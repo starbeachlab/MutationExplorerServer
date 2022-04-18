@@ -1,0 +1,71 @@
+<script src="{{url_for('static', filename='ngl.js')}}"></script>
+
+<script>
+    NGL.mainscriptPathFile = "{{url_for('static', filename='ngl.js')}}";
+
+    document.addEventListener( "DOMContentLoaded", function(){
+        stage = new NGL.Stage( "viewport" );
+
+        stage.loadFile( getFileURL("{{file_conv}}"), { defaultRepresentation: false } ).then( function( comp ){
+            comp.setName( "structure" );
+            comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+            comp.autoView();
+        } );
+
+        stage.setParameters( { backgroundColor: "white" } );
+    });
+
+    function getFileURL(filename) {
+        var loc = window.location;
+        var command = loc.protocol + "//" + loc.host + filename;
+        console.log(command);
+        return command;
+    }
+
+</script>
+
+<div style="width:100%;">
+  
+  <div id="viewport" style="float:left; width: 60%; height: 100%;"></div>
+
+  <div id="explanation" style="float:right; width: 40%;">
+
+    <div id="frame" style="margin:1cm;">
+    <h3> Color scheme </h3>
+    <ul>
+      <li> dark blue: not aligned (gap) </li>
+      <li> light blue: aligned to different amino acid group </li>
+      <li> yellow: aligned within an amino acid group </li>
+      <li> red: conserved </li>
+    </ul>
+    <h3> Amino acid groups </h3>
+    <ul> 
+    <li> R, H, K </li>
+    <li> D, E </li>
+    <li> S, T, N, Q </li>
+    <li> C, U, G, P </li>
+    <li> A, I, L, M, F, W, Y, V </li>
+    </ul>
+
+    
+    <p style="color: #8b0000"><b> Please note: other chains than the one contained in the alignment will be dark blue as well!</b></p>
+    <br>
+    <h3> NGL Viewer </h3>
+    <p> Following the link to the fullscreen window, a menu will be opened, giving full control over the visualization. A manual can be found <a href="https://nglviewer.org/ngl/api/manual/index.html" target="_blank"> here</a>. </p>
+    <p> By default, the entire molecule is displayed with all chains. In the fullscreen menu, there is a filtering symbol below the structure name. Enter e.g. ':A' to filter for chain A. The eye symbol toggles the respective element off/on. </p>
+    <p> Add a representation by clicking the horizontal lines symbol on the very right of the molecule name, select 'Add' next to 'Representation'. Further detail can be found in the  <a href="https://nglviewer.org/ngl/api/manual/index.html" target="_blank"> manual</a>.</p>
+
+    <a href="{{url_for('menu', tag=tag)}}"> <h4> Fullscreen with menu </h4> </a>
+    <br>
+    <br>
+ 
+    <h3> Download </h3>
+    <p> You can download the displayed structures here:</p>
+    <a href="{{url_for('download', tag=tag, filename='colored.pdb')}}">conservation.pdb</a>
+    <p> The sequence conservation is written to the b-factor column of the PDB.</p>
+    <br>
+    <br>
+    <h2 style="color: red;"> {{errmsg}} </h2>
+    </div>
+  </div>
+</div>

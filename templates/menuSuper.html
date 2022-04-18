@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+       <title>MutationExplorer</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+        <link rel="stylesheet"  href="/mutation_explorer/static/webapp/css/font-awesome.min.css" />
+        <link rel="stylesheet"  href="/mutation_explorer/static/webapp/css/main.css" />
+        <link rel="subresource" href="/mutation_explorer/static/webapp/css/light.css" />
+        <link rel="subresource" href="/mutation_explorer/static/webapp/css/dark.css" />
+
+
+  </head>
+  <body>
+    
+    
+
+    
+
+<script src="/mutation_explorer/static/webapp/js/ngl.js"></script>
+<script src="/mutation_explorer/static/webapp/js/lib/signals.min.js"></script>
+<script src="/mutation_explorer/static/webapp/js/lib/tether.min.js"></script>
+<script src="/mutation_explorer/static/webapp/js/lib/colorpicker.min.js"></script>
+<script src="/mutation_explorer/static/webapp/js/ui/ui.js"></script>
+<script src="/mutation_explorer/static/webapp/js/ui/ui.extra.js"></script>
+<script src="/mutation_explorer/static/webapp/js/ui/ui.ngl.js"></script>
+<script src="/mutation_explorer/static/webapp/js/ui/ui.helper.js"></script>
+<script src="/mutation_explorer/static/webapp/js/gui.js"></script>
+
+<script> 
+    
+    NGL.cssDirectory = "/mutation_explorer/static/webapp/css/";
+           
+	  document.addEventListener( "DOMContentLoaded", function(){
+
+              stage = new NGL.Stage();
+              NGL.StageWidget( stage );
+
+              stage.setParameters( { backgroundColor: "white" } );
+
+	            var loc = window.location;
+              var file = loc.protocol + "//" + loc.host + "{{file_conv}}";
+              console.log( file );
+        
+              // load molecule structure
+              stage.loadFile( file, {defaultRepresentation: false} ).then( function( comp){
+                  // console.log( "loaded file: " + file);
+                  comp.setName( "structure");
+                  comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+                  comp.autoView();
+	       });
+
+              file = loc.protocol + "//" + loc.host + "{{file_super}}";
+              console.log( file );
+
+              // load molecule structure
+              stage.loadFile( file, {defaultRepresentation: false} ).then( function( comp){
+                  // console.log( "loaded file: " + file);
+                  comp.setName( "second structure");
+                  comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+                  comp.autoView();
+	       });
+
+	   
+
+	   });
+
+	   
+
+
+ 
+
+
+				
+</script>
+
+
+  </body>
+</html>
+

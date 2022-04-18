@@ -1,0 +1,218 @@
+#submit h2 {
+    margin-bottom: 1.5vh;
+}
+
+.hide {
+    display: none !important;
+}
+
+i {
+    font-family: 'Material Icons';
+    font-style: normal;
+}
+
+#uploadPdb div {
+    margin-top: calc(2vw + 1vh);
+    padding: 1.25vh 2.5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    color: white;
+    background: #09AC50;
+    cursor: pointer;
+}
+
+#dragDropField {
+    height: 34vh;
+    margin-top: 2vh;
+    margin-bottom: 1vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 3px dashed grey;
+    font-size: 1.5rem;
+    color: grey;
+}
+
+#dragDropField i {
+    margin-top: -4vh;
+    font-size: 10vh;
+    color: grey;
+    cursor: default;
+}
+
+.dragOver span {
+    font-weight: bold;
+}
+
+#inputPdb {
+    display: none;
+}
+
+#fileUploadInterface label.input {
+    display: none;
+}
+
+#load_example {
+    display: flex;
+    align-items: center;
+    color: #03A64A;
+    font-weight: bold;
+    gap: 0.3rem;
+}
+
+/* Interface 2 */
+
+.inputField {
+    /*text-align: center;
+    width: 100%;
+    margin: 4vh 0;
+    display: flex;
+    justify-content: space-between;*/
+    /*width: 7.5vw;*/
+    margin: 4vh 1em;
+    margin-right: 2vw;
+}
+
+.inputField p {
+    margin: 0;
+    padding: 0;
+    /*text-align: left;*/
+    /*padding-left: 1vw;*/
+    font-weight: bold;
+    font-family: 'Questrial', sans-serif;
+    margin-bottom: 1.5vh;
+    white-space: nowrap;
+}
+
+#fileField {
+    display: inline-block;
+    /*display: flex;
+    flex-direction: row;
+    align-items: center;*/
+    width: min-content;
+    font-size: 1em;
+}
+
+#fileField p {
+    padding: 0;
+    font-weight: normal;
+    font-family: 'Roboto', sans-serif;
+    margin-bottom: 0;
+}
+
+#submitInterface {
+    /*display: flex;
+    flex-wrap: wrap;*/
+    margin-bottom: 5vh;
+}
+
+#submitInterface input {
+    /*width: 7.5vw;*/
+    width: 10rem;
+    /*height: min-content;*/
+    padding: 1px;
+    padding-bottom: 0px;
+    border: 0;
+    border-bottom: 1px solid grey;
+    margin-bottom: 0;
+    box-shadow: none !important;
+}
+
+#submitInterface select {
+    width: 8rem;
+    height: min-content;
+    padding: 1px;
+    padding-bottom: 5px;
+    border: 0;
+    border-bottom: 1px solid grey;
+    font-family: 'Roboto', sans-serif;
+    background: transparent;
+    color: black;
+    font-size: 1em;
+    /*margin: 2vh 0;*/
+    -webkit-appearance: none;
+    display: block;
+    box-shadow: none !important;
+    outline: none;
+    text-align: center;
+}
+
+#submitInterface #inputOptions {
+    cursor: pointer;
+}
+
+#submitInterface #submitbtn {
+    width: min-content;
+    padding: 1.25vh 1.25vw;
+    background: #09AC50;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.2em;    
+    border: none;
+    border-radius: 3px;
+
+    position: relative;
+    /*top: 5vh;*/
+    left: 17.5vw; /* (100vw - 2* section padding)/2 */
+    transform: translate(-50%, 0%);
+}
+
+#submitInterface #submitbtn:hover {
+    background: #03A64A;
+    cursor: pointer;
+}
+
+#tag_wrapper {
+    display: flex;
+    align-items: center;
+}
+
+#tag {
+    margin-right: 1vw;
+    height: min-content;
+}
+
+/*
+#generate_tag {
+    padding: 2px;
+    padding-bottom: 6px;
+}*/
+
+
+@media screen and (max-width: 993px) {
+    
+    #submitInterface {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .inputField p {
+        text-align: center;
+    }
+
+    #submitInterface input {
+        width: 45vw;
+        text-align: center;
+	margin-top: 2em;
+    }
+
+    #submitInterface select {
+        width: 45vw;
+        text-align: center;
+    }
+
+    #submitbtn {
+        position: inherit !important;
+        transform: translate(0%, 0%) !important;
+        margin-top: 2rem;
+        margin-bottom: 4rem !important;
+    }
+
+    #tag_wrapper {
+        flex-direction: column;
+    }
+}

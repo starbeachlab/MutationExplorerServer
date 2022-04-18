@@ -1,0 +1,58 @@
+{% extends "bootstrap/base.html" %}
+
+{% block head %}
+<title>MutationExplorer</title>
+
+<!-- universal css -->
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}" media="all">
+{% endblock %}
+
+
+{% block body %}
+  
+{% block header %}
+<!---
+ <div class="navbar-fixed">
+  <nav>
+      <div class="nav-wrapper">
+          <a id="logo" class="brand-logo black-text" href="{{ url_for('index') }}">
+              <img src="{{ url_for( 'static', filename ='img/MutationExplorer.png' )}}" style="width:150pt;" >
+              <div id="title">Mutation Explorer</div>
+          </a>
+          <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons grey-text text-darken-3">menu</i></a>
+          <ul id="nav-mobile" class="right hide-on-med-and-down">
+              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">home</a></li>
+              <li><a href="{{ url_for('conservation') }}" class="grey-text text-darken-3">alignment</a></li>
+              <li><a href="{{ url_for('conservation') }}" class="grey-text text-darken-3">mutations</a></li>
+              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">tutorial</a></li>
+              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">faq</a></li>
+          </ul>
+      </div>
+</nav>
+</div>
+--->
+ {% endblock %}
+ 
+ {% block content %}
+ {% endblock %}
+
+ {% block footer %}
+<br><br>
+<footer>
+  <center>
+  <p>
+    When using the MutationExplorer, please cite:
+    <br>
+    Ren&eacute; Staritzbichler, Nikola Ristic, ...,  Peter W Hildebrand
+    <br> 
+    Mutation Explorer, 2022 (details follow soon).
+  </p>
+</center>
+</footer>
+ {% endblock %}
+
+ {% block scripts %}
+ {{ super() }}
+ {% endblock %}
+
+{% endblock %}
