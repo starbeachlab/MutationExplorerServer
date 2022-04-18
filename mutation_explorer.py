@@ -4,7 +4,6 @@ from wtforms import StringField, SubmitField, SelectField, FileField
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
-
 import os, datetime, random, string
 import requests, subprocess, sys
 
@@ -37,15 +36,32 @@ def submit():
         os.mkdir(outdir)
 
         file_conv = request.files['file_conv']
-        file_conv.save(outdir + secure_filename(file_conv.filename))
+        file_conv_text = request.form['file_conv_text'].strip()
+        if file_conv.filename != "":
+            file_conv_fn = outdir + secure_filename(file_conv.filename)
+            file_conv.save(file_conv_fn)
+        elif file_conv_text != "":
+            file_conv_text = secure_filename(file_conv_text).lower()
+            url = 'https://files.rcsb.org/view/{0}.pdb'.format(file_conv_text.upper())
+            r = requests.get(url, allow_redirects=True)
+            file_conv_fn = outdir + file_conv_text + '.pdb'
+            open(fn, 'wb').write(r.content)
 
         superimpose = False
 
         file_super = request.files['file_super']
+        file_super_text = request.form['file_super_text'].strip()
         if file_super.filename != "":
             superimpose = True
-            file_super.save(outdir + secure_filename(file_super.filename))
-
+            file_super_fn = outdir + secure_filename(file_super.filename)
+            file_super.save(file_super_fn)
+        elif file_super_text != "":
+            superimpose = True
+            file_super_text = secure_filename(file_super_text).lower()
+            url = 'https://files.rcsb.org/view/{0}.pdb'.format(file_super_text.upper())
+            r = requests.get(url, allow_redirects=True)
+            file_super_fn = outdir + file_super_text + '.pdb'
+            open(fn, 'wb').write(r.content)
 
         alignment_link = request.form.getlist('alignment_link')[0]
         alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
@@ -59,7 +75,7 @@ def submit():
 
 
         ###  determine chain and seqid
-        chain, seqid = ChainSeqidFromPDBandAlignment( outdir + secure_filename( file_conv.filename), alignment )        
+        chain, seqid = ChainSeqidFromPDBandAlignment( file_conv_fn, alignment )        
 
         print( 'check', chain, seqid)
 
@@ -69,7 +85,7 @@ def submit():
 
         if not superimpose:
         
-            pdb_name = outdir + secure_filename(file_conv.filename)
+            pdb_name = file_conv_fn
             aliname = alignment
 
             cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py ' + pdb_name + ' ' + chain + ' ' + aliname + ' ' + seqid + ' 0.2  > ' + outdir + 'colored.pdb'
@@ -77,17 +93,17 @@ def submit():
             os.system( cmd )
 
 
-            return render_template('overview.html', tag=tag, file_conv=url_for('download', tag=tag, filename="colored.pdb"), errmsg=error)
+            return render_template('overview.html', tag=tag, file_conv=url_for('download', tag=tag, filename="colored.pdb"), errmsg=error) # Maybe needs changing
             
         
         chain_1 = chain
         seqid_1 = seqid
-        pdb_name_1 = outdir + secure_filename(file_conv.filename)
+        pdb_name_1 = file_conv_fn
         ali_name = alignment
 
-        pdb_name_2 = outdir + secure_filename(file_super.filename)
+        pdb_name_2 = file_super_fn
 
-        chain_2, seqid_2 = ChainSeqidFromPDBandAlignment( outdir + secure_filename( file_super.filename), alignment )        
+        chain_2, seqid_2 = ChainSeqidFromPDBandAlignment( file_super_fn, alignment )        
 
         if chain_2 == '' or seqid_2 == '':
             error = "The program was not able to find any sequence of the alignment in the PDB. Please note, that one chain has to match EXACTLY to one of the sequences within the alignment!"
@@ -126,7 +142,7 @@ def submit():
 
         
         # return render_template( 'fullmenu.html', path=tag, pdb="super_colored.pdb", chain=chain_1, pdb2="template_colored.pdb", chain2 = chain_2 )  # use same html ?
-        return render_template('overviewSuper.html', tag=tag, file_conv=url_for('download', tag=tag, filename="super_colored.pdb"), file_super=url_for('download', tag=tag, filename="template_colored.pdb"), errmsg=error)
+        return render_template('overviewSuper.html', tag=tag, file_conv=url_for('download', tag=tag, filename="super_colored.pdb"), file_super=url_for('download', tag=tag, filename="template_colored.pdb"), errmsg=error) # Maybe needs changing
 
     return render_template('home.html')
 
