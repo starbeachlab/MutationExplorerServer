@@ -6,7 +6,7 @@
     document.addEventListener( "DOMContentLoaded", function(){
         stage = new NGL.Stage( "viewport" );
 
-        stage.loadFile( getFileURL("{{file_conv}}"), { defaultRepresentation: false } ).then( function( comp ){
+        stage.loadFile( getFileURL("{{url_for('download', tag=tag, filename=pdb ) }}"), { defaultRepresentation: false } ).then( function( comp ){
             comp.setName( "structure" );
             comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
             comp.autoView();
@@ -31,13 +31,26 @@
   <div id="explanation" style="float:right; width: 40%;">
 
     <div id="frame" style="margin:1cm;">
+
+    <h2 style="color: red;"> {{errmsg}} </h2>
+    <br>
+    
     <h3> Color scheme </h3>
     <ul>
-      <li> dark blue: not aligned (gap) </li>
-      <li> light blue: aligned to different amino acid group </li>
-      <li> yellow: aligned within an amino acid group </li>
-      <li> red: conserved </li>
-    </ul>
+      <li> red: conserved residue </li>
+      <li> yellow: similar residue (within one of the five amino acid groups)</li>
+      <li> light blue: dissimilar residue </li>
+      <li> dark blue: not aligned due to a gap or in a different chain    </ul>
+
+    <br>
+    <h3> Using the NGL Viewer </h3>
+    <p> Welcome to the quick NGL interface! Mousing over the protein will identify individual residues. For full control over visualization, please follow this link to the fullscreen mode with menus. </p>
+
+    <a href="{{url_for('menu', tag=tag, pdb1=pdb)}}"> <h4> Fullscreen with menu </h4> </a>
+
+
+    <p> By default, the entire molecule is displayed with all chains. To hide or show individual chains, enter the fullscreen mode. There you will find a “filter” symbol below the structure name, which will enable you to select a specific chain: enter e.g. ‘:A’ to create a selection for chain A. Use the “eye” symbol to toggle the respective element off/on. Finally, to add a new representation (e.g., ball-and-stick), click on the 3-bar symbol to the right of the molecule name and select “Add” next to “Representation”. Further detail can be found in the <a href="https://nglviewer.org/ngl/api/manual/index.html" target="_blank"> NGL manual</a>. </p>
+    <br>
     <h3> Amino acid groups </h3>
     <ul> 
     <li> R, H, K </li>
@@ -47,25 +60,12 @@
     <li> A, I, L, M, F, W, Y, V </li>
     </ul>
 
-    
-    <p style="color: #8b0000"><b> Please note: other chains than the one contained in the alignment will be dark blue as well!</b></p>
     <br>
-    <h3> NGL Viewer </h3>
-    <p> Following the link to the fullscreen window, a menu will be opened, giving full control over the visualization. A manual can be found <a href="https://nglviewer.org/ngl/api/manual/index.html" target="_blank"> here</a>. </p>
-    <p> By default, the entire molecule is displayed with all chains. In the fullscreen menu, there is a filtering symbol below the structure name. Enter e.g. ':A' to filter for chain A. The eye symbol toggles the respective element off/on. </p>
-    <p> Add a representation by clicking the horizontal lines symbol on the very right of the molecule name, select 'Add' next to 'Representation'. Further detail can be found in the  <a href="https://nglviewer.org/ngl/api/manual/index.html" target="_blank"> manual</a>.</p>
-
-    <a href="{{url_for('menu', tag=tag)}}"> <h4> Fullscreen with menu </h4> </a>
-    <br>
-    <br>
- 
     <h3> Download </h3>
     <p> You can download the displayed structures here:</p>
-    <a href="{{url_for('download', tag=tag, filename='colored.pdb')}}">conservation.pdb</a>
-    <p> The sequence conservation is written to the b-factor column of the PDB.</p>
+    <a href="{{url_for('download', tag=tag, filename=pdb)}}">{{pdb}}</a>
+    <p> The sequence conservation is written to the B-factor column of the PDB.</p>
     <br>
-    <br>
-    <h2 style="color: red;"> {{errmsg}} </h2>
     </div>
   </div>
 </div>

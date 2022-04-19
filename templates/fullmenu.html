@@ -52,7 +52,8 @@
                    comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
                    comp.autoView();
 	       });
-	   
+
+	       if ( "{{pdb2}}" !== "" ){
                file = loc.protocol + "//" + loc.host + "{{url_for('get', mydir=path, pdb=pdb2)}}";
                console.log( file );
         
@@ -62,7 +63,8 @@
 	                comp.setSelection( ":{{chain2}}" );
                   comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
                   comp.autoView();
-	       });
+	   });
+	   }
 	   
 
 	   });

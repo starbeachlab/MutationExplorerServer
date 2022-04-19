@@ -36,15 +36,41 @@ def submit():
             outdir = app.config['USER_DATA_DIR'] + tag + "/"
         os.mkdir(outdir)
 
+        #conv_file_upload = True
+        conv_filename = ""
+
         file_conv = request.files['file_conv']
-        file_conv.save(outdir + secure_filename(file_conv.filename))
+        if file_conv.filename != "":
+            file_conv.save(outdir + secure_filename(file_conv.filename))
+            conv_filename = secure_filename(file_conv.filename)
+        else:
+            conv_file_upload = False
+            pdb_conv = request.form.getlist('pdb_conv')[0]
+            file_conv_link = "https://files.rcsb.org/download/" + pdb_conv + ".pdb"
+            req = requests.get(file_conv_link)
+            with open(outdir + pdb_conv + ".pdb", "w") as f:
+                f.write(req.content)
+            conv_filename = pdb_conv + ".pdb"
 
         superimpose = False
+        #super_file_upload = True
+        super_filename = ""
 
         file_super = request.files['file_super']
         if file_super.filename != "":
             superimpose = True
             file_super.save(outdir + secure_filename(file_super.filename))
+            super_filename = secure_filename(file_super.filename)
+        else:
+            pdb_super = request.form.getlist('pdb_super')[0]
+            if pdb_super != "":
+                file_super_link = "https://files.rcsb.org/download/" + pdb_super + ".pdb"
+                superimpose = True
+                #super_file_upload = False
+                req = requests.get(file_super_link)
+                with open(outdir + pdb_super + ".pdb", "w") as f:
+                    f.write(req.content)
+                super_filename = pdb_super + ".pdb"
 
 
         alignment_link = request.form.getlist('alignment_link')[0]
@@ -59,7 +85,8 @@ def submit():
 
 
         ###  determine chain and seqid
-        chain, seqid = ChainSeqidFromPDBandAlignment( outdir + secure_filename( file_conv.filename), alignment )        
+        #chain, seqid = ChainSeqidFromPDBandAlignment( outdir + secure_filename( file_conv.filename), alignment )        
+        chain, seqid = ChainSeqidFromPDBandAlignment( outdir + conv_filename, alignment )        
 
         print( 'check', chain, seqid)
 
@@ -69,28 +96,33 @@ def submit():
 
         if not superimpose:
         
-            pdb_name = outdir + secure_filename(file_conv.filename)
+            #pdb_name = outdir + secure_filename(file_conv.filename)
+            pdb_name = outdir + conv_filename
             aliname = alignment
-
-            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py ' + pdb_name + ' ' + chain + ' ' + aliname + ' ' + seqid + ' 0.2  > ' + outdir + 'colored.pdb'
+            #new_name = secure_filename( file_conv.filename)[:-4] + '_consrv.pdb'
+            new_name = conv_filename[:-4] + '_consrv.pdb'
+            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py ' + pdb_name + ' ' + chain + ' ' + aliname + ' ' + seqid + ' 0.2  > ' + outdir + new_name
             print( cmd )
             os.system( cmd )
 
 
-            return render_template('overview.html', tag=tag, file_conv=url_for('download', tag=tag, filename="colored.pdb"), errmsg=error)
+            return render_template('overview.html', tag=tag, pdb=new_name, errmsg=error)
             
         
         chain_1 = chain
         seqid_1 = seqid
-        pdb_name_1 = outdir + secure_filename(file_conv.filename)
+        #pdb_name_1 = outdir + secure_filename(file_conv.filename)
+        pdb_name_1 = outdir + conv_filename
         ali_name = alignment
 
-        pdb_name_2 = outdir + secure_filename(file_super.filename)
+        #pdb_name_2 = outdir + secure_filename(file_super.filename)
+        pdb_name_2 = outdir + super_filename
 
-        chain_2, seqid_2 = ChainSeqidFromPDBandAlignment( outdir + secure_filename( file_super.filename), alignment )        
+        chain_2, seqid_2 = ChainSeqidFromPDBandAlignment( outdir + super_filename, alignment )        
 
         if chain_2 == '' or seqid_2 == '':
             error = "The program was not able to find any sequence of the alignment in the PDB. Please note, that one chain has to match EXACTLY to one of the sequences within the alignment!"
+            return render_template('overview.html', errmsg=error);
         
         if seqid_1 == '0' and seqid_2 == '1':
             
@@ -100,11 +132,17 @@ def submit():
             sys.stdout.flush()
             os.system( cmd )
 
-            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + outdir + 'super.pdb' + ' ' + chain_1 + ' ' + ali_name + ' ' + seqid_1 + ' 0.2  > ' + outdir + 'super_colored.pdb'
+            #new_name_1 = secure_filename(file_conv.filename)[:-4] + '_consvr_suprmp.pdb'
+            new_name_1 = conv_filename[:-4] + '_consvr_suprmp.pdb'
+            
+            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + outdir + 'super.pdb' + ' ' + chain_1 + ' ' + ali_name + ' ' + seqid_1 + ' 0.2  > ' + outdir + new_name_1
             print( cmd )
             os.system( cmd )
 
-            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + pdb_name_2 + ' ' + chain_2 + ' ' + ali_name + ' ' + seqid_2 + ' 0.2  > ' + outdir + 'template_colored.pdb'
+            #new_name_2 = secure_filename( file_super.filename)[:-4] + "_consvr.pdb" 
+            new_name_2 = super_filename[:-4] + "_consvr.pdb" 
+            
+            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + pdb_name_2 + ' ' + chain_2 + ' ' + ali_name + ' ' + seqid_2 + ' 0.2  > ' + outdir + new_name_2
             print( cmd )
             os.system( cmd )
 
@@ -116,28 +154,34 @@ def submit():
             sys.stdout.flush()
             os.system( cmd )
 
-            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + outdir + 'super.pdb' + ' ' + chain_2 + ' ' + ali_name + ' ' + seqid_2 + ' 0.2  > ' + outdir + 'super_colored.pdb'
+            #new_name_2 = secure_filename(file_super.filename)[:-4] + '_consvr_suprmp.pdb'
+            new_name_2 = super_filename[:-4] + '_consvr_suprmp.pdb'
+
+            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + outdir + 'super.pdb' + ' ' + chain_2 + ' ' + ali_name + ' ' + seqid_2 + ' 0.2  > ' + outdir + new_name_2
             print( cmd )
             os.system( cmd )
 
-            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + pdb_name_1 + ' ' + chain_1 + ' ' + ali_name + ' ' + seqid_1 + ' 0.2  > ' + outdir + 'template_colored.pdb'
+            #new_name_1 = secure_filename(file_conv.filename)[:-4] + '_consvr.pdb'
+            new_name_1 = conv_filename[:-4] + '_consvr.pdb'
+
+            cmd =  'python3 ' + app.config['APP_PATH'] + 'pdb_conservation.py '  + pdb_name_1 + ' ' + chain_1 + ' ' + ali_name + ' ' + seqid_1 + ' 0.2  > ' + outdir + new_name_1
             print( cmd )
             os.system( cmd )
 
         
-        # return render_template( 'fullmenu.html', path=tag, pdb="super_colored.pdb", chain=chain_1, pdb2="template_colored.pdb", chain2 = chain_2 )  # use same html ?
-        return render_template('overviewSuper.html', tag=tag, file_conv=url_for('download', tag=tag, filename="super_colored.pdb"), file_super=url_for('download', tag=tag, filename="template_colored.pdb"), errmsg=error)
+        return render_template('overviewSuper.html', tag=tag, pdb1=new_name_1, pdb2=new_name_2, errmsg=error)
+
+
 
     return render_template('home.html')
 
+# this can handle both cases of single and pair of PDBs: same could be done for overview
+@app.route('/menu/<tag>/<pdb1>')
+@app.route('/menu/<tag>/<pdb1>/<pdb2>')
+def menu(tag, pdb1, pdb2 = ""):
+    return render_template( 'fullmenu.html', path=tag, pdb=pdb1,  pdb2=pdb2)
 
-@app.route('/menu/<tag>')
-def menu(tag):
-    if os.path.exists(app.config['USER_DATA_DIR'] + tag + "/super_colored.pdb"):
-        return render_template('menuSuper.html', tag=tag, file_conv=url_for('download', tag=tag, filename="super_colored.pdb"), file_super=url_for('download', tag=tag, filename="template_colored.pdb"))
-    return render_template('menu.html', tag=tag, file_conv=url_for('download', tag=tag, filename="colored.pdb"))
-
-
+# same as get() below...
 @app.route('/downloads/<tag>/<filename>')
 def download(tag, filename):
     path = app.config['USER_DATA_DIR'] + '/' + tag 

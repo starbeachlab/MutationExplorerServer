@@ -101,7 +101,7 @@ with open( pdb_file) as r:
                 print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
                 exit(1)
             print( l[:60] + "{:6.2f}".format( factor * vals[eidi] ) + l[66:] )
-        elif "ATOM" == l[0:4]:
+        elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
             print( l[:60] + "{:6.2f}".format( 0.0 ) + l[66:] )
         else:
             print( l)
