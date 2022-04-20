@@ -9,6 +9,8 @@ from Bio import AlignIO
 from Bio import SeqUtils
 import sys
 
+from collections import defaultdict
+
 aligned = 0.2
 grouped = 0.5
 factor = 200.0
@@ -53,9 +55,24 @@ def group_id( A):
 
 def same_group( A, B ):
     return group_id( A) == group_id(B)
-    
-    
-alignment = AlignIO.read( ali_file, 'clustal')
+
+
+
+dic = defaultdict( str )
+with open( ali_file) as r:
+    r.readline()
+    for l in r:
+        l = l.strip()
+        if len(l) == 0:
+            continue
+        c = l.split()
+
+        if len(c) > 1 and len(c[1]) > 0:
+            dic[c[0]] +=  c[1] 
+
+alignment = []
+for (key,value) in dic.items():
+    alignment.append(value)
 
 nr = len( alignment)
 

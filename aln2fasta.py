@@ -17,6 +17,6 @@ with open( sys.argv[1]) as r:
             dic[c[0]] +=  c[1] 
 
 for (d,v) in dic.items():
-    print( '>' , d )
-    print( v )
+    print( '>' + d.strip().strip('-').strip('_') )
+    print( v.strip() )
         
