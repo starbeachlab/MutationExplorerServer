@@ -9,7 +9,7 @@
 
 
 import Bio.PDB
-import Bio.AlignIO
+import basic_alignment as bali
 import sys
 
 if len( sys.argv) < 7:
@@ -122,18 +122,19 @@ elif mode == "chain:":
                     print( "a residue without CA?:", residue )
 
 elif mode == "alignment:":
-    alignment = Bio.AlignIO.read( open( alignment_file ), 'clustal')
+
+    alignment = bali.ReadAlignment( alignment_file )[1]
 
     for chain in first_structure:
         if chain.get_id() == first_chain:
             residues = list(chain)
             count = 0
-            for i in range( 0, len( alignment[0].seq )):
-                if alignment[0].seq[i] != '-':
-                    if alignment[1].seq[i] != '-':
+            for i in range( 0, len( alignment[0] )):
+                if alignment[0][i] != '-':
+                    if alignment[1][i] != '-':
                         #print( count, residues[count])
                         if count >= len(residues):
-                            print( "ERROR: alignment longer than first chain: ", len(alignment[0].seq), len(residues), 'first residues: ', alignment[0].seq[:10], residues[:3])
+                            print( "ERROR: alignment longer than first chain: ", len(alignment[0]), len(residues), 'first residues: ', alignment[0][:10], residues[:3])
                         if 'CA' not in residues[count]:
                             print( 'CA not found in residue:', residues[count])
                         first_atoms.append( residues[count]['CA'] )
@@ -143,9 +144,9 @@ elif mode == "alignment:":
         if chain.get_id() == second_chain:
             residues = list(chain)
             count = 0
-            for i in range( 0, len( alignment[1].seq )):
-                if alignment[1].seq[i] != '-':
-                    if alignment[0].seq[i] != '-':
+            for i in range( 0, len( alignment[1] )):
+                if alignment[1][i] != '-':
+                    if alignment[0][i] != '-':
                         second_atoms.append( residues[count]['CA'] )
                     count += 1
                     

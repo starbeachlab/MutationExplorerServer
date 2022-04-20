@@ -1,0 +1,63 @@
+{% import "bootstrap/wtf.html" as wtf %}
+
+
+<h1> MutationViewer</h1>
+
+
+<div id="main" style="width:100%">
+  <div id="formdiv" style="float:left;width:30%;">
+
+    <form method="POST" enctype="multipart/form-data" action="/" >
+      {{ form.csrf_token }}
+      
+      <h3> {{ form.pdb.label }} </h3>
+      {{ form.pdb }}
+
+      <h3> {{form.ali.label}} </h3>
+      {{form.ali}}
+
+      <h3> {{form.mutations.label}} </h3>
+      {{form.mutations}}
+
+      <h3> {{form.display.label}} </h3>
+      {{form.display}}
+
+      {{form.submit}}
+
+      <input type="submit" value="go">
+    </form>
+
+  </div>
+  <div id="ngldiv" style="float:right:width:70%;">
+
+    <div id="viewport" style="width: 100%; height: 100vh;"></div>
+
+  </div>
+</div>
+
+
+
+<script> 
+    NGL.mainscriptPathFile = "{{url_for('static', filename='ngl.js')}}";
+
+    document.addEventListener( "DOMContentLoaded",  function() {
+
+        stage = new NGL.Stage("viewport");
+        stage.setParameters( { backgroundColor: "white" } );
+        var loc = window.location;
+        var file = loc.protocol + "//" + loc.host + "{{url_for('get', mydir=path, pdb=pdb)}}";
+        //console.log( file );
+        
+        // load molecule structure
+        stage.loadFile( file, {defaultRepresentation: false} ).then( function( comp){
+            // console.log( "loaded file: " + file);
+            comp.setName( "structure");
+            //comp.setSelection( "");
+            comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+            comp.autoView();
+        });
+    
+    });
+    
+</script>
+

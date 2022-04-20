@@ -9,7 +9,9 @@ from Bio import AlignIO
 from Bio import SeqUtils
 import sys
 
-from collections import defaultdict
+
+import basic_alignment as bali
+
 
 aligned = 0.2
 grouped = 0.5
@@ -57,23 +59,7 @@ def same_group( A, B ):
     return group_id( A) == group_id(B)
 
 
-
-dic = defaultdict( str )
-with open( ali_file) as r:
-    r.readline()
-    for l in r:
-        l = l.strip()
-        if len(l) == 0:
-            continue
-        c = l.split()
-
-        if len(c) > 1 and len(c[1]) > 0:
-            dic[c[0]] +=  c[1] 
-
-alignment = []
-for (key,value) in dic.items():
-    alignment.append(value)
-
+alignment = bali.ReadAlignment( ali_file)[1]
 nr = len( alignment)
 
 

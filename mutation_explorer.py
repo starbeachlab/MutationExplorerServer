@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, url_for, send_from_directory, jsonify
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, FileField
+from wtforms import StringField, SubmitField, SelectField, FileField, RadioField
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
 
 import os, datetime, random, string
 import requests, subprocess, sys
+import basic_alignment as bali
 
 
 app = Flask(__name__)
@@ -18,9 +19,10 @@ bootstrap = Bootstrap( app )
 
 
 
-@app.route('/')
+
+@app.route('/' , methods=['GET','POST'] )
 def index():
-    return render_template('home.html')
+    render_template( 'home.html')
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -204,11 +206,10 @@ def ChainSeqidFromPDBandAlignment( pdb, ali):
     #print( pdb_chains)
     #print( pdb_seqs)
     
-    cmd = app.config['APP_PATH'] + 'aln2fasta.py'
     #print( cmd)
-    aln_seqs =  subprocess.check_output( [ 'python3', cmd , ali ] ).split('\n')
+    aln_seqs =  bali.ReadAlignment( ali )[1]
     #print(aln_seqs)
-    aln_seqs = [ f.replace('-','') for f in aln_seqs[1::2] ]
+    aln_seqs = [ f.replace('-','') for f in aln_seqs ]
     #print( aln_seqs)
     chain = ''
     seqid = ''
@@ -224,7 +225,9 @@ def ChainSeqidFromPDBandAlignment( pdb, ali):
     if chain == '' or seqid == '':
         # print error message in form!
         print('WARNING, no match between PDB and alignment found, no identical sequence!')
-    print( 'chain:', chain, 'seqid:', seqid)
+        print( pdb_seqs)
+        print( aln_seqs)
+    #print( 'chain:', chain, 'seqid:', seqid)
     return chain, seqid
 
 
@@ -390,4 +393,44 @@ def superx():
     
     return render_template( 'fullmenu.html', path=job, pdb="super_colored.pdb", chain=chain_1, pdb2="template_colored.pdb", chain2 = chain_2 )  # use same html ?
 
+
+
+
+###  MUTATION EXPLORER ITSELF  ##########
+
+class MutExForm( FlaskForm):
+    pdb = FileField( 'PDB' )#, validator=[DataRequired()])
+    ali = FileField( 'Alignment' )
+    mutations = StringField( 'Mutations' )
+    display = RadioField( 'Display:', choices=[('A', 'WT'), ('B', 'Mutated'), ('C', 'Delta')] , default='C')
+    submit = SubmitField( 'Update')
+    session_id = ""
+
+
+@app.route('/mutex' , methods=['GET','POST'] )
+def mutex():
+    form = MutExForm()
+
+    if form.validate_on_submit():
+        pdb = form.pdb.data
+        pdb_file = secure_filename( pdb.filename)
+        
+        tag = str(random.randint(0, 999999))
+        outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        while os.path.exists(outdir):
+            tag = str(random.randint(0, 999999))
+            outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        os.mkdir(outdir)
+        if not os.path.exists( os.path.join( outdir, pdb_file )):
+            # score it, write into bfactor
+            pdb.save( os.path.join( outdir, pdb_file))
+
+        choice = form.display.data
+
+        #return redirect( url_for( 'mutex' )) # diff than this func?
+        return render_template( 'mutations.html', form=form) 
+
+
+    
+    return render_template('mutations.html', form=form)
 
