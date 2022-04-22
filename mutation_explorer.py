@@ -527,3 +527,4 @@ def mutant():
 
 
 #https://alphafold.ebi.ac.uk/files/AF-B8JHS2-F1-model_v2.pdb
+ 
