@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, url_for, send_from_directory, jsonify
+from flask import Flask, render_template, request, url_for, send_from_directory, jsonify, session
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, FileField, RadioField
+from wtforms import StringField, SubmitField, SelectField, FileField, RadioField, HiddenField
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
@@ -22,7 +22,7 @@ bootstrap = Bootstrap( app )
 
 @app.route('/' , methods=['GET','POST'] )
 def index():
-    render_template( 'home.html')
+    return render_template( 'home.html')
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -399,38 +399,100 @@ def superx():
 ###  MUTATION EXPLORER ITSELF  ##########
 
 class MutExForm( FlaskForm):
-    pdb = FileField( 'PDB' )#, validator=[DataRequired()])
-    ali = FileField( 'Alignment' )
-    mutations = StringField( 'Mutations' )
-    display = RadioField( 'Display:', choices=[('A', 'WT'), ('B', 'Mutated'), ('C', 'Delta')] , default='C')
+    pdb = FileField( 'Start new session by uploading PDB from your local machine (the Wildtype: WT)' )#, validator=[DataRequired()])
+    idstr = StringField( 'Identifier of PDB' )
+    source = RadioField( 'Select source of PDB:', choices=[('A', 'RCSB (PDB)'), ('B','OPM - membrane proteins'), ('C', 'alpha Fold')], default='A')
+    opensession = StringField( 'Open session by ID')
+    ali = FileField( 'Mutate WT protein by alignment' )
+    mutations = StringField( 'Define mutations for WT:' )
+    display = RadioField( 'Display PDB colored by energy:', choices=[('A', 'WT'), ('B', 'Mutated by energy'), ('C', 'Mutated by energy difference to WT')] , default='C')
+    download = SelectField( 'Download files from this session (upon update)', choices=[('A','NONE'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] )
     submit = SubmitField( 'Update')
-    session_id = ""
 
+"""
+session
+- sessionid
+- history 
+- wt
+- nr
+"""
 
-@app.route('/mutex' , methods=['GET','POST'] )
-def mutex():
+@app.route('/mutantX' , methods=['GET','POST'] )
+def mutant():
     form = MutExForm()
+    print('mutex')
+    if request.method == 'POST':
+        #if form.validate_on_submit():
+        if 'sessionid' in session:
+            sessionid = session.get( 'sessionid')
+            outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
 
-    if form.validate_on_submit():
+        ### pdb upload ###
         pdb = form.pdb.data
         pdb_file = secure_filename( pdb.filename)
-        
-        tag = str(random.randint(0, 999999))
-        outdir = app.config['USER_DATA_DIR'] + tag + "/"
-        while os.path.exists(outdir):
-            tag = str(random.randint(0, 999999))
-            outdir = app.config['USER_DATA_DIR'] + tag + "/"
-        os.mkdir(outdir)
-        if not os.path.exists( os.path.join( outdir, pdb_file )):
+        idstr = form.idstr.data
+        if pdb_file != "" or idstr != "":
+            sessionid = str( random.randint(0, 999999))            
+            outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
+            while os.path.exists(outdir):
+                sessionid = str(random.randint(0, 999999))
+                outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
+            os.mkdir(outdir)
+            session['nr'] = 0
+            if 'history' in session:
+                session['history'] = session.get('history') + ' ' + sessionid
+            else:
+                session['history'] = sessionid
+        if pdb_file != "":
             # score it, write into bfactor
             pdb.save( os.path.join( outdir, pdb_file))
+            session['wt'] = pdb_file[:-4]    
+        elif idstr != "":
+            session['wt'] = idstr
+            if form.source.data == 'A':
+                url = "https://files.rcsb.org/download/" + idstr + ".pdb"
+            elif form.source.data == 'B':
+                url = "https://opm-assets.storage.googleapis.com/pdb/" + idstr + ".pdb"
+            elif form.source.data == 'C':
+                url = "https://alphafold.ebi.ac.uk/files/" + idstr + ".pdb"
+            req = requests.get( url )
+            with open( outdir + idstr + ".pdb" , 'w') as f:
+                f.write( req.content )
+        elif form.opensession.data != "":
+            sessionid = form.opensession.data
+            session['sessionid'] = sessionid
+            outdir = app.config['USER_DATA_DIR'] + session_id + '/'
+            maxi = -1
+            for f in os.listdir( outdir ):
+                if f[-4:] == ".pdb":
+                    if "mutX" not in f:
+                        session['wt'] = f[:-4]
+                    else:
+                        kid = int( f[ f.index('mutX') + 3 : -4])
+                        maxi = max( maxi, kid)
+            session['nr'] = maxi
 
+        
+            
+            #### MUTATION SECTION
+            if 'nr' in session:
+                session['nr'] = session.get('nr') + 1
+            else:
+                session['nr'] = 1
+
+                
+                
+        session['sessionid'] = sessionid
+        print( 'out', outdir)
         choice = form.display.data
-
+        print( 'choice', choice)
         #return redirect( url_for( 'mutex' )) # diff than this func?
-        return render_template( 'mutations.html', form=form) 
+        return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=pdb_file) 
 
 
-    
+    print( 'request', request )
     return render_template('mutations.html', form=form)
+
+
+
 
