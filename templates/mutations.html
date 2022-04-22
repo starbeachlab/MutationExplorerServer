@@ -1,7 +1,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 
-<h1> MutationViewer</h1>
+<h1> MutantX</h1>
 
 
 <div id="main" style="width:100%">
@@ -10,52 +10,38 @@
     <form method="POST" enctype="multipart/form-data"  >
       {{ form.csrf_token }}
 
-      <h2> Upload section </h2>
-      
       <h3> {{ form.pdb.label }} </h3>
       {{ form.pdb }}
 
-      <p> <b>OR</b> upload PDB file from one of the following servers: </p>
 
       <h3> {{ form.idstr.label }} </h3>
       {{form.idstr}}
-      
       <h3> {{ form.source.label }} </h3>
       {{form.source}}
       
-      <p> <b> OR: </b> </p>
 
       <h3> {{form.opensession.label}} </h3>
       {{ form.opensession }}
       
-      <h2> Mutation section </h2>
-
-      
+        
       <h3> {{form.ali.label}} </h3>
       {{form.ali}}
 
-      <p><b> OR:</b></p>
-      
       <h3> {{form.mutations.label}} </h3>
       {{form.mutations}}
-
-      <h2> Display section </h2>
       
       <h3> {{form.display.label}} </h3>
       {{form.display}}
 
-      <h2> Download section </h2>
-      
       <h3> {{form.download.label}}</h3>
       {{form.download}}
-      <br>
-      <br>
 
-      
-      <h2> Update <h2>
-	  {{form.submit}}
+      <br><br>
+
+      {{form.submit}}
 	  
     </form>
+    <br>
     <br>
     
     <div id="session_id">Current session ID: {{mydir}}</div>
