@@ -10,30 +10,32 @@
     <form method="POST" enctype="multipart/form-data"  >
       {{ form.csrf_token }}
 
-      <h3> {{ form.pdb.label }} </h3>
+      <h3> Start new session</h3>
+      
+      <h4> {{ form.pdb.label }} </h4>
       {{ form.pdb }}
 
 
-      <h3> {{ form.idstr.label }} </h3>
+      <h4> {{ form.idstr.label }} </h4>
       {{form.idstr}}
-      <h3> {{ form.source.label }} </h3>
+      <h4> {{ form.source.label }} </h4>
       {{form.source}}
       
 
-      <h3> {{form.opensession.label}} </h3>
+      <h4> {{form.opensession.label}} </h4>
       {{ form.opensession }}
       
-        
-      <h3> {{form.ali.label}} </h3>
-      {{form.ali}}
 
+      <br>
+      <br>
+ 
       <h3> {{form.mutations.label}} </h3>
       {{form.mutations}}
       
-      <h3> {{form.display.label}} </h3>
+      <h4> {{form.display.label}} </h4>
       {{form.display}}
 
-      <h3> {{form.download.label}}</h3>
+      <h4> {{form.download.label}}</h4>
       {{form.download}}
 
       <br><br>
@@ -71,11 +73,11 @@
         console.log( file );
         
         // load molecule structure
-        stage.loadFile( file, {defaultRepresentation: true} ).then( function( comp){
+        stage.loadFile( file, {defaultRepresentation: false} ).then( function( comp){
             // console.log( "loaded file: " + file);
             comp.setName( "structure");
             //comp.setSelection( "");
-            //comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+            comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
             comp.autoView();
         });
     

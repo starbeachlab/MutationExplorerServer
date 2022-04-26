@@ -12,7 +12,8 @@ import basic_alignment as bali
 
 app = Flask(__name__)
 app.config['USER_DATA_DIR'] = "/disk/user_data/mutation_explorer/"
-app.config['APP_PATH']      = "/home/hildilab/app/mutation_explorer/"
+app.config['APP_PATH']      = "/home/hildilab/app/mutation_explorer_beta/"    ### ADJUST !!!!
+app.config['ROSETTA_PATH']  = "/home/hildilab/dev/ext/rosetta/bin/"
 app.config['SECRET_KEY']    = 'klsdf23*&%..'
 
 bootstrap = Bootstrap( app )
@@ -399,12 +400,11 @@ def superx():
 ###  MUTATION EXPLORER ITSELF  ##########
 
 class MutExForm( FlaskForm):
-    pdb = FileField( 'Start new session by uploading PDB from your local machine (the Wildtype: WT)' )
+    pdb = FileField( 'Upload PDB from your machine' )
     idstr = StringField( 'OR download from server by identifier:' )
     source = SelectField( 'Select server:', choices=[('A', 'RCSB (PDB)'), ('B','OPM - membrane proteins'), ('C', 'alpha Fold')], default='A')
     opensession = StringField( 'OR open session by ID')
-    ali = FileField( 'Mutate WT protein by alignment' )
-    mutations = StringField( 'OR manually define mutations for WT:' )
+    mutations = StringField( 'Define mutations for WT:' )
     display = SelectField( 'Display PDB colored by energy', default='A')
     download = SelectField( 'Download files from this session', choices=[('A','(none)'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] )
     submit = SubmitField( 'Update')
@@ -412,7 +412,7 @@ class MutExForm( FlaskForm):
 
     
 """
-session
+session / sammlung von cookies / damit folgeseiten auf fruehere werte zugreifen
 - sessionid
 - history 
 - wt
@@ -430,28 +430,28 @@ def mutant():
             sessionid = session.get( 'sessionid')
             outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
 
-        ### pdb upload ###
+        ##### pdb upload #####
         pdb = form.pdb.data
-        pdb_file = secure_filename( pdb.filename)
-        idstr = form.idstr.data
-        if pdb_file != "" or idstr != "":
-            sessionid = str( random.randint(0, 999999))            
+        pdb_file = secure_filename( pdb.filename)  # local file upload
+        idstr = form.idstr.data   # upload via RCSB or OPM or alpha Fold
+        if pdb_file != "" or idstr != "":  # if new session, create session id and directory, add to history
+            sessionid = str( random.randint(0, 999999))
+            sessionid = "66827"
             outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
-            while os.path.exists(outdir):
-                sessionid = str(random.randint(0, 999999))
-                outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
-            os.mkdir(outdir)
+            #while os.path.exists(outdir):
+            #    sessionid = str(random.randint(0, 999999))
+            #    outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
+            #os.mkdir(outdir)
             session['nr'] = 0
             if 'history' in session:
                 session['history'] = session.get('history') + ' ' + sessionid
             else:
                 session['history'] = sessionid
-        if pdb_file != "":
-            # score it, write into bfactor
+        if pdb_file != "":   # upload local pdb file
             pdb.save( os.path.join( outdir, pdb_file))
             session['wt'] = pdb_file[:-4]
             form.pdb.data = ''
-        elif idstr != "":
+        elif idstr != "":   # upload via server
             session['wt'] = idstr
             if form.source.data == 'A':
                 url = "https://files.rcsb.org/download/" + idstr + ".pdb"
@@ -466,7 +466,7 @@ def mutant():
                 f.write( req.content )
                 
             form.idstr.data = ''
-        elif form.opensession.data != "":
+        elif form.opensession.data != "":  # open previous session
             sessionid = form.opensession.data
             session['sessionid'] = sessionid
             outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
@@ -482,6 +482,27 @@ def mutant():
             session['nr'] = maxi
             form.opensession.data = ''
 
+        # if file was uploaded (new sesssion), filter pdb and write energies into PDBID_wt.pdb
+        if pdb_file != "" or idstr != "":
+            # filter (ONLY HETATMs at the moment!!!!) TODO: undef RESTYPES !!!
+            #print(' CWD: ', os.getcwd())
+            if not os.path.exists( outdir + 'tmp/'):
+                os.mkdir( outdir + "tmp/")
+            filt = outdir + "tmp/" + pdb_file[:-4] + "_filtered.pdb"
+            rose = filt[:-4] + '.out'
+            cmd =  app.config['APP_PATH'] + "pdb_filter.py " + outdir + pdb_file + ' ' + filt
+            print( cmd )
+            os.system( cmd )
+            # calc energies (rosetta)
+            cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + filt + " -out:file:silent " + rose
+            print( cmd )
+            os.system(cmd)
+            # write energies to pdb
+            cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file[:-4] + "_wt.pdb"
+            print( cmd)
+            os.system(cmd)
+
+            
             
         #### MUTATION SECTION
         if form.mutations.data != "":
@@ -501,13 +522,23 @@ def mutant():
                 session['nr'] = 1
             form.mutations.data = ''
 
-        choices = [ ('A' , 'WT::energy') ]
-        for i in range( int(session['nr'] )):
-            choices.append( ( chr(66+2*i) , 'MutX:' + str(i+1) + '::energy ') )
-            choices.append( ( chr(66+(2*i+1)) , 'MutX:' + str(i+1) + '::diff2WT') )
+        #current = pdb_file[:-4] + "_wt.pdb"
 
+        current =  form.display.data + ".pdb"
+
+        print( 'current pdb to display:' , current)
+        
+
+        # collect choices for next update
+        choices = [ ]
+        c = 0
+        for f in os.listdir( outdir ):
+            if f[-4:] == ".pdb":
+                choices.append(( f[:-4], f[:-4]) )
+                c+=1
         form.display.choices = choices
 
+        
         if pdb_file == '':
             pdb_file = session['wt'] + '.pdb'
         if sessionid != '':
@@ -516,9 +547,9 @@ def mutant():
             sessionid = session['sessionid']
         print( 'out', outdir, sessionid, pdb_file)
         print( 'session', session)
-        return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=pdb_file, history=session['history']) 
+        return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, history=session['history']) 
 
-
+    # GET
     form.display.choices = [('A','Tom'),('B','still waits...')]
     print( 'request', request )
     return render_template('mutations.html', form=form)
