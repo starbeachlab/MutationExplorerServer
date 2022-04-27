@@ -401,11 +401,11 @@ def superx():
 
 class MutExForm( FlaskForm):
     pdb = FileField( 'Upload PDB from your machine' )
-    idstr = StringField( 'OR download from server by identifier:' )
+    idstr = StringField( 'OR download from server by identifier:' , render_kw={'placeholder':'PDB or alpha Fold ID'})
     source = SelectField( 'Select server:', choices=[('A', 'RCSB (PDB)'), ('B','OPM - membrane proteins'), ('C', 'alpha Fold')], default='A')
     opensession = StringField( 'OR open session by ID')
-    mutations = StringField( 'Define mutations for WT:' )
-    display = SelectField( 'Display PDB colored by energy', default='A')
+    mutations = StringField( 'Define mutations for W:T', default='optimal usage...' )
+    display = SelectField( 'Display PDB colored by energy')
     download = SelectField( 'Download files from this session', choices=[('A','(none)'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] )
     submit = SubmitField( 'Update')
 
@@ -443,7 +443,7 @@ def mutant():
             #    outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
             #os.mkdir(outdir)
             session['nr'] = 0
-            if 'history' in session:
+            if 'history' in session and not sessionid in session.get( 'history'):
                 session['history'] = session.get('history') + ' ' + sessionid
             else:
                 session['history'] = sessionid
@@ -464,7 +464,6 @@ def mutant():
             pdb_file = idstr + ".pdb"
             with open( outdir +  pdb_file , 'w') as f:
                 f.write( req.content )
-                
             form.idstr.data = ''
         elif form.opensession.data != "":  # open previous session
             sessionid = form.opensession.data
@@ -481,7 +480,6 @@ def mutant():
                         maxi = max( maxi, kid)
             session['nr'] = maxi
             form.opensession.data = ''
-
         # if file was uploaded (new sesssion), filter pdb and write energies into PDBID_wt.pdb
         if pdb_file != "" or idstr != "":
             # filter (ONLY HETATMs at the moment!!!!) TODO: undef RESTYPES !!!
@@ -490,37 +488,76 @@ def mutant():
                 os.mkdir( outdir + "tmp/")
             filt = outdir + "tmp/" + pdb_file[:-4] + "_filtered.pdb"
             rose = filt[:-4] + '.out'
-            cmd =  app.config['APP_PATH'] + "pdb_filter.py " + outdir + pdb_file + ' ' + filt
-            print( cmd )
-            os.system( cmd )
+            if not os.path.exists( filt ):
+                cmd =  app.config['APP_PATH'] + "pdb_filter.py " + outdir + pdb_file + ' ' + filt
+                print( cmd )
+                os.system( cmd )
             # calc energies (rosetta)
-            cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + filt + " -out:file:silent " + rose
-            print( cmd )
-            os.system(cmd)
+            if not os.path.exists( rose ):
+                cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + filt + " -out:file:silent " + rose
+                print( cmd )
+                os.system(cmd)
             # write energies to pdb
-            cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file[:-4] + "_wt.pdb"
-            print( cmd)
-            os.system(cmd)
+            if not os.path.exists( outdir + pdb_file[:-4] + "_wt.pdb" ):
+                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file[:-4] + "_wt.pdb"
+                print( cmd)
+                os.system(cmd)
 
             
+        if pdb_file == '':
+            pdb_file = session.get('wt') + '.pdb'
             
         #### MUTATION SECTION
         if form.mutations.data != "":
+            nr = session.get('nr')
+            nr += 1
+            session['nr'] = nr
             print( form.mutations.data)
             muts = form.mutations.data.split(',')
-            for m in muts:
-                c = m.split(':')
-                res1 = c[0]
-                res2 = c[2]
-                x = c[1].split('-')
-                chain = x[0]
-                resid = x[1]
-                print( 'mutate ' + res1 + ' ' + chain + ' ' + resid + ' to ' + res2 )
-            if 'nr' in session:
-                session['nr'] = session.get('nr') + 1
+            with open( outdir + 'tmp/resfile.txt', 'w' ) as w:
+                w.write( 'start\n')
+                for m in muts:
+                    c = m.split(':')
+                    res1 = c[-1][0]
+                    res2 = c[-1][-1]
+                    chain = ''
+                    if len(c) > 1:
+                        chain = c[0]                    
+                    resid = c[-1][1:-2]
+                    print( 'mutate ' + res1 + ' ' + chain + ' ' + resid + ' to ' + res2 )
+                    #print( resid, chain, 'PIKAA', res2, file=w)
+                    w.write( resid + ' ' + chain + ' PIKAA ' + res2 + '\n')
+                    
+            # call rosetta design / mutate 
+            if "_wt.pdb" not in pdb_file:
+                wt = outdir + pdb_file[:-4] + "_wt.pdb"
             else:
-                session['nr'] = 1
+                wt = outdir + pdb_file
+            rose = outdir + "tmp/" + pdb_file[:-4] + '_m' + str(nr) 
+            cmd = app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + wt + " -resfile " + outdir + "tmp/resfile.txt -nstruct 1 -ex1 -ex2 -out:pdb  -out:prefix " + rose + ' >& ' + outdir + 'tmp/log.txt'
+            print( cmd )
+            #os.system(cmd)
+
+            # find mutant
+            mutant = ''
+            for f in os.listdir( outdir + 'tmp/'):
+                if pdb_file[:-4] + '_m' + str(nr) in f and '.pdb' in f:
+                    mutant = f
+
+            # per residue energy
+            if mutant != '':
+                rose = outdir + "tmp/" + pdb_file[:-4] + '_m' + str(nr) + '.out'
+                cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + mutant + " -out:file:silent " + rose
+                print( cmd  )
+                os.system(cmd)
+
+                # write energies into bfactor of pdb
+                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + wt + " " + rose + " "  + outdir + pdb_file[:-4] + "_m" + str(nr) + ".pdb"
+                print( cmd)
+                os.system(cmd)
             form.mutations.data = ''
+
+            
 
         #current = pdb_file[:-4] + "_wt.pdb"
 
@@ -537,20 +574,25 @@ def mutant():
                 choices.append(( f[:-4], f[:-4]) )
                 c+=1
         form.display.choices = choices
+        # display latest mutation by default
+        if session.get( 'nr') > 0:
+            default = pdb_file[:-4] + '_m' + str( session.get('nr') ) + '.pdb'
+        else:
+            default = pdb_file[:-4] + '_wt.pdb'
+        form.display.default = default
 
-        
-        if pdb_file == '':
-            pdb_file = session['wt'] + '.pdb'
+        ### HERE???
         if sessionid != '':
             session['sessionid'] = sessionid
         else:
-            sessionid = session['sessionid']
+            sessionid = session.get('sessionid')
         print( 'out', outdir, sessionid, pdb_file)
         print( 'session', session)
         return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, history=session['history']) 
 
     # GET
-    form.display.choices = [('A','Tom'),('B','still waits...')]
+    form.display.choices = [('A','Nothing to display'),('B','still waiting...')]
+    #session.clear()
     print( 'request', request )
     return render_template('mutations.html', form=form)
 
