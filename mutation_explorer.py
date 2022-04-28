@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, send_from_directory, jsonify, session
+from flask import Flask, render_template, request, url_for, send_from_directory, jsonify, session,redirect
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField, FileField, RadioField, HiddenField
 from flask_bootstrap import Bootstrap
@@ -404,9 +404,9 @@ class MutExForm( FlaskForm):
     idstr = StringField( 'OR download from server by identifier:' , render_kw={'placeholder':'PDB or alpha Fold ID'})
     source = SelectField( 'Select server:', choices=[('A', 'RCSB (PDB)'), ('B','OPM - membrane proteins'), ('C', 'alpha Fold')], default='A')
     opensession = StringField( 'OR open session by ID')
-    mutations = StringField( 'Define mutations for W:T', default='optimal usage...' )
+    mutations = StringField( 'Define mutations for W:T')
     display = SelectField( 'Display PDB colored by energy')
-    download = SelectField( 'Download files from this session', choices=[('A','(none)'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] )
+    download = SelectField( 'Download files from this session', choices=[('A','(none)'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] , default='A')
     submit = SubmitField( 'Update')
 
 
@@ -470,18 +470,20 @@ def mutant():
             session['sessionid'] = sessionid
             outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
             maxi = -1
-            for f in os.listdir( outdir ):
-                if f[-4:] == ".pdb":
-                    if "mutX" not in f:
-                        session['wt'] = f[:-4]
-                        pdb_file = f
-                    else:
-                        kid = int( f[ f.index('mutX') + 3 : -4])
-                        maxi = max( maxi, kid)
+            if os.path.exists( outdir):
+                # add message if ID was not found
+                for f in os.listdir( outdir ):
+                    if f[-4:] == ".pdb":
+                        if 'mutX' in f:
+                            kid = int( f[ f.index('mutX') + 3 : -4])
+                            maxi = max( maxi, kid)
+                        elif 'wt' not in f:
+                            session['wt'] = f[:-4]
+                            pdb_file = f
             session['nr'] = maxi
             form.opensession.data = ''
         # if file was uploaded (new sesssion), filter pdb and write energies into PDBID_wt.pdb
-        if pdb_file != "" or idstr != "":
+        if form.pdb.data != "" or form.idstr.data != "":
             # filter (ONLY HETATMs at the moment!!!!) TODO: undef RESTYPES !!!
             #print(' CWD: ', os.getcwd())
             if not os.path.exists( outdir + 'tmp/'):
@@ -556,22 +558,19 @@ def mutant():
                 print( cmd)
                 os.system(cmd)
             form.mutations.data = ''
+            ### END of mutation block ###
 
             
-
-        #current = pdb_file[:-4] + "_wt.pdb"
-
-        current =  form.display.data + ".pdb"
-
-        print( 'current pdb to display:' , current)
-        
+            
 
         # collect choices for next update
         choices = [ ]
+        file_names = []
         c = 0
         for f in os.listdir( outdir ):
             if f[-4:] == ".pdb":
                 choices.append(( f[:-4], f[:-4]) )
+                file_names.append( f)
                 c+=1
         form.display.choices = choices
         # display latest mutation by default
@@ -581,11 +580,44 @@ def mutant():
             default = pdb_file[:-4] + '_wt.pdb'
         form.display.default = default
 
+        #current = pdb_file[:-4] + "_wt.pdb"
+
+        current =  form.display.data + ".pdb"
+
+        print( 'current pdb to display:' , current)
+
+
+        ### DOWNLOAD SECTION ###
+        if form.download.data != 'A':
+            print('Download Section')
+            if form.download.data == 'B':
+                out_name = pdb_file[:-4] + '.zip'
+                cmd = "cd " + outdir + "; zip " + out_name
+                for y in file_names:
+                    cmd += ' ' + y
+                print(cmd)
+                os.system(cmd)
+                return get( sessionid , out_name )
+            elif form.download.data == 'C':
+                out_name = pdb_file[:-4] + '.tgz'
+                cmd = "cd " + outdir + "; tar -czPf " + out_name
+                for y in file_names:
+                    cmd += ' ' + y
+                print(cmd)
+                os.system(cmd)
+                return redirect( url_for( 'get', mydir=sessionid , pdb=out_name ))
+        
+        
+
+        
+
         ### HERE???
         if sessionid != '':
             session['sessionid'] = sessionid
         else:
             sessionid = session.get('sessionid')
+        if 'history' not in session:
+            session['history'] = sessionid
         print( 'out', outdir, sessionid, pdb_file)
         print( 'session', session)
         return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, history=session['history']) 
