@@ -407,7 +407,7 @@ class MutExForm( FlaskForm):
     mutations = StringField( 'Define mutations for W:T')
     display = SelectField( 'Display PDB colored by energy')
     download = SelectField( 'Download files from this session', choices=[('A','(none)'), ('B', 'ZIP'),('C', 'TAR GZIPPED')] , default='A')
-    submit = SubmitField( 'Update')
+    submit = SubmitField( 'Go')
 
 
     
@@ -415,7 +415,7 @@ class MutExForm( FlaskForm):
 session / sammlung von cookies / damit folgeseiten auf fruehere werte zugreifen
 - sessionid
 - history 
-- wt
+- protein
 - nr
 """
 
@@ -427,19 +427,21 @@ def mutant():
     if request.method == 'POST':
         #if form.validate_on_submit():
         if 'sessionid' in session:
+            print( 'sessionid', session.get('sessionid'))
             sessionid = session.get( 'sessionid')
             outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
-
+            tmpdir = outdir + 'tmp/'
+            
         ##### pdb upload #####
-        pdb = form.pdb.data
-        pdb_file = secure_filename( pdb.filename)  # local file upload
+        pdb_file = secure_filename( form.pdb.data.filename)  # local file upload
         idstr = form.idstr.data   # upload via RCSB or OPM or alpha Fold
         if pdb_file != "" or idstr != "":  # if new session, create session id and directory, add to history
-            sessionid = str( random.randint(0, 999999))
+            sessionid = str( random.randint(0, 9999999))
             sessionid = "66827"
             outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
+            tmpdir = outdir + 'tmp/'
             #while os.path.exists(outdir):
-            #    sessionid = str(random.randint(0, 999999))
+            #    sessionid = str(random.randint(0, 9999999))
             #    outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
             #os.mkdir(outdir)
             session['nr'] = 0
@@ -448,50 +450,60 @@ def mutant():
             else:
                 session['history'] = sessionid
         if pdb_file != "":   # upload local pdb file
-            pdb.save( os.path.join( outdir, pdb_file))
-            session['wt'] = pdb_file[:-4]
+            print( 'upload local file', pdb_file)
+            pdb.save( os.path.join( tmpdir , pdb_file))
+            session['protein'] = pdb_file[:-4]
             form.pdb.data = ''
         elif idstr != "":   # upload via server
-            session['wt'] = idstr
+            print( 'upload from server:', idstr)
+            if idstr[:-4] == ".pdb":
+                idstr = idstr[:-4]
+            session['protein'] = idstr
+            idstr += ".pdb"
             if form.source.data == 'A':
-                url = "https://files.rcsb.org/download/" + idstr + ".pdb"
+                url = "https://files.rcsb.org/download/" + idstr
             elif form.source.data == 'B':
-                url = "https://opm-assets.storage.googleapis.com/pdb/" + idstr + ".pdb"
+                url = "https://opm-assets.storage.googleapis.com/pdb/" + idstr
             elif form.source.data == 'C':
-                url = "https://alphafold.ebi.ac.uk/files/" + idstr + ".pdb"
+                url = "https://alphafold.ebi.ac.uk/files/" + idstr 
             print( url)
             req = requests.get( url )
-            pdb_file = idstr + ".pdb"
-            with open( outdir +  pdb_file , 'w') as f:
+            with open( os.path.join( tmpdir, idstr) , 'w') as f:
                 f.write( req.content )
             form.idstr.data = ''
         elif form.opensession.data != "":  # open previous session
+            print( 'open previous:', form.opensession.data)
             sessionid = form.opensession.data
             session['sessionid'] = sessionid
             outdir = app.config['USER_DATA_DIR'] + sessionid + '/'
-            maxi = -1
+            tmpdir = outdir + 'tmp'
+            maxi = 0
             if os.path.exists( outdir):
                 # add message if ID was not found
                 for f in os.listdir( outdir ):
-                    if f[-4:] == ".pdb":
-                        if 'mutX' in f:
-                            kid = int( f[ f.index('mutX') + 3 : -4])
-                            maxi = max( maxi, kid)
-                        elif 'wt' not in f:
-                            session['wt'] = f[:-4]
-                            pdb_file = f
+                    if '_m' in f:
+                        print( 'mut: ', f, f.index('_m'))
+                        kid = int( f[ f.index('_m') + 2 : -4])
+                        maxi = max( maxi, kid)
+                    elif '_wt' in f:
+                        print( 'wt:', f)
+                        session['protein'] = f[:-7]
             session['nr'] = maxi
             form.opensession.data = ''
+            print ( 'found', session.get( 'nr'), 'mutations of ', session.get('protein'))
+            
         # if file was uploaded (new sesssion), filter pdb and write energies into PDBID_wt.pdb
-        if form.pdb.data != "" or form.idstr.data != "":
+        if form.pdb.data.filename != "" or form.idstr.data != "":
             # filter (ONLY HETATMs at the moment!!!!) TODO: undef RESTYPES !!!
             #print(' CWD: ', os.getcwd())
-            if not os.path.exists( outdir + 'tmp/'):
-                os.mkdir( outdir + "tmp/")
-            filt = outdir + "tmp/" + pdb_file[:-4] + "_filtered.pdb"
+            print( 'form:',  form.pdb.data.filename ,  form.idstr.data)
+            pdb_file = session.get( 'protein')
+            if not os.path.exists( tmpdir ):
+                os.mkdir( tmpdir )
+            filt = tmpdir + pdb_file + "_filtered.pdb"
             rose = filt[:-4] + '.out'
             if not os.path.exists( filt ):
-                cmd =  app.config['APP_PATH'] + "pdb_filter.py " + outdir + pdb_file + ' ' + filt
+                cmd =  app.config['APP_PATH'] + "pdb_filter.py " + tmpdir + pdb_file + '.pdb ' + filt
                 print( cmd )
                 os.system( cmd )
             # calc energies (rosetta)
@@ -500,23 +512,24 @@ def mutant():
                 print( cmd )
                 os.system(cmd)
             # write energies to pdb
-            if not os.path.exists( outdir + pdb_file[:-4] + "_wt.pdb" ):
-                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file[:-4] + "_wt.pdb"
+            if not os.path.exists( tmpdir + pdb_file + "_wt.pdb" ):
+                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file + "_wt.pdb"
                 print( cmd)
                 os.system(cmd)
 
             
-        if pdb_file == '':
-            pdb_file = session.get('wt') + '.pdb'
-            
+
         #### MUTATION SECTION
         if form.mutations.data != "":
             nr = session.get('nr')
             nr += 1
             session['nr'] = nr
-            print( form.mutations.data)
+            mstr = 'm' + str(nr)
+            print( 'mutations:', form.mutations.data)
             muts = form.mutations.data.split(',')
-            with open( outdir + 'tmp/resfile.txt', 'w' ) as w:
+            prev_chains = []
+            with open( tmpdir + 'resfile' + str(nr) + '.txt', 'w' ) as w:
+                w.write( 'NATRO\n' )
                 w.write( 'start\n')
                 for m in muts:
                     c = m.split(':')
@@ -524,74 +537,85 @@ def mutant():
                     res2 = c[-1][-1]
                     chain = ''
                     if len(c) > 1:
-                        chain = c[0]                    
-                    resid = c[-1][1:-2]
+                        chain = c[0]
+                    if chain not in prev_chains:
+                        w.write( '* ' + chain + ' NATAA \n' )
+                        prev_chains.append( chain )
+                        
+                    resid = c[-1][1:-1]
                     print( 'mutate ' + res1 + ' ' + chain + ' ' + resid + ' to ' + res2 )
                     #print( resid, chain, 'PIKAA', res2, file=w)
                     w.write( resid + ' ' + chain + ' PIKAA ' + res2 + '\n')
                     
-            # call rosetta design / mutate 
-            if "_wt.pdb" not in pdb_file:
-                wt = outdir + pdb_file[:-4] + "_wt.pdb"
-            else:
-                wt = outdir + pdb_file
-            rose = outdir + "tmp/" + pdb_file[:-4] + '_m' + str(nr) 
-            cmd = app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + wt + " -resfile " + outdir + "tmp/resfile.txt -nstruct 1 -ex1 -ex2 -out:pdb  -out:prefix " + rose + ' >& ' + outdir + 'tmp/log.txt'
+            # call rosetta design / mutate
+            protein = session.get('protein')
+            wt = outdir + protein + "_wt.pdb"
+            cmd = app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + wt + " -resfile " + tmpdir + 'resfile' + str(nr) + '.txt -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + tmpdir + mstr + '_  >& ' + outdir + 'tmp/log.txt'
             print( cmd )
-            #os.system(cmd)
+            os.system(cmd)
 
             # find mutant
             mutant = ''
-            for f in os.listdir( outdir + 'tmp/'):
-                if pdb_file[:-4] + '_m' + str(nr) in f and '.pdb' in f:
+            for f in os.listdir( tmpdir ):
+                if mstr + '_' in f and '_0001.pdb' in f:
                     mutant = f
 
             # per residue energy
             if mutant != '':
-                rose = outdir + "tmp/" + pdb_file[:-4] + '_m' + str(nr) + '.out'
-                cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + mutant + " -out:file:silent " + rose
+                rose = tmpdir  + protein + '_' + mstr + '.out'
+                cmd = app.config['ROSETTA_PATH'] + "per_residue_energies.static.linuxgccrelease -in:file:s " + tmpdir + mutant + " -out:file:silent " + rose
                 print( cmd  )
                 os.system(cmd)
 
                 # write energies into bfactor of pdb
-                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + wt + " " + rose + " "  + outdir + pdb_file[:-4] + "_m" + str(nr) + ".pdb"
+                cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + tmpdir + mutant + " " + rose + " "  + outdir + protein + '_' + mstr + ".pdb"
                 print( cmd)
                 os.system(cmd)
-            form.mutations.data = ''
+                form.mutations.data = ''
             ### END of mutation block ###
 
             
             
-
-        # collect choices for next update
-        choices = [ ]
+        ###  DISPLAY SECTION  #####
+        choices = []
         file_names = []
+        protein = session.get('protein')
         c = 0
         for f in os.listdir( outdir ):
             if f[-4:] == ".pdb":
                 choices.append(( f[:-4], f[:-4]) )
                 file_names.append( f)
                 c+=1
+        current_choice = form.display.data
+        current = ''
         form.display.choices = choices
-        # display latest mutation by default
-        if session.get( 'nr') > 0:
-            default = pdb_file[:-4] + '_m' + str( session.get('nr') ) + '.pdb'
+        if current_choice != '' and current_choice != 'A':
+            current = current_choice + '.pdb'
         else:
-            default = pdb_file[:-4] + '_wt.pdb'
-        form.display.default = default
+            # display latest mutation by default
+            default = ''
+            if session.get( 'nr') > 0:
+                default = protein + '_m' + str( session.get('nr') ) 
+            else:
+                default = protein + '_wt'
+                form.display.default = default
+                print( 'form.display.default' ,  form.display.default , default )
 
-        #current = pdb_file[:-4] + "_wt.pdb"
-
-        current =  form.display.data + ".pdb"
+                #current = pdb_file[:-4] + "_wt.pdb"
+                current = ''
+                if default != '':
+                    current =  default + ".pdb"
 
         print( 'current pdb to display:' , current)
 
 
         ### DOWNLOAD SECTION ###
         if form.download.data != 'A':
+            protein = session.get( 'protein')
+            ### create thread / def to avoid issue with return statement at the end ??
             print('Download Section')
             if form.download.data == 'B':
-                out_name = pdb_file[:-4] + '.zip'
+                out_name = protein + '.zip'
                 cmd = "cd " + outdir + "; zip " + out_name
                 for y in file_names:
                     cmd += ' ' + y
@@ -599,16 +623,16 @@ def mutant():
                 os.system(cmd)
                 return get( sessionid , out_name )
             elif form.download.data == 'C':
-                out_name = pdb_file[:-4] + '.tgz'
+                out_name = protein + '.tgz'
                 cmd = "cd " + outdir + "; tar -czPf " + out_name
                 for y in file_names:
                     cmd += ' ' + y
                 print(cmd)
                 os.system(cmd)
                 return redirect( url_for( 'get', mydir=sessionid , pdb=out_name ))
-        
-        
 
+            
+        form.download.data = 'A'
         
 
         ### HERE???
@@ -618,13 +642,13 @@ def mutant():
             sessionid = session.get('sessionid')
         if 'history' not in session:
             session['history'] = sessionid
-        print( 'out', outdir, sessionid, pdb_file)
+        print( 'rebuild', outdir, sessionid, pdb_file)
         print( 'session', session)
         return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, history=session['history']) 
 
     # GET
-    form.display.choices = [('A','Nothing to display'),('B','still waiting...')]
-    #session.clear()
+    form.display.choices = [('A','Nothing to display')]
+    session.clear()
     print( 'request', request )
     return render_template('mutations.html', form=form)
 

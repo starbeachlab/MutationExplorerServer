@@ -13,7 +13,7 @@ scores = []
 with open( in_score_file ) as r:
     r.readline()
     for l in r:
-        if l.find('onebody') > -1:
+        if "description" not in l:
             c = l.split()
             scores.append(  float( c[-2] ))
         

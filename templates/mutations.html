@@ -29,7 +29,7 @@
       <br>
       <br>
  
-      <h3 title="Example: 'A:S12T' replaces Ser at resid 12 in chain A with Thr, if there is no chain information in your PDB file use '_:S12T'"> {{form.mutations.label}} <img src="static/img/info.png"> </h3>
+      <h3 title="Example: 'A:S12T' replaces Ser at residue ID 12 in chain A with Thr. The residue ID is used as given in the PDB file. If there is no chain information in your PDB file use '_:S12T'."> {{form.mutations.label}} <img src="static/img/info.png"> </h3>
       {{form.mutations}}
       
       <h4> {{form.display.label}} </h4>
@@ -40,6 +40,7 @@
 
       <br><br>
 
+      <h3 title="Generally, updating the website should not require more than 1 minute. However, if you apply many mutations in many chains this may take longer."> Send your request to server <img src="static/img/info.png"> </h3>
       {{form.submit}}
 	  
     </form>
