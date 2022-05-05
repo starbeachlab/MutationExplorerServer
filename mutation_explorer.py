@@ -4,6 +4,7 @@ from wtforms import StringField, SubmitField, SelectField, FileField, RadioField
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
+from collections import defaultdict
 
 import os, datetime, random, string
 import requests, subprocess, sys
@@ -417,6 +418,7 @@ session / sammlung von cookies / damit folgeseiten auf fruehere werte zugreifen
 - history 
 - protein
 - nr
+- chain_resid
 """
 
 
@@ -425,6 +427,7 @@ def mutant():
     form = MutExForm()
     print('mutex')
     if request.method == 'POST':
+        msg = ''
         #if form.validate_on_submit():
         if 'sessionid' in session:
             print( 'sessionid', session.get('sessionid'))
@@ -444,16 +447,18 @@ def mutant():
             #    sessionid = str(random.randint(0, 9999999))
             #    outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
             #os.mkdir(outdir)
+            if not os.path.exists(tmpdir):
+                os.mkdir(tmpdir)
             session['nr'] = 0
             if 'history' in session and not sessionid in session.get( 'history'):
                 session['history'] = session.get('history') + ' ' + sessionid
             else:
                 session['history'] = sessionid
+                
         if pdb_file != "":   # upload local pdb file
             print( 'upload local file', pdb_file)
             pdb.save( os.path.join( tmpdir , pdb_file))
             session['protein'] = pdb_file[:-4]
-            form.pdb.data = ''
         elif idstr != "":   # upload via server
             print( 'upload from server:', idstr)
             if idstr[:-4] == ".pdb":
@@ -470,8 +475,7 @@ def mutant():
             req = requests.get( url )
             with open( os.path.join( tmpdir, idstr) , 'w') as f:
                 f.write( req.content )
-            form.idstr.data = ''
-        elif form.opensession.data != "":  # open previous session
+        elif form.opensession.data != "":  ### open previous session
             print( 'open previous:', form.opensession.data)
             sessionid = form.opensession.data
             session['sessionid'] = sessionid
@@ -491,6 +495,7 @@ def mutant():
             session['nr'] = maxi
             form.opensession.data = ''
             print ( 'found', session.get( 'nr'), 'mutations of ', session.get('protein'))
+
             
         # if file was uploaded (new sesssion), filter pdb and write energies into PDBID_wt.pdb
         if form.pdb.data.filename != "" or form.idstr.data != "":
@@ -516,11 +521,16 @@ def mutant():
                 cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + filt + " " + rose + " "  + outdir + pdb_file + "_wt.pdb"
                 print( cmd)
                 os.system(cmd)
+            form.idstr.data = ''
+            form.pdb.data = ''
 
             
 
         #### MUTATION SECTION
+        repos = ''
         if form.mutations.data != "":
+            repos = 'comp.addRepresentation( "licorice", {sele: "'
+            aa_chains = defaultdict( list )
             nr = session.get('nr')
             nr += 1
             session['nr'] = nr
@@ -546,7 +556,17 @@ def mutant():
                     print( 'mutate ' + res1 + ' ' + chain + ' ' + resid + ' to ' + res2 )
                     #print( resid, chain, 'PIKAA', res2, file=w)
                     w.write( resid + ' ' + chain + ' PIKAA ' + res2 + '\n')
-                    
+                    aa_chains[chain].append( resid )
+            for k,v in aa_chains.items():
+                repos += '(:' + k + ' and (' 
+                for x in v:
+                    repos += x + ' '
+                repos += ')) '
+            repos += '" } );'
+
+            session[mstr] = repos
+                
+            print( 'representation:', repos.encode( "ascii", "ignore"))
             # call rosetta design / mutate
             protein = session.get('protein')
             wt = outdir + protein + "_wt.pdb"
@@ -571,8 +591,17 @@ def mutant():
                 cmd =  app.config['APP_PATH'] + "pdb_write_rosetta_energies.py " + tmpdir + mutant + " " + rose + " "  + outdir + protein + '_' + mstr + ".pdb"
                 print( cmd)
                 os.system(cmd)
+
+                #write energy differences into pdb
+                score_file =  tmpdir + protein + "_filtered.out"
+                cmd =  app.config['APP_PATH'] + "pdb_diff_rosetta_energies.py " + score_file + " " + rose + " "  + outdir + protein + '_' + mstr + ".pdb" + " "  + outdir + protein + '_d' + str(nr) + ".pdb"
+                print( cmd)
+                os.system(cmd)
                 form.mutations.data = ''
+
+                
             ### END of mutation block ###
+            msg = mstr + ' done'
 
             
             
@@ -603,14 +632,30 @@ def mutant():
 
                 #current = pdb_file[:-4] + "_wt.pdb"
                 current = ''
-                if default != '':
-                    current =  default + ".pdb"
+            if default != '':
+                current =  default + ".pdb"
 
         print( 'current pdb to display:' , current)
+        mini = ''
+        maxi = ''
+        with open( outdir + current) as r:
+            for l in r:
+                if "RANGE:" in l:
+                    c = l.split()
+                    if len(c) > 2:
+                        mini = c[1]
+                        maxi = c[2]
 
 
         ### DOWNLOAD SECTION ###
         if form.download.data != 'A':
+            # perform download in child process while parent rebuilds page
+            #n = os.fork()
+            #if n > 0:
+            #    print( 'parent')
+            #else:
+            #    print( 'child')
+                
             protein = session.get( 'protein')
             ### create thread / def to avoid issue with return statement at the end ??
             print('Download Section')
@@ -630,7 +675,7 @@ def mutant():
                 print(cmd)
                 os.system(cmd)
                 return redirect( url_for( 'get', mydir=sessionid , pdb=out_name ))
-
+    
             
         form.download.data = 'A'
         
@@ -644,7 +689,20 @@ def mutant():
             session['history'] = sessionid
         print( 'rebuild', outdir, sessionid, pdb_file)
         print( 'session', session)
-        return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, history=session['history']) 
+
+        #representation = ' '
+        #if '_m' in current:
+        #    kid = current[ current.index( '_m' ) + 1: -4]
+        #    if session.get(kid) != '':
+        #        representation = session.get( kid )
+        #elif '_d' in current:
+        #    kid = 'm' + current[ current.index( '_d' ) + 2: -4]
+        #    if session.get( kid ) != '':
+        #        representation = session.get(kid)
+        #    
+        #print( 'representation', representation)
+        
+        return render_template( 'mutations.html', form=form, mydir=sessionid, pdb=current, mini=mini, maxi=maxi , msg=msg, history=session['history']) 
 
     # GET
     form.display.choices = [('A','Nothing to display')]

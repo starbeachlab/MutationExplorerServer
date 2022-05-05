@@ -45,6 +45,10 @@
 	  
     </form>
     <br>
+    <div id="msg" style="color:green;"><b>{{msg}}</b></div>
+    <br>
+    <div id="range"> Energy range: {{mini}} ... {{maxi}}  </div>
+    <p> Note that positive values are chopped above the absolute of the minimum!</p>
     <br>
     
     <div id="session_id">Current session ID: {{mydir}}</div>
@@ -68,7 +72,7 @@
     document.addEventListener( "DOMContentLoaded",  function() {
 
         stage = new NGL.Stage("viewport");
-        stage.setParameters( { backgroundColor: "green" } );
+        stage.setParameters( { backgroundColor: "grey" } );
         var loc = window.location;
         var file = loc.protocol + "//" + loc.host + "{{url_for('get', mydir=mydir, pdb=pdb)}}";
         console.log( file );
@@ -79,6 +83,7 @@
             comp.setName( "structure");
             //comp.setSelection( "");
             comp.addRepresentation( "cartoon", {color: "bfactor" , colorReverse: true} );
+            {{repos}}
             comp.autoView();
         });
     

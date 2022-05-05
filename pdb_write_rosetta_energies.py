@@ -17,7 +17,17 @@ with open( in_score_file ) as r:
             c = l.split()
             scores.append(  float( c[-2] ))
         
+mini = min( scores)
+maxi = max( scores)
+print( 'min:', mini, 'max:', maxi)
 
+maxi = abs( mini)
+
+for i in range( len( scores ) ):
+    scores[i] = min( maxi, scores[i] )
+
+
+            
 # PDB FILES in/out
 counter = 0
 resid = -999
@@ -36,7 +46,7 @@ with open( out_pdb_file, 'w') as w:
                 counter += 1
             score = scores[counter]
             w.write( l[:60] + ( "%6.2f" % score) + l[66:] )
-
+    print( 'RANGE:', mini , maxi, file=w )
                 
                 
     
