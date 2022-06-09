@@ -440,13 +440,14 @@ def mutant():
         idstr = form.idstr.data   # upload via RCSB or OPM or alpha Fold
         if pdb_file != "" or idstr != "":  # if new session, create session id and directory, add to history
             sessionid = str( random.randint(0, 9999999))
-            sessionid = "66827"
+            # sessionid = "66827"       ### TEST MODE
             outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
             tmpdir = outdir + 'tmp/'
-            #while os.path.exists(outdir):
-            #    sessionid = str(random.randint(0, 9999999))
-            #    outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
-            #os.mkdir(outdir)
+            ### comment out following loop when in test mode !!
+            while os.path.exists(outdir):
+                sessionid = str(random.randint(0, 9999999))
+                outdir = app.config['USER_DATA_DIR'] + sessionid + "/"
+            os.mkdir(outdir) ### until here
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
             session['nr'] = 0
