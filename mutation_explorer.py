@@ -667,7 +667,7 @@ def mutant():
                     cmd += ' ' + y
                 print(cmd)
                 os.system(cmd)
-                return get( sessionid , out_name )
+                get( sessionid , out_name )
             elif form.download.data == 'C':
                 out_name = protein + '.tgz'
                 cmd = "cd " + outdir + "; tar -czPf " + out_name
@@ -675,7 +675,7 @@ def mutant():
                     cmd += ' ' + y
                 print(cmd)
                 os.system(cmd)
-                return redirect( url_for( 'get', mydir=sessionid , pdb=out_name ))
+                redirect( url_for( 'get', mydir=sessionid , pdb=out_name ))
     
             
         form.download.data = 'A'
