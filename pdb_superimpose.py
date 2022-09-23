@@ -124,10 +124,12 @@ elif mode == "chain:":
 elif mode == "alignment:":
 
     alignment = bali.ReadAlignment( alignment_file )[1]
+    print(len(alignment[0]),len(alignment[1]))
 
     for chain in first_structure:
         if chain.get_id() == first_chain:
             residues = list(chain)
+            print(len(residues))
             count = 0
             for i in range( 0, len( alignment[0] )):
                 if alignment[0][i] != '-':
@@ -143,10 +145,15 @@ elif mode == "alignment:":
     for	chain in second_structure:
         if chain.get_id() == second_chain:
             residues = list(chain)
+            print(len(residues))
             count = 0
             for i in range( 0, len( alignment[1] )):
                 if alignment[1][i] != '-':
                     if alignment[0][i] != '-':
+                        if count >= len(residues):
+                            print( "ERROR: alignment longer than second chain: ", len(alignment[1]), len(residues), 'first residues: ', alignment[1][:10], residues[:3])
+                        if 'CA' not in residues[count]:
+                            print( 'CA not found in residue:', residues[count])
                         second_atoms.append( residues[count]['CA'] )
                     count += 1
                     

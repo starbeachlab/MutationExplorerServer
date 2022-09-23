@@ -22,7 +22,7 @@ bootstrap = Bootstrap( app )
 
 @app.route('/' , methods=['GET','POST'] )
 def index():
-    render_template( 'home.html')
+    return render_template( 'home.html')
 
 
 @app.route('/submit', methods=['GET', 'POST'])
