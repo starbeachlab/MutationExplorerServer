@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<center>
+<h1>Status {{tag}}</h1>
+</center>
+
+<p>
+    The submitted structure is currently being mutated and new energy values are being calculated.
+    This may take a few minutes, depending on the size of the protein.
+    <br>
+    You will be automatically redirected when the calculation is done.
+    <br>
+    <br>
+    You can access the results from this link: <br>
+    <a href="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/status/{{tag}}/{{file}}">https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/status/{{tag}}/{{file}}</a>
+</p>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+    $().ready(function() {
+        update_progress()
+    })
+
+
+    function errorMessage(m) {
+        //$("#wait-text").css("display", "none");
+        //$("#error-text").text(m);
+        console.log(m)
+    }
+
+
+    function update_progress() {
+        console.log("check");
+        $.getJSON("{{url_for('get_status', tag = tag, file = file)}}", function(data) {
+            if(data['done'] == true) {
+                if(data['status'] == 'done') {
+                    window.location.href = "{{url_for('explore', tag = tag)}}"
+                } else {
+                    errorMessage("There was an error: \"" + data['message'] + "\"")
+                }
+            } else {
+                setTimeout(function() {
+                    update_progress()
+                }, 1000)
+            }
+        })
+    }
+
+</script>
+
+{% endblock %}

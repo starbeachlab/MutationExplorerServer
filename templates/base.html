@@ -1,58 +1,75 @@
-{% extends "bootstrap/base.html" %}
+<!DOCTYPE html>
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title> MutEx </title>
 
-{% block head %}
-<title>MutationExplorer</title>
+    <!-- universal css -->
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}" media="all">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='materialize/css/materialize.min.css')}}" media="all">
 
-<!-- universal css -->
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}" media="all">
-{% endblock %}
+    {% block head %}
+    {% endblock %}
+
+    <!-- fonts -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{url_for('static', filename='ngl_menu/css/font-awesome.min.css')}}" />
+
+</head>
+<body>
 
 
-{% block body %}
-  
-{% block header %}
-<!---
- <div class="navbar-fixed">
-  <nav>
+<div class="navbar-fixed">
+  <nav class="teal ligthen-2">
+  <!--<nav class="deep-orange">-->
       <div class="nav-wrapper">
-          <a id="logo" class="brand-logo black-text" href="{{ url_for('index') }}">
-              <img src="{{ url_for( 'static', filename ='img/MutationExplorer.png' )}}" style="width:150pt;" >
-              <div id="title">Mutation Explorer</div>
+          <a id="logo" class="brand-logo white-text" href="{{ url_for('index') }}">
+              <!--<img src="{{ url_for( 'static', filename ='bridge_logo.svg' )}}" style="background: white">-->
+              <i class="material-icons">nature</i>
+              <div id="title">MutEx</div>
           </a>
           <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons grey-text text-darken-3">menu</i></a>
           <ul id="nav-mobile" class="right hide-on-med-and-down">
-              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">home</a></li>
-              <li><a href="{{ url_for('conservation') }}" class="grey-text text-darken-3">alignment</a></li>
-              <li><a href="{{ url_for('conservation') }}" class="grey-text text-darken-3">mutations</a></li>
-              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">tutorial</a></li>
-              <li><a href="{{ url_for('index') }}" class="grey-text text-darken-3">faq</a></li>
+              <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
+              <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">point mutations</a></li>
+              <li><a href="{{ url_for('adjustment') }}" class="white-text text-darken-3">structure-sequence adjustment</a></li>
+              <li><a href="{{ url_for('examples') }}" class="white-text text-darken-3">examples</a></li>
+              <li><a href="{{ url_for('faq') }}" class="white-text text-darken-3">faq</a></li>
           </ul>
       </div>
 </nav>
 </div>
---->
- {% endblock %}
+
+<ul class="sidenav" id="mobile-nav">
+  <li>
+    <a class="brand-logo" href="{{ url_for('index') }}">
+      <img src="{{ url_for( 'static', filename ='logo.svg' )}}">
+    </a>
+  </li>
+  <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
+  <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">point mutations</a></li>
+  <li><a href="{{ url_for('adjustment') }}" class="white-text text-darken-3">structure-sequence adjustment</a></li>
+  <li><a href="{{ url_for('examples') }}" class="white-text text-darken-3">examples</a></li>
+  <li><a href="{{ url_for('faq') }}" class="white-text text-darken-3">faq</a></li>
+</ul>
  
- {% block content %}
- {% endblock %}
 
- {% block footer %}
-<br><br>
-<footer>
-  <center>
-  <p>
-    When using the MutationExplorer, please cite:
-    <br>
-    Ren&eacute; Staritzbichler, Nikola Ristic, ...,  Peter W Hildebrand
-    <br> 
-    Mutation Explorer, 2022 (details follow soon).
-  </p>
-</center>
-</footer>
- {% endblock %}
-
- {% block scripts %}
- {{ super() }}
- {% endblock %}
-
+<div id="content">
+{% block content %}
 {% endblock %}
+</div>
+
+ <script src="{{url_for('static', filename='jquery/jquery-3.5.1.min.js')}}"></script>
+ <script src="{{url_for('static', filename='materialize/js/materialize.min.js')}}"></script>
+
+ <script>
+    $(document).ready(function(){
+      $('.sidenav').sidenav();
+    });
+ </script>
+
+{% block scripts %}
+{% endblock %}
+
+</body></html>

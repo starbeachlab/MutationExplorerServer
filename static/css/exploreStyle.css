@@ -1,0 +1,62 @@
+#content {
+    padding: 0 20vw;
+}
+
+#viewport {
+    /*
+    position: absolute;
+    left: 100px;
+    top: 100px;
+    */
+    position: relative;
+    width: 100%;
+    height: 60vh;
+}
+
+
+#submit-btn {
+    margin-top: 0 !important;
+    width: 100%;
+}
+
+#mutation-view {
+    margin-bottom: 5rem;
+}
+
+#strc-download {
+    float: right;
+    margin-top: 0.5rem;
+}
+
+#res-download {
+    margin-top: 2rem;
+    width: 100%;
+}
+
+.inv {
+    display: none;
+}
+
+.bld {
+    font-weight: 600;
+}
+
+i {
+    cursor: default;
+}
+
+.toggle {
+    cursor: pointer;
+}
+
+.non {
+    display: none;
+}
+
+.rot {
+    rotate: 90deg;
+}
+
+h4 {
+    cursor: pointer;
+}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<center>
+<h1>Structure-Sequence Adjustment</h1>
+</center>
+
+
+<form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
+                
+
+<div class="col s6">
+
+    <h4 class="center-align">Structure</h4>
+
+    <div class="">
+        <div style="width: 100%; display: flex; justify-content: center">
+        <div class="file-field input-field" style="width: 100%">
+            <div class="btn" style="width: 100%">
+                <span>Upload a PDB file</span>
+                <input type="file" name="file">
+            </div>
+        </div>
+        </div>
+    </div>
+
+
+    <div class="input-field">
+        <input id="chain" type="text" name="pdb" class="validate" placeholder="PDB ID">
+        <label for="chain">Load structure from PDB</label>
+    </div>
+
+    <div class="input-field">
+        <input id="chain" type="text" name="alphafold" class="validate" placeholder="Uniprot ID">
+        <label for="chain">Load prediction from AlphaFold DB</label>
+    </div>
+
+
+</div>
+
+<div class="col s6">
+
+    <h4 class="center-align">Sequence</h4>
+
+    <div class="">
+        <div style="width: 100%; display: flex; justify-content: center">
+        <div class="file-field input-field" style="width: 100%">
+            <div class="btn" style="width: 100%">
+                <span>Upload a FASTA file</span>
+                <input type="file" name="fasta">
+            </div>
+        </div>
+        </div>
+    </div>
+
+
+    <div class="input-field">
+        <input id="chain" type="text" name="sequence" class="validate" placeholder="ABBA...">
+        <label for="chain">Enter a sequence</label>
+    </div>
+
+    <div class="input-field">
+        <input id="chain" type="text" name="uniprot" class="validate" placeholder="Uniprot ID">
+        <label for="chain">Load sequence from UniProt</label>
+    </div>
+</div>
+
+<div class="center-align">
+    <span id="error-msg">{{error}}</span>
+</div>
+
+<div class="center-align">
+<input id="submit-btn" type="submit" value="submit" class="btn">
+</div>
+
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<center>
+<h1>Frequently Asked Questiones</h1>
+</center>
+
+<ul class="collapsible">
+
+<li>
+    <div class="collapsible-header">
+        How can I upload structures?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How can I define mutations?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        What coloring schemes are available?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How to use an alignment to define mutations?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How can I color a structure by sequence conservation?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Which parameters were used in examples?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Is it possible to mutate peptides?
+    </div>
+    <div class="collapsible-body"><span>
+        The smaller the peptide the more likely it is to be flexible. MutationExplorer has no restrictions concerning the size of the protein being uploaded. However, you should be aware that any conformation is just a snapshot and the smaller your peptide the more likely a given conformation may not represent the effect of a mutation on another conformation.
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Is it possible to mutate transmembrane proteins?
+    </div>
+    <div class="collapsible-body"><span>
+        In general yes. However, there is no energetic effect due to the lipid bilayer considered at this point. 
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        What about nonstandard AA, lipids, ions?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        What version of Rosetta is being used?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How to mutate a mutant? How to perform multiple rounds of mutations?
+    </div>
+    <div class="collapsible-body"><span>
+        Once you performed your first mutations, the results are displayed, together with a window where you can enter other mutations.
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How to link an alignment server for 3D visualisation to MutationExplorer?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Can I use multichain proteins? 
+    </div>
+    <div class="collapsible-body"><span>
+        Yes. For mutations you have to specify the chain to be mutated.
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        How can I change the representation of the models?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Are there more options to the viewer? 
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">
+        Where can I find more information about MDsrv/Mol*?
+    </div>
+    <div class="collapsible-body"><span>
+        A
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header">Q</div>
+    <div class="collapsible-body"><span>A</span></div>
+</li>
+
+
+</ul>
+
+
+
+{% endblock %}
+
+
+
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        $('.collapsible').collapsible();
+    });
+        
+</script>
+{% endblock %}
