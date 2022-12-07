@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<center>
+  <br>
+  <h3>VCF analysis</h3>
+  <br>
+  <p> Details of the workflow are outlined in FAQs. </p>
+  <br>
+</center>
+
+<form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
+  
+
+<br>
+
+<div class="col offset-s3 s6 center-align">
+  <div class="">
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div class="file-field input-field" style="width: 100%">
+	<div class="btn" style="width: 100%">
+	  <span>Upload a VCF file</span>
+	  <input type="file" name="vcf">
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<br>
+
+<div class="col offset-s3 s6 center-align">
+    <span id="error-msg">{{error}}</span>
+</div>
+
+<div class="col offset-s3 s6 center-align">
+<input id="submit-btn" type="submit" value="submit" class="btn">
+</div>
+
+
+
+</form>
+
+<br>
+<br>
+
+
+
+{% endblock %}

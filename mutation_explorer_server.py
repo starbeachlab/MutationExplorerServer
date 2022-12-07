@@ -98,19 +98,36 @@ def fixbb(tag, structure, resfile, out_file_name, log):
     p = subprocess.check_output(cmd.split())
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
+    bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energies_to_bfactor.py "
+    ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
+    hydro = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_to_bfactor.py '
+    hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
+    
     cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + out_file_name
+    print(cmd)
+    p = subprocess.check_output( cmd.split())
+    
+    cmd = "tsp " + bfac + out + out_file_name + ' ' + out + out_file_name[:-4] + '_absE.pdb'
     print(cmd)
     p = subprocess.check_output(cmd.split())
 
-#    # create info file
-#    with open(out + "info/" + out_file_name.split(".")[0] + ".txt", "w") as f:
-#        if mutations:
-#            f.write(structure + "\n")
-#            for mut in mutations:
-#                f.write(mut + " ")
-#        else:
-#            f.write("-")
+    cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffE.pdb'
+    print(cmd)
+    p = subprocess.check_output(cmd.split())
 
+    cmd = "tsp " + hydro + out +  out_file_name + ' ' + out +  out_file_name[:-4] + '_hyph.pdb'
+    print(cmd)
+    p = subprocess.check_output(cmd.split())
+
+    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_hyph.pdb'
+    print(cmd)
+    p = subprocess.check_output(cmd.split())
+
+    cmd = "tsp " + hdiff + out + structure[:-4] + '_hyph.pdb ' + out + out_file_name[:-4] + '_hyph.pdb ' + out + out_file_name[:-4] + '_diffHP.pdb'
+    print(cmd)
+    p = subprocess.check_output(cmd.split())
+
+    
     # add to file listing # vielleicht auch ausserhalb?
     with open(out + "list.txt", "a") as f:
         f.write(out_file_name + "\n")
@@ -395,8 +412,16 @@ def explore(tag):
     start_thread(fixbb, [tag, strc,  name[:-4] + '_resfile.txt', name, "log.txt"], "remutate")
     
     return redirect(url_for('status', tag = tag, filename = name))
-    
 
+
+# Testing molstar / mdsrv
+@app.route('/molstar/<tag>')
+def molstar(tag):
+    mut_tree = build_mutation_tree(tag, "-")
+    structures = "<ul>" + build_list(mut_tree) + "</ul>"
+    return render_template("explore4.html", tag = tag, structures = structures)
+    
+    
 @app.route('/examples')
 def examples():
     return render_template("examples.html")
