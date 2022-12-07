@@ -3,27 +3,101 @@
 {% block content %}
 
 <center>
-<h1>Mutate {{tag}}</h1>
+  <br>
+  <h2>Define mutations </h2>
 </center>
+
+<br>
+<p class="center-align"><b> Select one of the following:</b></p>
+<br>
+<h4 class="center-align">1) Manual definition</h4>
+
 
 
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
-                
+  
+<div class="input-field col offset-s3 s6">
+     <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+    <label for="chain">Enter Mutations</label>
+</div>
+
+<br>
+
+<div class="col offset-s3">
+  <h4 class="center-align">2) Sequencing data</h4>
+  <div class="">
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div class="file-field input-field" style="width: 100%">
+	<div class="btn" style="width: 100%">
+	  <span>Upload a VCF file</span>
+	  <input type="file" name="vcf">
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<br>
+
+
+<div class="col offset-s3">
+  <h4 class="center-align">3) Sequence alignment</h4>
+  <div class="">
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div class="file-field input-field" style="width: 100%">
+	<div class="btn" style="width: 100%">
+	  <span>Upload a ClustalW file</span>
+	  <input type="file" name="clustal">
+	</div>
+      </div>
+    </div>
+  </div>
+<div style="color:red;"><b> TODO: Assign seq ID within alignment with chain in PDB!</b> </div>
+</div>
+  
+<br>
+
+<div class="col offset-s3  s6">
+  <h4 class="center-align">4) Target sequence</h4>
+  <div class="">
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div class="file-field input-field" style="width: 100%">
+        <div class="btn" style="width: 100%">
+          <span>Upload a FASTA file</span>
+          <input type="file" name="fasta">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="input-field">
+    <input id="chain" type="text" name="sequence" class="validate" placeholder="ABBA...">
+    <label for="chain">Enter a sequence</label>
+  </div>
+  
+  <div class="input-field">
+    <input id="chain" type="text" name="uniprot" class="validate" placeholder="Uniprot ID">
+    <label for="chain">Load sequence from UniProt</label>
+  </div>
+<div style="color:red;"><b> TODO: Assign sequence with chain in PDB!</b> </div>
+</div>
+
+<div class="col offset-s3  s6">
+  <h4 class="center-align">Optional information</h4>
+</div>
+
 
 <div class="input-field col offset-s3 s6">
-    <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
-    <label for="chain">Enter Mutations</label>
+    <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
+    <label for="name">Name mutated structure</label>
 </div>
 
 <div class="input-field col offset-s3 s6">
     <input id="chain" type="text" name="email" class="validate" placeholder="(optional)">
-    <label for="chain">Enter an Email to get notified</label>
+    <label for="chain">Email for notification</label>
 </div>
 
-<div class="input-field col offset-s3 s6">
-    <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-    <label for="name">Name the new Structure</label>
-</div>
 
 <div class="col offset-s3 s6 center-align">
     <span id="error-msg">{{error}}</span>
@@ -36,6 +110,26 @@
 
 
 </form>
+
+<br>
+<br>
+<h4> Link to results </h4>
+
+<p>Copy this link for later access to your results: <br>
+{{url_for('mutate',tag=tag)}}
+</p>
+
+<h4> Rough time estimate </h4>
+  <ul>
+    <li> Initial basic minimization: 1 min </li>
+    <li> Mutation and basic minimization: 2 min  </li>
+    <li> VCF processing:  5 min  </li>
+  </ul>
+<p> Details can be found in the FAQs </p>
+
+<br>
+<br>
+<br>
 
 
 {% endblock %}

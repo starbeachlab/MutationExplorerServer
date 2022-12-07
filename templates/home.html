@@ -3,15 +3,67 @@
 {% block content %}
 
 <center>
-<h1>MutEx</h1>
+<h1 style="font-variant:small-caps">MutationExplorer</h1>
 </center>
 
-
-<h3>Modes of use</h3>
 <p>
-- point mutations <br>
-- structure-sequence adjustment <br>
-- structure alignment<br>
+  The server lets users mutate proteins in
+  various ways and study mutation effects in 3D.
+  The only required inputs are a structural model and a list of mutations of
+  interest.
 </p>
+  
+<h4>Main steps</h4>
+<p>
+  <ul>
+    <li> upload structure </li>
+    <li> define mutations </li>
+    <li> mutate again and again ... </li>
+  </ul>
+</p>
+
+<h4> Structure upload </h4>
+
+<p>
+  Structures can be uploaded in three different ways:
+  <ul>
+    <li> PDB ID </li>
+    <li> AlphaFold ID </li>
+    <li> Upload local PDB file </li>
+  </ul>
+</p>
+
+<h4> Define mutations </h4>
+
+<p>
+  Mutations can be defined in five different ways:
+  <ul>
+    <li> Key or paste into GUI, using a simple syntax </li>
+    <li> Upload VCF file</li>
+    <li> Upload ClustalW file </li>
+    <li> Upload Fasta file </li>
+    <li> Provide Uniprot-ID </li>
+  </ul>
+</p>
+
+<h4> Explorations </h4>
+<p> You can select a model and further mutate this using the mutation window. </p>
+
+<h4> Expected time requirements </h4>
+
+<p>
+  Actual times depend on the size of the system and may vary significantly.
+  <ul>
+    <li> Initial basic minimization: 1 min </li>
+    <li> Mutation and basic minimization: 2 min  </li>
+    <li> VCF processing:  5 min  </li>
+  </ul>
+</p>
+
+<p> Details can be found in the FAQs </p>
+
+<br>
+<br>
+<br>
 
 {% endblock %}

@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title> MutEx </title>
+    <title> MutationExplorer </title>
 
     <!-- universal css -->
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}" media="all">
@@ -27,13 +27,13 @@
           <a id="logo" class="brand-logo white-text" href="{{ url_for('index') }}">
               <!--<img src="{{ url_for( 'static', filename ='bridge_logo.svg' )}}" style="background: white">-->
               <i class="material-icons">nature</i>
-              <div id="title">MutEx</div>
+              <div id="title" style="font-variant:small-caps"> MutationExplorer </div>
           </a>
           <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons grey-text text-darken-3">menu</i></a>
           <ul id="nav-mobile" class="right hide-on-med-and-down">
               <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
-              <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">point mutations</a></li>
-              <li><a href="{{ url_for('adjustment') }}" class="white-text text-darken-3">structure-sequence adjustment</a></li>
+              <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">upload structure and mutations</a></li>
+              <li><a href="{{ url_for('vcf') }}" class="white-text text-darken-3">vcf analysis</a></li>
               <li><a href="{{ url_for('examples') }}" class="white-text text-darken-3">examples</a></li>
               <li><a href="{{ url_for('faq') }}" class="white-text text-darken-3">faq</a></li>
           </ul>
@@ -56,9 +56,13 @@
  
 
 <div id="content">
-{% block content %}
+  {% block content %}
 {% endblock %}
 </div>
+
+<footer style="position: fixed; padding: 10px 10px 0px 10px; bottom: 0;text-align: center; width:100%; height=50px;background: grey;color:white;" class="teal ligthen-2">
+  <p> Please cite: Michelle Philipp, Nikola Ristic, Johanna Tiemann, Chris Moth, Jens Meiler, Peter Hildebrand, Daniel Wiegreffe, Ren&eacute; Staritzbichler, Nucleic Acid Research, 2023 </p>
+  </footer>
 
  <script src="{{url_for('static', filename='jquery/jquery-3.5.1.min.js')}}"></script>
  <script src="{{url_for('static', filename='materialize/js/materialize.min.js')}}"></script>

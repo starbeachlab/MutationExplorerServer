@@ -13,7 +13,11 @@
         How can I upload structures?
     </div>
     <div class="collapsible-body"><span>
-        A
+        There are three different ways of uploading: from the Protein Databank (PDB), from
+	the AlphaFold website, from your local machine. All three possibilities are shown on the
+	initial submit page. You have to provide the PDB ID, the AlphaFold ID, or select a file
+	from your computer, accordingly.
+	
     </span></div>
 </li>
 
@@ -22,17 +26,70 @@
         How can I define mutations?
     </div>
     <div class="collapsible-body"><span>
-        A
+        Once you submitted the structure, a second page opens. On that page you are asked
+	to define your mutations. There are four ways of defining your mutations:
+	<ol>
+	  <li> define any number of mutations manually using the graphical user interface.
+See FAQ (link to next) for a detailed explanation of the syntax.</li>
+	  <li> upload sequencing data (VCF format).</li>
+	  <li> upload a sequence alignment (clustalW format) </li>
+	  <li> provide a target sequence </li>
+	  <ol>
+	    <li> upload file (Fasta format) </li>
+	    <li> Uniprot-ID </li>
+	    <li> paste sequence </li>
+	  </ol>
+	</ol>
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        What coloring schemes are available?
-    </div>
-    <div class="collapsible-body"><span>
-        A
-    </span></div>
+  <div class="collapsible-header">
+    What is the syntax for manually defining mutations?
+  </div>
+  <div class="collapsible-body">
+    <span>
+      For each mutation you have to provide in this order:
+      <ol>
+	<li> the chain as written in the PDB file </li>
+	<li> the ’:’ separator </li>
+	<li> the residue number </li>
+	<li> the one letter code of the target amino acid </li>
+      </ol>
+      
+      You can define any number of mutations, separated by commas.
+      Example: ”A:12G,B:123W”: two mutations are defined, first, in chain A residue 12 is
+      mutated into glycine, second, in chain B residue 123 is mutated into tryptophan.
+    </span>
+  </div>
+</li>
+
+
+<li>
+  <div class="collapsible-header">
+    How is the VCF sequencing format evaluated?
+  </div>
+  <div class="collapsible-body">
+    <span>
+      First, a suitable PDB is determined.
+      Second, the mutations are applied.
+    </span>
+  </div>
+</li>
+
+
+
+<li>
+  <div class="collapsible-header">
+    What coloring schemes are available?
+  </div>
+  <div class="collapsible-body"><span>
+      You can color structures by energy, sequence conservation and properties such as hydropho-
+bicities. For the energy coloring red means an increased energy due to the mutation(s),
+blue an increased energy, and white no change. For sequence conservation blue means
+conserved and red means not conserved. For hydrophobicity blue means hydrophilic and
+red means hydrophobic.
+  </span></div>
 </li>
 
 <li>
@@ -40,7 +97,10 @@
         How to use an alignment to define mutations?
     </div>
     <div class="collapsible-body"><span>
-        A
+        There are two reasons for using alignments. First, an alignment is a way of defining
+potentially many mutations. Second, by looking at differences in structure and energy can
+provide deep insights into the alignment itself. Obviously, only aligned positions can be
+used to define mutations. Gaps cannot be translated into mutations.
     </span></div>
 </li>
 
@@ -49,7 +109,7 @@
         How can I color a structure by sequence conservation?
     </div>
     <div class="collapsible-body"><span>
-        A
+        MICHELLE
     </span></div>
 </li>
 

@@ -3,20 +3,20 @@
 {% block content %}
 
 <center>
-<h1>Point Mutations</h1>
+  <br>
+  <h3>Upload structure or model</h3>
+  <br>
 </center>
 
 
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
                 
-<h4 class="center-align">Structure</h4>
-
 <div class="col offset-s3 s6">
     <div style="width: 100%; display: flex; justify-content: center">
     <div class="file-field input-field" style="width: 100%">
         <div class="btn" style="width: 100%">
             <span>Upload a PDB file</span>
-            <input type="file" name="file">
+            <input type="file" name="pdbfile">
         </div>
     </div>
     </div>
@@ -24,12 +24,12 @@
 
 
 <div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="pdb" class="validate" placeholder="PDB ID">
+    <input id="chain" type="text" name="pdbid" class="validate" placeholder="PDB ID">
     <label for="chain">Load structure from PDB</label>
 </div>
 
 <div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="alphafold" class="validate" placeholder="Uniprot ID">
+    <input id="chain" type="text" name="alphafoldid" class="validate" placeholder="Uniprot ID">
     <label for="chain">Load prediction from AlphaFold DB</label>
 </div>
 

@@ -14,7 +14,7 @@
     <br>
     <br>
     You can access the results from this link: <br>
-    <a href="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/status/{{tag}}/{{file}}">https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/status/{{tag}}/{{file}}</a>
+    <a href="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/explore/{{tag}}">https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/explore/{{tag}}</a>
 </p>
 
 
@@ -38,8 +38,8 @@
 
 
     function update_progress() {
-        console.log("check");
-        $.getJSON("{{url_for('get_status', tag = tag, file = file)}}", function(data) {
+        console.log("check:  {{tag}} {{filename}} " );
+        $.getJSON("{{url_for('get_status', tag = tag, filename = filename)}}", function(data) {
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
                     window.location.href = "{{url_for('explore', tag = tag)}}"

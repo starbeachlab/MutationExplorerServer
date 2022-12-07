@@ -3,7 +3,7 @@ import os, random, subprocess, time
 import threading
 import requests
 import glob
-
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -35,7 +35,8 @@ def build_tree(node, links):
     for l in links:
         if l[0] == node:
             children.append(l[1]) 
-
+    print(len(children), 'children')
+    
     tree = {}
     for child in children:
         tree[child] = build_tree(child, links)
@@ -51,7 +52,8 @@ def build_mutation_tree(tag, root):
     for f in files:
         parent = open(info + f).read().split("\n")[0]
         links.append([parent.split(".")[0], f.split(".")[0]])
-
+    print( len(links), 'links')
+    
     # default root: "-"
     return build_tree(root, links)
 
@@ -68,66 +70,56 @@ def name_mutation(base_structure, tag):
     return strc + "_" + str(max(nums) + 1) + ".pdb"
 
 
-def fixbb(tag, structure, mutations, name, log):
+def fixbb(tag, structure, resfile, out_file_name, log):
     out = app.config['USER_DATA_DIR'] + tag + "/"
 
-    # create resfile
-    if not mutations:
-        resfile = app.config['SCRIPTS_PATH'] + "resfile.txt"
-    if mutations:
-        resfile = out + "resfile.txt"
-        with open(resfile, 'w') as f:
-            f.write('NATRO\n')
-            f.write('start\n')
-            prev_chains = []
-            for mut in mutations:
-                chain = mut[0]
-                resid = mut[2:-1]
-                res = mut[-1]
+    ### Ich wuerde Funktionen immer so einfach wie moeglich halten und auf eine Aufgabe fokusieren, d.h. hier die Ausfuehrung von fixbb
+    
+#    # create resfile
+#    if mutations:
+#        resfile = os.path.join( out , out_file_name[:-4] + "_resfile.txt")
+#        MutationsToResfile( mutations, resfile)
+#    else:
+#        resfile = app.config['SCRIPTS_PATH'] + "resfile.txt"  
+#        
+#    # wait for previous structure
+#    while not os.path.isfile(out + structure):
+#        time.sleep(1)
 
-                if chain not in prev_chains:
-                    f.write('* ' + chain + ' NATAA \n')
-                    prev_chains.append(chain)
-
-                f.write(resid + ' ' + chain + ' PIKAA ' + res + '\n')
-
-    # wait for previous structure
-    while not os.path.isfile(out + structure):
-        time.sleep(1)
-
-    # generate unique extension (temp file)
+    # generate unique extension (temp file)  ## WARUM?
     while(True):
         ext = "m" + str(random.randint(0, 999))
         if not glob.glob(out + ext + r'.*\.pdb$'):
             break
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out + ext + '_'
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out + ext + '_'
     print(cmd)
     p = subprocess.check_output(cmd.split())
 
-    # rename output file
-    cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + name
+    # rename output file #### WRITE ENERGIES INSTEAD !!!!!
+    cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + out_file_name
     print(cmd)
     p = subprocess.check_output(cmd.split())
 
-    # create info file
-    with open(out + "info/" + name.split(".")[0] + ".txt", "w") as f:
-        if mutations:
-            f.write(structure + "\n")
-            for mut in mutations:
-                f.write(mut + " ")
-        else:
-            f.write("-")
+#    # create info file
+#    with open(out + "info/" + out_file_name.split(".")[0] + ".txt", "w") as f:
+#        if mutations:
+#            f.write(structure + "\n")
+#            for mut in mutations:
+#                f.write(mut + " ")
+#        else:
+#            f.write("-")
 
-    # add to file listing
+    # add to file listing # vielleicht auch ausserhalb?
     with open(out + "list.txt", "a") as f:
-        f.write(name + "\n")
+        f.write(out_file_name + "\n")
 
     # delete resfile
-    if mutations:
-        cmd = "tsp rm " + out + "resfile.txt"
-        p = subprocess.check_output(cmd.split())
+    # better have individual names: mut111_resfile.txt
+    #if mutations:
+    #    cmd = "tsp rm " + out + "resfile.txt"
+    #    p = subprocess.check_output(cmd.split())
 
     print("### THREAD FINISHED ###")
 
@@ -148,9 +140,9 @@ def submit():
     os.mkdir(outdir)
 
     # get form values
-    upload = request.files['file']
-    pdb = request.form['pdb'].strip()
-    af = request.form['alphafold'].strip()
+    upload = request.files['pdbfile']
+    pdb = request.form['pdbid'].strip()
+    af = request.form['alphafoldid'].strip()
 
     # save file
     file_path = outdir + "structure.pdb"    
@@ -166,7 +158,7 @@ def submit():
 
     # create log file
     with open(outdir + "log.txt", "w") as f:
-        f.write("hi")
+        f.write("submit")
         # TODO: actually log something
 
     # create list file
@@ -175,11 +167,14 @@ def submit():
 
     # create info file
     os.mkdir(outdir + "info/")
-    with open(outdir + "info/structure.txt", "w") as f:
+    with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("-")
 
+    resfile =  "mut_0_resfile.txt"   
+    mutations_to_resfile( [] , outdir + resfile )    
+
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", [], "relaxed_structure.pdb", outdir + "log.txt"], "minimisation")
+    start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0.pdb", "log.txt"], "minimisation")
 
     return redirect(url_for('mutate', tag = tag))
 
@@ -189,23 +184,65 @@ def mutate(tag):
     if request.method == 'GET':
         return render_template("mutate.html", tag = tag, error = "")
 
-    # get form values
-    mutations = request.form['mutations'].strip().split('; ')
+    ###  get form values
+    mutations = request.form['mutations'].strip().split(',')
+    vcf = request.files['vcf']
+    clustal = request.files['clustal']
+    fasta = request.files['fasta']
+    seq_input = request.form['sequence'].strip()
+    uniprot = request.form['uniprot'].strip()
     mail = request.form['email'].strip()
-
-    name = request.form['name'].strip() + ".pdb"
+    name = request.form['name'].strip() + ".pdb"  
     if name == ".pdb":
-        name = name_mutation("relaxed_structure.pdb", tag)
+        name = name_mutation("mut_0.pdb", tag)
 
-    # return error message if no mutations given
-    if not mutations:
+    print(name)
+
+    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
+    parent =   "mut_0.pdb"
+    resfile =  "mut_0_1_resfile.txt"
+    align =    "mut_0_1.clw"  # align with parent
+    mutfile =  "info/mut_0_1.txt"  # parent and mutations
+    
+    ###  return error message if no mutations given
+    if len(mutations) == 0 and not vcf and not clustal and not fasta and not seq_input and not uniprot:
         return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
 
-    # mutate structure
-    outdir = app.config['USER_DATA_DIR'] + tag + "/"
-    start_thread(fixbb, [tag, "relaxed_structure.pdb", mutations, name, outdir + "log.txt"], "minimisation")
+    ### wait for parent to exist:
+    wait( outdir + parent)
     
-    return redirect(url_for('status', tag = tag, file = name))
+    ###  case separation
+    if len(mutations) != 0:
+        helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+    if vcf.filename != "":
+        vcf_file = os.path.join( outdir,  vcf.filename )
+        vcf.safe( vcf_file)
+        helper_files_from_vcf( vcf_file, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)        
+    elif clustal.filename != "":
+        clustal_file = os.path.join( outdir , clustal.filename )
+        clustal.safe( clustal_file)
+        #### chain seqid !!!
+        helper_files_from_alignment( clustal_file, outdir + parent, outdir + resfile, outdir + mutfile )
+    else:
+        target = ""
+        if fasta.filename != "":
+            print()
+        
+        elif seq_input != "":
+            print()
+        
+        elif uniprot != "":
+            print()
+        helper_files_from_sequence( target, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+        
+    start_thread(fixbb, [tag, parent, resfile, name, "log.txt"], "mutti")
+        
+    return redirect(url_for('status', tag = tag, filename = name))
+
+
+@app.route('/vcf', methods=['GET', 'POST'])
+def vcf():
+    return render_template("vcf.html", error = "")
 
 
 @app.route('/adjustment', methods=['GET', 'POST'])
@@ -226,9 +263,9 @@ def adjustment():
     seq_input = request.form['sequence'].strip()
     uniprot = request.form['uniprot'].strip()
 
-    strc_upload = request.files['file']
-    pdb = request.form['pdb'].strip()
-    af = request.form['alphafold'].strip()
+    strc_upload = request.files['pdbfile']
+    pdb = request.form['pdbid'].strip()
+    af = request.form['alphafoldid'].strip()
 
     # save file
     #    structure
@@ -301,22 +338,23 @@ def adjustment():
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
     start_thread(fixbb, [tag, "structure.pdb", mutations, "mut_structure.pdb", outdir + "log.txt"], "minimisation")
 
-    return redirect(url_for('status', tag = tag, file = "mut_structure.pdb"))
+    return redirect(url_for('status', tag = tag, filename = "mut_structure.pdb"))
     
 
 
-@app.route('/get_status/<tag>/<file>')
-def get_status(tag, file):
-    dir = app.config['USER_DATA_DIR'] + tag + "/"
-    done = os.path.isfile(dir + file)
+@app.route('/get_status/<tag>/<filename>')
+def get_status(tag, filename):
+    dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + filename )
+    done = os.path.isfile(dirname)
     status = "done"
     msg = ""
+    print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
 
-@app.route('/status/<tag>/<file>')
-def status(tag, file):
-    return render_template("status.html", tag = tag, file = file)
+@app.route('/status/<tag>/<filename>')
+def status(tag, filename):
+    return render_template("status.html", tag = tag, filename = filename)
 
 
 def build_list(d):
@@ -336,22 +374,27 @@ def build_list(d):
 def explore(tag):
     if request.method == 'GET':
         mut_tree = build_mutation_tree(tag, "-")
+        print('explore::tree', mut_tree)
         structures = "<ul>" + build_list(mut_tree) + "</ul>"
-
+        print('explore::tree:', structures)
         return render_template("explore.html", tag = tag, structures = structures)
 
     # get form values
-    mutations = request.form['mutations'].strip().split('; ')
-    strc = request.form['structure'].strip()
+    mutations = request.form['mutations'].strip().replace(' ', '').split(',')
+    strc = request.form['structure'].strip() 
     name = request.form['name'].strip() + ".pdb"
     if name == ".pdb":
         name = name_mutation(strc, tag)
-
+    
+    print('novel mutant:', name)
+    # OUTDIR ???
+        
     # mutate structure
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
-    start_thread(fixbb, [tag, strc, mutations, name, outdir + "log.txt"], "minimisation")
+    helper_files_from_mutations( mutations, outdir + strc, outdir + name[:-4] + '_resfile.txt', outdir + name[:-4] + '.clw', outdir + "info/" + name[:-4] + '.txt' ) 
+    start_thread(fixbb, [tag, strc,  name[:-4] + '_resfile.txt', name, "log.txt"], "remutate")
     
-    return redirect(url_for('status', tag = tag, file = name))
+    return redirect(url_for('status', tag = tag, filename = name))
     
 
 @app.route('/examples')
@@ -388,3 +431,171 @@ def fbt():
 
 if __name__ == "__main__":
     app.run()
+
+    
+def mutations_to_resfile( mutations, resfile):
+    with open(resfile, 'w') as f:
+        f.write('NATRO\n')
+        f.write('start\n')
+        prev_chains = []
+        for mut in mutations:
+            chain = mut[0]
+            resid = mut[2:-1]
+            res = mut[-1]
+            
+            if chain not in prev_chains:
+                f.write('* ' + chain + ' NATAA \n')
+                prev_chains.append(chain)
+                
+            f.write(resid + ' ' + chain + ' PIKAA ' + res + '\n')
+
+            
+def resid( line):
+    return int( line[22:26].strip() )
+
+def residue_name( line ):
+    return line[17:20]
+
+def chain( line ):
+    return line[21]
+
+def single_letter( residue ):
+    if residue.upper() == "Gly".upper(): return "G"
+    if residue.upper() == "Ala".upper(): return "A"
+    if residue.upper() == "Leu".upper(): return "L"
+    if residue.upper() == "Met".upper(): return "M"
+    if residue.upper() == "Phe".upper(): return "F"
+    if residue.upper() == "Trp".upper(): return "W"
+    if residue.upper() == "Lys".upper(): return "K"
+    if residue.upper() == "Gln".upper(): return "Q"
+    if residue.upper() == "Glu".upper(): return "E"
+    if residue.upper() == "Ser".upper(): return "S"
+    if residue.upper() == "Pro".upper(): return "P"                           
+    if residue.upper() == "Val".upper(): return "V"                           
+    if residue.upper() == "Ile".upper(): return "I"                   
+    if residue.upper() == "Cys".upper(): return "C"                
+    if residue.upper() == "Tyr".upper(): return "Y"                
+    if residue.upper() == "His".upper(): return "H"                
+    if residue.upper() == "Hsd".upper(): return "H"                
+    if residue.upper() == "Arg".upper(): return "R"                
+    if residue.upper() == "Asn".upper(): return "N"                   
+    if residue.upper() == "Asp".upper(): return "D"     
+    if residue.upper() == "Thr".upper(): return "T"   
+    return "X"
+
+
+
+def sequence_chain_resids( parent):
+    chains = defaultdict(list)
+    with open( parent) as r:
+        prev_chain = 'xxx'
+        prev_id = -9999
+        for l in r:
+            if l[:4] != "ATOM" and l[:6] != "HETATM": continue
+            c = chain(l)
+            res = resid(l)
+            if prev_chain != c or prev_id != res:
+                chains[c].append( [ single_letter( residue_name(l)) , res ] )
+                prev_chain = c
+                prev_id = res
+    return chains
+
+def alignment_from_mutations( mutations, parent, align,mutant_file):
+    chains = sequence_chain_resids( parent)
+    print( len(chains))
+    mutseq = ""
+    parent_str = parent.split('/')[-1][:-4]
+    mutant_str = mutant_file.split('/')[-1][:-4]
+    l1 = len(parent_str)
+    l2 = len(mutant_str)
+    w = open( align, 'w') 
+    w.write( 'CLUSTAL W formatted output, created by MutationExplorer\n\n')
+    for c, l in chains.items():
+        curr_par = parent_str + ':' + c
+        curr_mut = mutant_str + ':' + c
+        count = 0
+        if l1 < l2:
+            curr_par = curr_par.ljust(l2+2)
+            maxl = l2+2
+        elif l2 < l1:
+            curr_mut = curr_mut.ljust(l1+2)
+            maxl = l1+2
+        else:
+            maxl = l1+2
+        curr_par += '\t'
+        curr_mut += '\t'
+        curr_match = ''.rjust(maxl) + '\t'
+        astr = ''
+        bstr = ''
+        cstr = ''
+        for aa,rid in l:
+            astr += aa
+            #print( c,i,s)
+            mstr = c + ':' + str(rid)
+            #print( mstr)
+            mutti = ''
+            for m in mutations:
+                #print( 'm: ', m)
+                if mstr == m[:-1]:
+                    #print( 'found')
+                    mutti = m[-1]
+                    break
+            if mutti != '':
+                bstr += mutti
+                cstr += ' '
+            else:
+                bstr += aa
+                cstr += '*'
+            if len(astr) == 60:
+                w.write( curr_par + astr + '\n')
+                w.write( curr_mut + bstr + '\n')
+                w.write( curr_match + cstr + '\n\n')
+                astr = ''
+                bstr = ''
+                cstr = ''
+        if len(astr) > 0:
+            w.write( curr_par + astr + '\n')
+            w.write( curr_mut + bstr + '\n')
+            w.write( curr_match + cstr + '\n\n')
+            
+
+
+
+            
+            
+def mutation_parent_file( mutations, parent, mutfile):   
+    with open( mutfile, 'w') as f:
+        if mutations:
+            f.write(parent.split('/')[-1] + "\n")
+            for mut in mutations:
+                f.write(mut + "\n")
+        else:
+            f.write("-\n")
+
+            
+def helper_files_from_mutations( mutations, parent, resfile, align, mutfile):
+    mutations_to_resfile( mutations, resfile)
+    mutation_parent_file( mutations, parent, mutfile)
+    alignment_from_mutations( mutations, parent, align, mutfile)
+
+    
+def vcf_to_resfile( vcf_file, resfile, mutations):
+    print('chris...')
+
+    
+def helper_files_from_vcf( vcf_file, parent, resfile, align, mutfile):
+    vcf_to_resfile( vcf_file, resfile, mutations)
+    mutation_parent_file( mutations, parent, mutfile)
+    alignment_from_mutations( mutations, parent, align)
+
+    
+def helper_files_from_sequence( target, parent, resfile, align, mutfile):
+    print()
+
+    
+def helper_files_from_alignment( clustal_file, parent, resfile, mutfile ):
+    mutations = mutations( clustal_file, chain, seqid )
+
+def wait( filename):
+    while not os.path.isfile(filename):
+        time.sleep(1)

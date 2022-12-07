@@ -9,7 +9,7 @@
 {% block content %}
 
 <center>
-<h1>Explore {{tag}}</h1>
+<h1>Exploration {{tag}}</h1>
 </center>
 
 <div class="row">
@@ -24,17 +24,17 @@
         <div>
             <div class="input-field">
                 <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
-                <label for="chain">Enter Mutations</label>
+                <label for="chain">Enter mutations</label>
             </div>
 
             <div class="input-field">
                 <input id="chain" type="text" name="structure" class="validate" placeholder="structure.pdb" required>
-                <label for="chain">Enter the Source Structure (from list below)</label>
+                <label for="chain">Source structure (from list)</label>
             </div>
 
             <div class="input-field">
                 <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-                <label for="name">Name the new Structure</label>
+                <label for="name">Name new structure</label>
             </div>
 
             <div class="center-align">
@@ -46,7 +46,7 @@
 
 
     <div id="tree-viewer">
-        <h4 class="center-align toggle-card">Structures</h4>
+        <h4 class="center-align toggle-card">Select</h4>
         <div>
 
             {{structures|safe}}
