@@ -191,10 +191,15 @@ def mutate(tag):
     ###  get form values
     mutations = request.form['mutations'].strip().split(',')
     vcf = request.files['vcf']
+    # allow multiple for following
     clustal = request.files['clustal']
     fasta = request.files['fasta']
+    fasta_chain = request.files['fasta_chain']
     seq_input = request.form['sequence'].strip()
+    seq_chain = request.files['seq_chain']
     uniprot = request.form['uniprot'].strip()
+    uniprot_chain = request.files['uniprot_chain']
+    #
     mail = request.form['email'].strip()
     name = request.form['name'].strip() + ".pdb"  
     if name == ".pdb":
@@ -216,29 +221,32 @@ def mutate(tag):
     wait( outdir + parent)
     
     ###  case separation
-    if len(mutations) != 0:
-        helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     if vcf.filename != "":
         vcf_file = os.path.join( outdir,  vcf.filename )
         vcf.safe( vcf_file)
-        helper_files_from_vcf( vcf_file, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)        
-    elif clustal.filename != "":
+        add_mutations_from_vcf( mutations, vcf_file, outdir + parent)        
+    if clustal.filename != "":
         clustal_file = os.path.join( outdir , clustal.filename )
         clustal.safe( clustal_file)
-        #### chain seqid !!!
-        helper_files_from_alignment( clustal_file, outdir + parent, outdir + resfile, outdir + mutfile )
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    if fasta.filename != "":
+        fasta_file =  outdir + fasta.filename
+        fasta.safe(fasta_file)
+        target = seq_from_fasta( fasta_file)
+        add_mutations_from_sequence( mutations, target, fasta_chain, outdir+parent)
+    if seq_input != "":
+        print()
+        add_mutations_from_sequence( mutations, seq_input, fasta_chain, outdir+parent)
+    if uniprot != "":
+        print()
+        target = seq_from_fasta( fasta_file)
+        add_mutations_from_sequence( mutations, target, outdir + parent)
+        
+    if len(mutations) != 0:
+        helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
-        target = ""
-        if fasta.filename != "":
-            print()
-        
-        elif seq_input != "":
-            print()
-        
-        elif uniprot != "":
-            print()
-        helper_files_from_sequence( target, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
-        
+        print("no mutations")
+
     start_thread(fixbb, [tag, parent, resfile, name, "log.txt"], "mutti")
         
     return redirect(url_for('status', tag = tag, filename = name))
@@ -591,23 +599,103 @@ def helper_files_from_mutations( mutations, parent, resfile, align, mutfile):
     alignment_from_mutations( mutations, parent, align, mutfile)
 
     
-def vcf_to_resfile( vcf_file, resfile, mutations):
+    
+def add_mutations_from_vcf( mutations, vcf_file, parent):
     print('chris...')
 
-    
-def helper_files_from_vcf( vcf_file, parent, resfile, align, mutfile):
-    vcf_to_resfile( vcf_file, resfile, mutations)
-    mutation_parent_file( mutations, parent, mutfile)
-    alignment_from_mutations( mutations, parent, align)
 
-    
-def helper_files_from_sequence( target, parent, resfile, align, mutfile):
+
+def add_mutations_from_sequence( mutations, target, chain, parent):
+    print()
+
+def seq_from_fasta( mutations, target, parent):
     print()
 
     
-def helper_files_from_alignment( clustal_file, parent, resfile, mutfile ):
-    mutations = mutations( clustal_file, chain, seqid )
+def add_mutations_from_alignment( mutations, clustal_files, parent):
+    for cf in clustal_files:
+        mutations.extend( mutations_from_alignment( cf, parent ) )
 
+
+        
+def read_clustal( clust):
+    ali = defaultdict( str)
+    with open(clust) as r:
+        r.readline()
+        for l in r:
+            if l.strip() == '' or l[:3] == '   ': continue
+            c = l.split()
+            if len(c) != 2: continue
+            ali[c[0]] += c[1]
+    return ali
+    
+def sequences( ali):
+    seqs = []
+    for k,v in ali.items():
+        seqs.append( v.replace('-','') )
+    return seqs
+
+# nearly same as sequence_chain_resids()
+def pdb2seq( pdb):
+    chains = defaultdict( lambda : ['',[]] )
+    with open( pdb) as r:
+        prev_chain = 'xxx'
+        prev_id = -9999
+        for l in r:
+            if l[:4] != "ATOM" and l[:6] != "HETATM": continue
+            c = chain(l)
+            res = resid(l)
+            if prev_chain != c or prev_id != res:
+                chains[c][0] += single_letter( residue_name(l))
+                chains[c][1].append( res )
+                prev_chain = c
+                prev_id = res
+    return chains
+    
+    
+def mutations_from_alignment( clustal, parent ):
+    mutations = []
+    ali = read_clustal( clustal)
+    #seqs = sequences( ali)
+    chains = pdb2seq( parent)
+    #print( ali)
+    #print( chains)
+    chain_in_pdb = ''
+    ali_id = ''
+    count = 0
+    for c,v in chains.items():
+        for a,b in ali.items():
+            if v[0] == b:
+                count += 1
+                chain_in_pdb = c 
+                ali_id = a
+                print( 'mutations(): matching sequences found:', a,c)
+    if count != 1:
+        print( 'ERROR: mutations() found ',count,'identical matches')
+    if count == 0:
+        print('bye')
+        exit(1)
+    count = 0
+    ### this will not work for MSA!!
+    for a,b in ali.items():
+        if a != ali_id:
+            aligned = b
+            break
+    pdbseq = chains[chain_in_pdb][0]
+    #print( pdbseq)
+    #print( aligned)
+    pdbres = chains[chain_in_pdb][1]
+    for i in range( len( pdbseq )):
+        while aligned[count] == '-':
+            count += 1
+        if aligned[count] != pdbseq[i]:
+            mutations.append( chain_in_pdb + ':' + str(pdbres[i]) + aligned[count] )
+        count += 1
+    return mutations
+
+                    
+            
 def wait( filename):
     while not os.path.isfile(filename):
         time.sleep(1)
+
