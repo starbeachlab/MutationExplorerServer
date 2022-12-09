@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+
+<style>
+    .navbar-fixed {
+        display: none;
+    }
+
+    /*
+    #viewport {
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }*/
+
+    footer {
+        display: none;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    hr {
+        margin: 10px;
+    }
+
+    h1, h2, h3, h4, h5 {
+        margin-top: 5px;
+        margin-bottom: 3px;
+    }
+
+    button {
+        padding: 2px;
+    }
+
+    #viewport {
+        position: absolute;
+        left: 100px;
+        top: 100px;
+        width: 800px;
+        height: 600px;
+    }
+</style>
+
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='v2/mdsrv.css')}}" /> 
+
+{% endblock %}
+
+
+{% block content %}
+
+<div id="viewport"></div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<!--<script type="text/javascript" src="https://molstar.org/viewer/molstar.js"></script>-->
+
+<script type="text/javascript" src="{{url_for('static', filename='v2/mdsrv.js')}}"></script>
+<script type="text/javascript">
+
+    // MDsrv ------------
+    function getParam(name, regex) {
+        var r = new RegExp(name + '=' + '(' + regex + ')[&]?', 'i');
+        return decodeURIComponent(((window.location.search || '').match(r) || [])[1] || '');
+    }
+
+    mdsrv.Viewer.create('viewport', {
+
+    }).then(viewer => {
+        //var pdbFile = getParam('pdb-file', '[^&]+').trim();
+        //var clustalFile = getParam('clustal-file', '[^&]+').trim();
+
+        // ?pdb-file=../../data/3sn6/3sn6_d1.pdb&clustal-file=../../data/3sn6/alignme_chainA.clw
+
+        //if (pdbFile && clustalFile) viewer.loadMutationExplorer(pdbFile, clustalFile);
+        var pdbFile = getURL("mut_0_1.pdb");
+        var clustalFile = getURL("mut_0_1.clw");
+        viewer.loadMutationExplorer(pdbFile, clustalFile);
+    });
+    // --------------------
+
+    function getURL(fname) {
+        var loc = window.location;
+        var command = loc.protocol + "//" + loc.host + "{{url_for('download', tag=tag, filename='')}}" + fname; 
+        return command;
+    }
+
+    /*
+    var viewer = new molstar.Viewer.create('viewport', {
+        layoutIsExpanded: false,
+        layoutShowControls: false,
+        layoutShowRemoteState: false,
+        layoutShowSequence: true,
+        layoutShowLog: false,
+        layoutShowLeftPanel: true,
+
+        viewportShowExpand: true,
+        viewportShowSelectionMode: false,
+        viewportShowAnimation: false,
+
+        pdbProvider: 'rcsb',
+        emdbProvider: 'rcsb',
+    });    
+    */
+
+    function loadPdb(name) {
+        viewer.then(function(val) {
+            val.plugin.clear()
+            val.loadStructureFromUrl(getURL(name), format='pdb')
+        })
+    }
+
+    /*
+    $(".structures").click(function(e) {
+        e.preventDefault()
+        name = $(this).text()
+        //href = $("#strc-download a").attr("href")
+        strc = name + ".pdb"
+        $("#strc-download a").attr("href", getURL(strc))
+        $("#strc-download a").text("download " + strc)
+        $("#strc-download a").removeClass("inv")
+
+        $(".structures").removeClass("bld")
+        $(this).addClass("bld")
+        loadPdb(strc)
+    })
+
+    $(".toggle").click(function(e) {
+        l = $(this).parent().next()
+        // if is redundant
+        if (l.children().length > 0) {
+            $(this).toggleClass("rot")
+            l.toggleClass("non")
+        }
+    })
+
+    $(".toggle-card").click(function() {
+        $(this).next().toggleClass("non")
+    })
+    */
+
+</script>
+
+
+
+
+{% endblock %}

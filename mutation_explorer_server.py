@@ -70,21 +70,11 @@ def name_mutation(base_structure, tag):
     return strc + "_" + str(max(nums) + 1) + ".pdb"
 
 
-def fixbb(tag, structure, resfile, out_file_name, log):
+def fixbb(tag, structure, resfile, out_file_name, logfile):
     out = app.config['USER_DATA_DIR'] + tag + "/"
-
+    log = open( out + logfile, 'a')
     ### Ich wuerde Funktionen immer so einfach wie moeglich halten und auf eine Aufgabe fokusieren, d.h. hier die Ausfuehrung von fixbb
     
-#    # create resfile
-#    if mutations:
-#        resfile = os.path.join( out , out_file_name[:-4] + "_resfile.txt")
-#        MutationsToResfile( mutations, resfile)
-#    else:
-#        resfile = app.config['SCRIPTS_PATH'] + "resfile.txt"  
-#        
-#    # wait for previous structure
-#    while not os.path.isfile(out + structure):
-#        time.sleep(1)
 
     # generate unique extension (temp file)  ## WARUM?
     while(True):
@@ -94,51 +84,48 @@ def fixbb(tag, structure, resfile, out_file_name, log):
 
     # call rosetta
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out + ext + '_'
-    print(cmd)
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
+    log.write(p+'\n')
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
-    bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energies_to_bfactor.py "
+    bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
     hydro = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_to_bfactor.py '
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
     
     cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + out_file_name
-    print(cmd)
+    log.write(cmd+'\n')
     p = subprocess.check_output( cmd.split())
+    log.write(p+'\n')
     
     cmd = "tsp " + bfac + out + out_file_name + ' ' + out + out_file_name[:-4] + '_absE.pdb'
-    print(cmd)
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
+    log.write(p+'\n')
 
-    cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffE.pdb'
-    print(cmd)
-    p = subprocess.check_output(cmd.split())
+    if "mut" in structure:
+        cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffE.pdb'
+        log.write(cmd+'\n')
+        p = subprocess.check_output(cmd.split())
+        log.write(p+'\n')
 
     cmd = "tsp " + hydro + out +  out_file_name + ' ' + out +  out_file_name[:-4] + '_hyph.pdb'
-    print(cmd)
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
+    log.write(p+'\n')
 
     cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_hyph.pdb'
-    print(cmd)
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
 
-    cmd = "tsp " + hdiff + out + structure[:-4] + '_hyph.pdb ' + out + out_file_name[:-4] + '_hyph.pdb ' + out + out_file_name[:-4] + '_diffHP.pdb'
-    print(cmd)
-    p = subprocess.check_output(cmd.split())
+    if "mut" in structure:
+        cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffHP.pdb'
+        log.write(cmd+'\n')
+        p = subprocess.check_output(cmd.split())
+        log.write(p+'\n')
 
-    
-    # add to file listing # vielleicht auch ausserhalb?
-    with open(out + "list.txt", "a") as f:
-        f.write(out_file_name + "\n")
-
-    # delete resfile
-    # better have individual names: mut111_resfile.txt
-    #if mutations:
-    #    cmd = "tsp rm " + out + "resfile.txt"
-    #    p = subprocess.check_output(cmd.split())
-
-    print("### THREAD FINISHED ###")
+    log.write("### THREAD FINISHED ###\n")
 
         
 
@@ -175,7 +162,7 @@ def submit():
 
     # create log file
     with open(outdir + "log.txt", "w") as f:
-        f.write("submit")
+        f.write("submit\n")
         # TODO: actually log something
 
     # create list file
@@ -531,22 +518,22 @@ def alignment_from_mutations( mutations, parent, align,mutant_file):
     mutseq = ""
     parent_str = parent.split('/')[-1][:-4]
     mutant_str = mutant_file.split('/')[-1][:-4]
-    l1 = len(parent_str)
-    l2 = len(mutant_str)
-    w = open( align, 'w') 
-    w.write( 'CLUSTAL W formatted output, created by MutationExplorer\n\n')
     for c, l in chains.items():
-        curr_par = parent_str + ':' + c
-        curr_mut = mutant_str + ':' + c
+        w = open( align[:-4] + '_' + c + '.clw', 'w') 
+        w.write( 'CLUSTAL W formatted output, created by MutationExplorer\n\n')
+        curr_par = parent_str #+ ':' + c
+        curr_mut = mutant_str #+ ':' + c
+        l1 = len(curr_par)
+        l2 = len(curr_mut)
         count = 0
         if l1 < l2:
-            curr_par = curr_par.ljust(l2+2)
-            maxl = l2+2
+            curr_par = curr_par.ljust(l2)
+            maxl = l2
         elif l2 < l1:
-            curr_mut = curr_mut.ljust(l1+2)
-            maxl = l1+2
+            curr_mut = curr_mut.ljust(l1)
+            maxl = l1
         else:
-            maxl = l1+2
+            maxl = l1
         curr_par += '\t'
         curr_mut += '\t'
         curr_match = ''.rjust(maxl) + '\t'
@@ -582,7 +569,7 @@ def alignment_from_mutations( mutations, parent, align,mutant_file):
             w.write( curr_par + astr + '\n')
             w.write( curr_mut + bstr + '\n')
             w.write( curr_match + cstr + '\n\n')
-            
+        w.close()
 
 
 

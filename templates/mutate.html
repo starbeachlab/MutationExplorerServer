@@ -8,107 +8,118 @@
 </center>
 
 <br>
-<p class="center-align"><b> Select one of the following:</b></p>
+<p class="center-align"><b> Select (click on) one of the following options:</b></p>
 <br>
-<h4 class="center-align">1) Manual definition</h4>
 
 
 
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
+
   
-<div class="input-field col offset-s3 s6">
-     <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+  <div>
+    <h4 class="center-align" onclick="document.getElementById('mutation').style.display= 'flex';">1) Manual definition</h4>
+  </div>
+  
+  <div id="mutation" style="display:none;" class="input-field col offset-s3 s6">
+    <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
     <label for="chain">Enter Mutations</label>
-</div>
+  </div>
 
-<br>
+  
+  <br>
 
-<div class="col offset-s3">
-  <h4 class="center-align">2) Sequencing data</h4>
-  <div class="">
-    <div style="width: 100%; display: flex; justify-content: center">
-      <div class="file-field input-field" style="width: 100%">
-	<div class="btn" style="width: 100%">
-	  <span>Upload a VCF file</span>
-	  <input type="file" name="vcf">
+  
+  <div class="col offset-s3">
+    <div class="center-align" style="width:100%">
+      <h4  onclick="document.getElementById('vcf').style.display= 'flex';" >2) Sequencing data</h4>
+      <div class="">
+	<div id="vcf" style="width: 100%; display: none; justify-content: center">
+	  <div class="file-field input-field" style="width: 100%">
+	    <div class="btn" style="width: 100%">
+	      <span>Upload a VCF file</span>
+	      <input type="file" name="vcf">
+	    </div>
+	  </div>
 	</div>
       </div>
     </div>
   </div>
-</div>
 
+  <br>
+  
 
-<br>
-
-
-<div class="col offset-s3">
-  <h4 class="center-align">3) Sequence alignment</h4>
-  <div class="">
-    <div style="width: 100%; display: flex; justify-content: center">
-      <div class="file-field input-field" style="width: 100%">
-	<div class="btn" style="width: 100%">
-	  <span>Upload a ClustalW file</span>
-	  <input type="file" name="clustal">
+  <div class="col offset-s3">
+    <div>
+      <h4 class="center-align" onclick="document.getElementById('clustal').style.display= 'flex';">3) Sequence alignment</h4>
+    </div>
+    <div class="">
+      <div id="clustal" style="width: 100%; display: none; justify-content: center">
+	<div class="file-field input-field" style="width: 100%">
+	  <div class="btn" style="width: 100%">
+	    <span>Upload a ClustalW file</span>
+	    <input type="file" name="clustal">
+	  </div>
 	</div>
       </div>
     </div>
+    <div style="color:red;"><b> TODO: Assign seq ID within alignment with chain in PDB! '+'add alignment</b> </div>
   </div>
-<div style="color:red;"><b> TODO: Assign seq ID within alignment with chain in PDB!</b> </div>
-</div>
   
-<br>
+  <br>
 
-<div class="col offset-s3  s6">
-  <h4 class="center-align">4) Target sequence</h4>
-  <div class="">
-    <div style="width: 100%; display: flex; justify-content: center">
-      <div class="file-field input-field" style="width: 100%">
-        <div class="btn" style="width: 100%">
-          <span>Upload a FASTA file</span>
-          <input type="file" name="fasta">
-        </div>
+  <div class="col offset-s3  s6">
+    <div>
+      <h4 class="center-align" onclick="document.getElementById('target').style.display= 'flex';">4) Target sequence</h4>
+    </div>
+    <div class="">
+      <div id="target" style="display:none;">
+	<div style="width: 100%; display: flex; justify-content: center">
+	  <div class="file-field input-field" style="width: 100%">
+            <div class="btn" style="width: 100%">
+              <span>Upload a FASTA file</span>
+              <input type="file" name="fasta">
+            </div>
+	  </div>
+	</div>
+      
+	<div class="input-field">
+	  <input id="chain" type="text" name="sequence" class="validate" placeholder="ABBA...">
+	  <label for="chain">Enter a sequence</label>
+	</div>
+	
+	<div class="input-field">
+	  <input id="chain" type="text" name="uniprot" class="validate" placeholder="Uniprot ID">
+	  <label for="chain">Load sequence from UniProt</label>
+	</div>
+	<div style="color:red;"><b> TODO: Assign sequence with chain in PDB!</b> </div>
       </div>
     </div>
   </div>
   
-  <div class="input-field">
-    <input id="chain" type="text" name="sequence" class="validate" placeholder="ABBA...">
-    <label for="chain">Enter a sequence</label>
+  <div class="col offset-s3  s6">
+    <h4 class="center-align" onclick="document.getElementById('opt').style.display= 'flex';">Optional information</h4>
   </div>
+  <div class="">
+  <div id="opt" style="display:none;">
+    <div class="input-field col offset-s3 s6">
+      <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
+      <label for="name">Name mutated structure</label>
+    </div>
   
-  <div class="input-field">
-    <input id="chain" type="text" name="uniprot" class="validate" placeholder="Uniprot ID">
-    <label for="chain">Load sequence from UniProt</label>
+    <div class="input-field col offset-s3 s6">
+      <input id="chain" type="text" name="email" class="validate" placeholder="(optional)">
+      <label for="chain">Email for notification</label>
+    </div>
   </div>
-<div style="color:red;"><b> TODO: Assign sequence with chain in PDB!</b> </div>
-</div>
-
-<div class="col offset-s3  s6">
-  <h4 class="center-align">Optional information</h4>
-</div>
-
-
-<div class="input-field col offset-s3 s6">
-    <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-    <label for="name">Name mutated structure</label>
-</div>
-
-<div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="email" class="validate" placeholder="(optional)">
-    <label for="chain">Email for notification</label>
-</div>
-
-
-<div class="col offset-s3 s6 center-align">
+  </div>
+  <div class="col offset-s3 s6 center-align">
     <span id="error-msg">{{error}}</span>
-</div>
-
-<div class="col offset-s3 s6 center-align">
-<input id="submit-btn" type="submit" value="submit" class="btn">
-</div>
-
-
-
+  </div>
+  
+  <div class="col offset-s3 s6 center-align">
+    <input id="submit-btn" type="submit" value="submit" class="btn">
+  </div>
+ 
 </form>
 
 <br>

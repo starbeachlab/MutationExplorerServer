@@ -37,7 +37,8 @@ with open( sys.argv[1] ) as r:
                 nr = len(cols)
                 ind = cols.index( 'total')
             elif ind > -1 and len(l) > 10 and l[0] != '#' and l[:4] != 'pose' and l[:7] != 'weights':
-                vals_orig.append( [ l[:3] , float( l.split()[ind]) ] )
+                cols = l.split()
+                vals_orig.append( [ cols[0] , float( cols[ind]) ] )
 
 pdb = []
 lines_mut = []
@@ -61,12 +62,13 @@ with open( sys.argv[2] ) as r:
                 nr = len(cols)
                 ind = cols.index( 'total')
             elif ind > -1 and len(l) > 10 and l[0] != '#' and l[:4] != 'pose' and l[:7] != 'weights':
-                vals_mut.append( [ l[:3] , float( l.split()[ind]) ] )
+                cols = l.split()
+                vals_mut.append( [ cols[0] , float( cols[ind]) ] )
 
 vals = []
 for a,b in zip(vals_mut, vals_orig):
     if a[0] != b[0]:
-        print( 'ERROR:', a[0], b[0] )
+        print( 'mutated:', a[0], b[0] )
     vals.append( [a[0], a[1] - b[1]] )
 
             
@@ -85,7 +87,7 @@ with open( sys.argv[3], 'w') as w:
                 prev_chain = ch
                 mid += 1
                 v = vals[mid]
-                if v[0] != residue_name(l):
+                if residue_name(l) not in v[0]:
                     print( 'ERROR: resnames do not match!: ', v[0], residue_name(l) , 'at', mid )
                     exit(1)
                 x = '{:6.3f}'.format(v[1])

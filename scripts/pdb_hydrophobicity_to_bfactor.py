@@ -29,31 +29,17 @@ def hydrophobicity( residue):
     print( 'WARNING unknown residue type:', residue)
     return 0.0
 
-if len(sys.argv) < 4:
-    print('USAGE:',sys.argv[0],'in:ORIG.pdb in:MUTANT.pdb out:MUTANT_DIFF.pdb')
+if len(sys.argv) < 3:
+    print( 'USAGE:', sys.argv[0], 'ORIG.pdb HYDROPH.pdb')
     exit(1)
 
-orig = []
-with open( sys.argv[1] ) as r:
-    for l in r:
-        if 'ATOM' == l[:4] or 'HETATM' == l[:6]:
-            orig.append(l)
-mut = []
-with open( sys.argv[2] ) as r:
-    for l in r:
-        if 'ATOM' == l[:4] or 'HETATM' == l[:6]:
-            mut.append(l)
-
-if len(orig) != len(mut):
-    print( "ERROR, nr of lines do not match:", len(orig), len(mut))
-    exit(1)
-    
-    
-with open( sys.argv[3], 'w') as w:
-    for o,m in zip(orig,mut):
-        a = residue_name(o)
-        b = residue_name(m)
-        x = '{:6.3f}'.format( (hydrophobicity(a) - hydrophobicity(b) ) )
-        if len(x) > 6:
-            x = x[:6]
-        w.write( m[:60] + str(x) + m[66:] )
+with open( sys.argv[2], 'w') as w:
+    with open( sys.argv[1] ) as r:
+        for l in r:
+            if 'ATOM' == l[:4] or 'HETATM' == l[:6]:
+                x = '{:6.3f}'.format(hydrophobicity( residue_name(l) ) )
+                if len(x) > 6:
+                    x = x[:6]
+                w.write( l[:60] + str(x) + l[66:] )
+            else:
+                w.write(l)
