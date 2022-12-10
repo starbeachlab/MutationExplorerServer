@@ -4,29 +4,285 @@
 
 <center>
   <br>
-  <h2>Define mutations </h2>
+  <h3>Define mutations </h3>
 </center>
 
+<p class="center-align"><b> Select (click on) one or more of the following options:</b></p>
 <br>
-<p class="center-align"><b> Select (click on) one of the following options:</b></p>
+
+
+<div class="row">
+ <form id="submitForm" method="POST" enctype="multipart/form-data" class="col s12"> 
+
+   <ul class="collapsible s12">
+
+    <li>
+      <div class="collapsible-header grey lighten-3">
+	<h5 class="center-align"> Manual mutation definition</h5>
+      </div>
+      <div class="collapsible-body">
+	<br>
+	<div class="row">
+	  <div id="mutation" class="input-field col s12">
+	    <input type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" required>
+	    <label for="mutations">Enter comma separated list of mutations</label>
+	  </div>
+	</div>
+	<br>
+      </div>
+    </li>
+
+    <li>
+      <div class="collapsible-header grey lighten-4">
+	<h5 class="center-align"> Sequence alignment </h5>
+      </div>
+      <div class="collapsible-body">
+	<br>
+	<div class="row center-align"> <span> One of the sequences in the alignment has to match exactly one sequence in your PDB.</span></div>
+	
+	<div class="row">
+	  <div class="col s12">
+	    <div class="btn">
+	      <span>Upload a ClustalW file</span>
+	      <input type="file" name="clustal1">
+	    </div>
+	  </div>
+	</div>
+	<br>
+	<div id="msgclw"> <span> <i class="material-icons medium" onclick="document.getElementById('addclw').style.display= 'grid';document.getElementById('msgclw').style.display='none';">add_circle</i> add 2 more alignment upload blocks</span></div>
+	<br>
+	<div id="addclw" style="display:none;">
+	  <div class="row">
+	    <div class="col s12">
+	      <div class="btn">
+		<span>Upload a ClustalW file</span>
+		<input type="file" name="clustal2">
+	      </div>
+	    </div>
+	  </div>
+	  
+	  <br>
+
+	  <div class="row">
+	    <div class="col s12">
+	      <div class="btn">
+		<span>Upload a ClustalW file</span>
+		<input type="file" name="clustal3">
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	  
+	<br>
+	
+      </div>
+    </li>
+
+    
+    <li>
+      <div class="collapsible-header grey lighten-3">
+	<h5 class="center-align"> Target sequence</h5>
+      </div>
+      <div class="collapsible-body">
+ 	<br>
+	<div class="row center-align">
+	  <span>You have to assign target sequences to chains in your PDB file. <br> There are three ways to upload your sequence(s).</span>
+	</div>
+	<br>
+	<div class="row">
+	  <div class="col s3">
+	    <div class="input-field">
+	      <input id="chainF1" type="text" name="chainF1" class="validate" >
+	      <label for="chainF1">Chain</label>
+	    </div>
+	  </div>
+	  <div class="col s9">
+            <div class="btn">
+              <span>Upload a FASTA file</span>
+              <input type="file" name="fasta1">
+            </div>
+	  </div>
+	</div>
+	<br>
+	
+	<div class="row">
+	  <div class="col s3">
+	    <div class="input-field">
+	      <input id="chainS1" type="text" name="chainS1" class="validate" >
+	      <label for="chainS1">Chain</label>
+	    </div>
+	  </div>
+	  <div class="col s9">
+	    <div class="input-field">
+	      <input id="seq1" type="text" name="sequence1" class="validate" placeholder="ABBA...ACDC">
+	      <label for="seq1"> Paste a sequence</label>
+	    </div>
+	  </div>
+	</div>
+ 	<br>
+	<div class="row">
+	  <div class="col s3">
+	    <div class="input-field">
+	      <input id="chainU1" type="text" name="chainU1" class="validate" >
+	      <label for="chainU1">Chain</label>
+	    </div>
+	  </div>
+	  <div class="col s9">
+	    <div class="input-field">
+	      <input id="U1" type="text" name="uniprot1" class="validate" placeholder="Uniprot ID">
+	      <label for="U1">Load sequence from UniProt</label>
+	    </div>
+	  </div>
+	</div>
+ 	<br>
+	<div id="msg"> <span> <i class="material-icons medium" onclick="document.getElementById('addseq').style.display= 'grid';document.getElementById('msg').style.display='none';">add_circle</i> add 2 more sequence upload blocks</span></div>
+	<br>
+
+
+	<div id="addseq" style="display:none;">
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainF2" type="text" name="chainF2" class="validate" >
+		<label for="chainF2">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+              <div class="btn">
+		<span>Upload a FASTA file</span>
+		<input type="file" name="fasta2">
+              </div>
+	    </div>
+	  </div>
+	  <br>
+	  
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainS2" type="text" name="chainS2" class="validate" >
+		<label for="chainS2">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+	      <div class="input-field">
+		<input id="seq2" type="text" name="sequence2" class="validate" placeholder="ABBA...ACDC">
+		<label for="seq2"> Paste a sequence</label>
+	      </div>
+	    </div>
+	  </div>
+ 	  <br>
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainU2" type="text" name="chainU2" class="validate" >
+		<label for="chainU2">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+	      <div class="input-field">
+		<input id="U2" type="text" name="uniprot2" class="validate" placeholder="Uniprot ID">
+		<label for="U2">Load sequence from UniProt</label>
+	      </div>
+	    </div>
+	  </div>
+
+
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainF3" type="text" name="chainF3" class="validate" >
+		<label for="chainF3">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+              <div class="btn">
+		<span>Upload a FASTA file</span>
+		<input type="file" name="fasta3">
+              </div>
+	    </div>
+	  </div>
+	  <br>
+	  
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainS3" type="text" name="chainS3" class="validate" >
+		<label for="chainS3">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+	      <div class="input-field">
+		<input id="seq3" type="text" name="sequence3" class="validate" placeholder="ABBA...ACDC">
+		<label for="seq3"> Paste a sequence</label>
+	      </div>
+	    </div>
+	  </div>
+ 	  <br>
+	  <div class="row">
+	    <div class="col s3">
+	      <div class="input-field">
+		<input id="chainU3" type="text" name="chainU3" class="validate" >
+		<label for="chainU3">Chain</label>
+	      </div>
+	    </div>
+	    <div class="col s9">
+	      <div class="input-field">
+		<input id="U3" type="text" name="uniprot3" class="validate" placeholder="Uniprot ID">
+		<label for="U3">Load sequence from UniProt</label>
+	      </div>
+	    </div>
+	  </div>
+
+	</div>
+	
+      </div>
+    </li>
+    
+    <li>
+      <div class="collapsible-header grey lighten-4">
+	<h5 class="center-align"> Sequencing data (VCF) </h5>
+      </div>
+      <div class="collapsible-body red">
+      </div>
+    </li>
+    
+   </ul>
+   <br>
+  
+   <div class="col offset-s3 s6 center-align">
+     <input id="submit-btn" type="submit" value="submit" class="btn">
+   </div>
+<br>
+<br>
+ 
+ </form>
+</div>
+
+<br>
+<br>
+<div style="width:100%;">
+  <h5> Link to results </h5>
+</div>
+<p>Copy this link for later to access your results: <br>
+  https://proteinformatics.uni-leipzig.de{{url_for('explore',tag=tag)}}
+</p>
+
+<h5> Rough time estimate </h5>
+<ul>
+  <li> Initial basic minimization: 1 min </li>
+  <li> Mutation and basic minimization: 2 min  </li>
+</ul>
+<p> Details can be found in the FAQs </p>
+
+<br>
+<br>
+<br>
+<br>
+<br>
 <br>
 
-
-
-<form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
-
-  
-  <div>
-    <h4 class="center-align" onclick="document.getElementById('mutation').style.display= 'flex';">1) Manual definition</h4>
-  </div>
-  
-  <div id="mutation" style="display:none;" class="input-field col offset-s3 s6">
-    <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
-    <label for="chain">Enter Mutations</label>
-  </div>
-
-  
-  <br>
+<!---
+    <br>
 
   
   <div class="col offset-s3">
@@ -141,6 +397,6 @@
 <br>
 <br>
 <br>
-
-
+--->
 {% endblock %}
+

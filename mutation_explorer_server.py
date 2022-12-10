@@ -188,33 +188,45 @@ def mutate(tag):
     if request.method == 'GET':
         return render_template("mutate.html", tag = tag, error = "")
 
+    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
+    w = open( outdir + 'log.txt', 'a')
     ###  get form values
-    mutations = request.form['mutations'].strip().split(',')
+    mutations = request.form['mutations'].strip().replace( ' ','').split(',')
+    for m in mutations:
+        w.write( m + '\n')
+    w.write( '?\n')
     vcf = request.files['vcf']
     # allow multiple for following
-    clustal = request.files['clustal']
-    fasta = request.files['fasta']
-    fasta_chain = request.files['fasta_chain']
-    seq_input = request.form['sequence'].strip()
-    seq_chain = request.files['seq_chain']
-    uniprot = request.form['uniprot'].strip()
-    uniprot_chain = request.files['uniprot_chain']
+    clustal1 = request.files['clustal1']
+    w.write( 'clw: ' + clustal1.filename + '\n')
+    fasta1 = request.files['fasta1']
+    w.write('fasta1: '+ fasta1.filename + '\n')
+    fasta_chain1 = request.form['chainF1']
+    w.write( 'fasta1 chain: ' + fasta_chain1 + '\n')
+    seq_input1 = request.form['sequence1'].strip()
+    w.write( "seq1 " + seq_input1+ '\n')
+    seq_chain1 = request.form['chainS1']
+    w.write( "chain: " + seq_chain1+ '\n')
+    uniprot1 = request.form['uniprot1'].strip()
+    w.write( "uniprot1: " + uniprot1+ '\n')
+    uniprot_chain1 = request.form['chainU1']
+    w.write( "chain: " +  uniprot_chain1+ '\n')
     #
-    mail = request.form['email'].strip()
-    name = request.form['name'].strip() + ".pdb"  
-    if name == ".pdb":
-        name = name_mutation("mut_0.pdb", tag)
+    #    mail = request.form['email'].strip()
+    #    name = request.form['name'].strip() + ".pdb"  
+    #    if name == ".pdb":
 
+    name = name_mutation("mut_0.pdb", tag)
+    w.write( name + '\n')
     print(name)
 
-    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
     parent =   "mut_0.pdb"
     resfile =  "mut_0_1_resfile.txt"
     align =    "mut_0_1.clw"  # align with parent
     mutfile =  "info/mut_0_1.txt"  # parent and mutations
     
     ###  return error message if no mutations given
-    if len(mutations) == 0 and not vcf and not clustal and not fasta and not seq_input and not uniprot:
+    if len(mutations) == 0 and not vcf and not clustal1 and not fasta1 and not seq_input1 and not uniprot1:
         return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
 
     ### wait for parent to exist:
@@ -226,18 +238,18 @@ def mutate(tag):
         vcf.safe( vcf_file)
         add_mutations_from_vcf( mutations, vcf_file, outdir + parent)        
     if clustal.filename != "":
-        clustal_file = os.path.join( outdir , clustal.filename )
+        clustal_file = os.path.join( outdir , clustal1.filename )
         clustal.safe( clustal_file)
         add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
     if fasta.filename != "":
-        fasta_file =  outdir + fasta.filename
+        fasta_file =  outdir + fasta1.filename
         fasta.safe(fasta_file)
         target = seq_from_fasta( fasta_file)
         add_mutations_from_sequence( mutations, target, fasta_chain, outdir+parent)
-    if seq_input != "":
+    if seq_input1 != "":
         print()
         add_mutations_from_sequence( mutations, seq_input, fasta_chain, outdir+parent)
-    if uniprot != "":
+    if uniprot1 != "":
         print()
         target = seq_from_fasta( fasta_file)
         add_mutations_from_sequence( mutations, target, outdir + parent)
