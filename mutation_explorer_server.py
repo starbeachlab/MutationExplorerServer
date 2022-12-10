@@ -196,6 +196,7 @@ def mutate(tag):
         w.write( m + '\n')
     w.write( '?\n')
     vcf = request.files['vcf']
+    w.write( 'vcf: ' + vcf.filename + '\n')
     # allow multiple for following
     clustal1 = request.files['clustal1']
     w.write( 'clw: ' + clustal1.filename + '\n')
@@ -237,13 +238,13 @@ def mutate(tag):
         vcf_file = os.path.join( outdir,  vcf.filename )
         vcf.safe( vcf_file)
         add_mutations_from_vcf( mutations, vcf_file, outdir + parent)        
-    if clustal.filename != "":
+    if clustal1.filename != "":
         clustal_file = os.path.join( outdir , clustal1.filename )
-        clustal.safe( clustal_file)
+        clustal1.safe( clustal_file)
         add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
-    if fasta.filename != "":
+    if fasta1.filename != "":
         fasta_file =  outdir + fasta1.filename
-        fasta.safe(fasta_file)
+        fasta1.safe(fasta_file)
         target = seq_from_fasta( fasta_file)
         add_mutations_from_sequence( mutations, target, fasta_chain, outdir+parent)
     if seq_input1 != "":
