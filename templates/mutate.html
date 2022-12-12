@@ -10,6 +10,9 @@
 <p class="center-align"><b> Select (click on) one or more of the following options:</b></p>
 <br>
 
+<div class="center-align"><span id="error-msg" style="color:red;"> {{error}} </span> </div>
+<br>
+<br>
 
 <div class="row">
  <form id="submitForm" method="POST" enctype="multipart/form-data" class="col s12"> 
@@ -24,7 +27,7 @@
 	<br>
 	<div class="row">
 	  <div id="mutation" class="input-field col s12">
-	    <input type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" required>
+	    <input type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" >
 	    <label for="mutations">Enter comma separated list of mutations</label>
 	  </div>
 	</div>
@@ -44,7 +47,7 @@
 	  <div class="col s12">
 	    <div class="btn">
 	      <span>Upload a ClustalW file</span>
-	      <input type="file" name="clustal1">
+	      <input type="file" name="clustal1" class="validate">
 	    </div>
 	  </div>
 	</div>
@@ -276,8 +279,8 @@
 <div style="width:100%;">
   <h5> Link to results </h5>
 </div>
-<p>Copy this link for later to access your results: <br>
-  https://proteinformatics.uni-leipzig.de{{url_for('explore',tag=tag)}}
+<p>Copy this link for later to access your results <br>(not available before running the job): <br>
+  https://proteinformatics.uni-leipzig.de{{url_for('explore',tag=tag,filename='mut_0_1.pdb')}}
 </p>
 
 <h5> Rough time estimate </h5>
@@ -294,112 +297,6 @@
 <br>
 <br>
 
-<!---
-    <br>
 
-  
-  <div class="col offset-s3">
-    <div class="center-align" style="width:100%">
-      <h4  onclick="document.getElementById('vcf').style.display= 'flex';" >2) Sequencing data</h4>
-    </div>
-  </div>
-
-  <br>
-  
-
-  <div class="col offset-s3">
-    <div>
-      <h4 class="center-align" onclick="document.getElementById('clustal').style.display= 'flex';">3) Sequence alignment</h4>
-    </div>
-    <div class="">
-      <div id="clustal" style="width: 100%; display: none; justify-content: center">
-	<div class="file-field input-field" style="width: 100%">
-	  <div class="btn" style="width: 100%">
-	    <span>Upload a ClustalW file</span>
-	    <input type="file" name="clustal">
-	  </div>
-	</div>
-      </div>
-    </div>
-    <div style="color:red;"><b> TODO: Assign seq ID within alignment with chain in PDB! '+'add alignment</b> </div>
-  </div>
-  
-  <br>
-
-  <div class="col offset-s3  s6">
-    <div>
-      <h4 class="center-align" onclick="document.getElementById('target').style.display= 'flex';">4) Target sequence</h4>
-    </div>
-    <div class="">
-      <div id="target" style="display:none;">
-	<div style="width: 100%; display: flex; justify-content: center">
-	  <div class="file-field input-field" style="width: 100%">
-            <div class="btn" style="width: 100%">
-              <span>Upload a FASTA file</span>
-              <input type="file" name="fasta">
-            </div>
-	  </div>
-	</div>
-      
-	<div class="input-field">
-	  <input id="chain" type="text" name="sequence" class="validate" placeholder="ABBA...">
-	  <label for="chain">Enter a sequence</label>
-	</div>
-	
-	<div class="input-field">
-	  <input id="chain" type="text" name="uniprot" class="validate" placeholder="Uniprot ID">
-	  <label for="chain">Load sequence from UniProt</label>
-	</div>
-	<div style="color:red;"><b> TODO: Assign sequence with chain in PDB!</b> </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col offset-s3  s6">
-    <h4 class="center-align" onclick="document.getElementById('opt').style.display= 'flex';">Optional information</h4>
-  </div>
-  <div class="">
-  <div id="opt" style="display:none;">
-    <div class="input-field col offset-s3 s6">
-      <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-      <label for="name">Name mutated structure</label>
-    </div>
-  
-    <div class="input-field col offset-s3 s6">
-      <input id="chain" type="text" name="email" class="validate" placeholder="(optional)">
-      <label for="chain">Email for notification</label>
-    </div>
-  </div>
-  </div>
-  <div class="col offset-s3 s6 center-align">
-    <span id="error-msg">{{error}}</span>
-  </div>
-  
-  <div class="col offset-s3 s6 center-align">
-    <input id="submit-btn" type="submit" value="submit" class="btn">
-  </div>
- 
-</form>
-
-<br>
-<br>
-<h4> Link to results </h4>
-
-<p>Copy this link for later access to your results: <br>
-{{url_for('mutate',tag=tag)}}
-</p>
-
-<h4> Rough time estimate </h4>
-  <ul>
-    <li> Initial basic minimization: 1 min </li>
-    <li> Mutation and basic minimization: 2 min  </li>
-    <li> VCF processing:  5 min  </li>
-  </ul>
-<p> Details can be found in the FAQs </p>
-
-<br>
-<br>
-<br>
---->
 {% endblock %}
 

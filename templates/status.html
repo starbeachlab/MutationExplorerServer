@@ -42,7 +42,7 @@
         $.getJSON("{{url_for('get_status', tag = tag, filename = filename)}}", function(data) {
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
-                    window.location.href = "{{url_for('explore', tag = tag)}}"
+                    window.location.href = "{{url_for('explore', tag = tag, filename = filename)}}"
                 } else {
                     errorMessage("There was an error: \"" + data['message'] + "\"")
                 }

@@ -9,13 +9,25 @@
 {% block content %}
 
 <center>
-<h1>Exploration {{tag}}</h1>
+<h4>Exploration {{tag}}</h4>
 </center>
 
 <div class="row">
 
 <div class="col s3">
 
+    <div id="tree-viewer">
+        <h4 class="center-align toggle-card">Select</h4>
+        <div>
+
+            {{structures|safe}}
+
+            <div class="center-align">
+                <a id="res-download" href="{{url_for('download', tag = tag, filename = 'results' + tag + '.zip')}}" download class="btn">download all</a>
+            </div>
+    
+        </div>
+    </div>
 
 
     <div id="mutation-view">
@@ -45,18 +57,21 @@
     </div>
 
 
-    <div id="tree-viewer">
-        <h4 class="center-align toggle-card">Select</h4>
-        <div>
+    <div id="info-view">
 
-            {{structures|safe}}
+      <span>Parent: {{parent}} </span>
 
-            <div class="center-align">
-                <a id="res-download" href="{{url_for('download', tag = tag, filename = 'results' + tag + '.zip')}}" download class="btn">download all</a>
-            </div>
-    
-        </div>
+      <br>
+
+      <span>Mutations: {{mutations}} </span>
+
+      <br>
+      <br>
+      <br>
+      <br>
+      
     </div>
+
 </div>
 
 <div class="col s9">

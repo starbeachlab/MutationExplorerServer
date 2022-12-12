@@ -4,6 +4,7 @@ import threading
 import requests
 import glob
 from collections import defaultdict
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -17,6 +18,12 @@ app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_gamma/script
 def index():
     return render_template("home.html")
 
+
+def secure_str( string):
+    string = string.replace('.','').replace('/','').replace('*','').replace('?','').replace('!','').replace( ' ', '')
+    if len(string) == 0:
+        print( "WARNING:", __name__, 'empty string after cleanup!')
+    return string
 
 def download_file(url, file_path):
         req = requests.get(url)
@@ -110,17 +117,17 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
         p = subprocess.check_output(cmd.split())
         log.write(p+'\n')
 
-    cmd = "tsp " + hydro + out +  out_file_name + ' ' + out +  out_file_name[:-4] + '_hyph.pdb'
+    cmd = "tsp " + hydro + out +  out_file_name + ' ' + out +  out_file_name[:-4] + '_HyPh.pdb'
     log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
     log.write(p+'\n')
 
-    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_hyph.pdb'
+    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb'
     log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
 
     if "mut" in structure:
-        cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffHP.pdb'
+        cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffHyPh.pdb'
         log.write(cmd+'\n')
         p = subprocess.check_output(cmd.split())
         log.write(p+'\n')
@@ -145,8 +152,8 @@ def submit():
 
     # get form values
     upload = request.files['pdbfile']
-    pdb = request.form['pdbid'].strip()
-    af = request.form['alphafoldid'].strip()
+    pdb = secure_filename( request.form['pdbid'].strip() )
+    af = secure_filename( request.form['alphafoldid'].strip() )
 
     # save file
     file_path = outdir + "structure.pdb"    
@@ -189,46 +196,67 @@ def mutate(tag):
         return render_template("mutate.html", tag = tag, error = "")
 
     outdir =   app.config['USER_DATA_DIR'] + tag + "/"
-    w = open( outdir + 'log.txt', 'a')
+    #w = open( outdir + 'log.txt', 'a')
     ###  get form values
     mutations = request.form['mutations'].strip().replace( ' ','').split(',')
-    for m in mutations:
-        w.write( m + '\n')
-    w.write( '?\n')
+    if len(mutations)==1 and mutations[0] == '':
+        print(__name__, 'reset')
+        mutations = []
+    #for m in mutations:
+    #    w.write( m + '\n')
+    #w.write( '?\n')
     vcf = request.files['vcf']
-    w.write( 'vcf: ' + vcf.filename + '\n')
+    #w.write( 'vcf: ' + vcf.filename + '\n')
     # allow multiple for following
     clustal1 = request.files['clustal1']
-    w.write( 'clw: ' + clustal1.filename + '\n')
+    clustal2 = request.files['clustal2']
+    clustal3 = request.files['clustal3']
+    #w.write( 'clw: ' + clustal1.filename + '\n')
     fasta1 = request.files['fasta1']
-    w.write('fasta1: '+ fasta1.filename + '\n')
-    fasta_chain1 = request.form['chainF1']
-    w.write( 'fasta1 chain: ' + fasta_chain1 + '\n')
+    fasta2 = request.files['fasta2']
+    fasta3 = request.files['fasta3']
+    #w.write('fasta1: '+ fasta1.filename + '\n')
+    chainF1 = request.form['chainF1']
+    chainF2 = request.form['chainF2']
+    chainF3 = request.form['chainF3']
+    #w.write( 'fasta1 chain: ' + fasta_chain1 + '\n')
     seq_input1 = request.form['sequence1'].strip()
-    w.write( "seq1 " + seq_input1+ '\n')
-    seq_chain1 = request.form['chainS1']
-    w.write( "chain: " + seq_chain1+ '\n')
+    seq_input2 = request.form['sequence2'].strip()
+    seq_input3 = request.form['sequence3'].strip()
+    #w.write( "seq1 " + seq_input1+ '\n')
+    chainS1 = request.form['chainS1']
+    chainS2 = request.form['chainS2']
+    chainS3 = request.form['chainS3']
+    #w.write( "chain: " + seq_chain1+ '\n')
     uniprot1 = request.form['uniprot1'].strip()
-    w.write( "uniprot1: " + uniprot1+ '\n')
-    uniprot_chain1 = request.form['chainU1']
-    w.write( "chain: " +  uniprot_chain1+ '\n')
+    uniprot2 = request.form['uniprot2'].strip()
+    uniprot3 = request.form['uniprot3'].strip()
+    #w.write( "uniprot1: " + uniprot1+ '\n')
+    chainU1 = request.form['chainU1']
+    chainU2 = request.form['chainU2']
+    chainU3 = request.form['chainU3']
+    
+    #w.write( "chain: " +  uniprot_chain1+ '\n')
     #
     #    mail = request.form['email'].strip()
     #    name = request.form['name'].strip() + ".pdb"  
     #    if name == ".pdb":
 
     name = name_mutation("mut_0.pdb", tag)
-    w.write( name + '\n')
+    #w.write( name + '\n')
     print(name)
 
     parent =   "mut_0.pdb"
-    resfile =  "mut_0_1_resfile.txt"
-    align =    "mut_0_1.clw"  # align with parent
-    mutfile =  "info/mut_0_1.txt"  # parent and mutations
+    resfile =  name[:-4] + "_resfile.txt"
+    align =    name[:-4] + ".clw"  # align with parent
+    mutfile =  "info/" + name[:-4] + ".txt"  # parent and mutations
     
     ###  return error message if no mutations given
-    if len(mutations) == 0 and not vcf and not clustal1 and not fasta1 and not seq_input1 and not uniprot1:
-        return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+    if len(mutations) == 0 and vcf.filename == '' and  clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
+        print( 'no mutations defined')
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation") # nutzlos, da javascript das gar nicht durchlaesst ohne eingabe 
+    else:
+        print( 'mutations defined')
 
     ### wait for parent to exist:
     wait( outdir + parent)
@@ -236,25 +264,70 @@ def mutate(tag):
     ###  case separation
     if vcf.filename != "":
         vcf_file = os.path.join( outdir,  vcf.filename )
-        vcf.safe( vcf_file)
+        vcf.save( vcf_file)
         add_mutations_from_vcf( mutations, vcf_file, outdir + parent)        
     if clustal1.filename != "":
         clustal_file = os.path.join( outdir , clustal1.filename )
-        clustal1.safe( clustal_file)
+        clustal1.save( clustal_file)
         add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
-    if fasta1.filename != "":
+    if clustal2.filename != "":
+        clustal_file = os.path.join( outdir , clustal2.filename )
+        clustal2.save( clustal_file)
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    if clustal3.filename != "":
+        clustal_file = os.path.join( outdir , clustal3.filename )
+        clustal3.save( clustal_file)
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    if fasta1.filename != "" and chainF1 != "":
+        secure_str(chainF1)
+        chainF1 = chainF1[0]
         fasta_file =  outdir + fasta1.filename
-        fasta1.safe(fasta_file)
+        fasta1.save(fasta_file)
         target = seq_from_fasta( fasta_file)
-        add_mutations_from_sequence( mutations, target, fasta_chain, outdir+parent)
-    if seq_input1 != "":
-        print()
-        add_mutations_from_sequence( mutations, seq_input, fasta_chain, outdir+parent)
-    if uniprot1 != "":
-        print()
+        add_mutations_from_sequence( mutations, target, chainF1, outdir+parent)
+    if fasta2.filename != "" and chainF2 != "":
+        secure_str(chainF2)
+        chainF2 = chainF2[0]
+        fasta_file =  outdir + fasta2.filename
+        fasta2.save(fasta_file)
         target = seq_from_fasta( fasta_file)
-        add_mutations_from_sequence( mutations, target, outdir + parent)
-        
+        add_mutations_from_sequence( mutations, target, chainF2, outdir+parent)
+    if fasta3.filename != "" and chainF3 != "":
+        secure_str(chainF3)
+        chainF3 = chainF3[0]
+        fasta_file =  outdir + fasta3.filename
+        fasta3.save(fasta_file)
+        target = seq_from_fasta( fasta_file)
+        add_mutations_from_sequence( mutations, target, chainF3, outdir+parent)
+    if seq_input1 != "" and chainS1 != "":
+        secure_str( chainS1)
+        chainS1 = chainS1[0]
+        secure_str( seq_input1 )
+        add_mutations_from_sequence( mutations, seq_input1, chainS1, "seq1", outdir+parent)
+    if seq_input2 != "" and chainS2 != "":
+        secure_str( seq_input2 )
+        chainS2 = chainS2[0]
+        add_mutations_from_sequence( mutations, seq_input2, chainS2, "seq2", outdir+parent)
+    if seq_input3 != "" and chainS3 != "":
+        secure_str( seq_input3 )
+        chainS3 = chainS3[0]
+        add_mutations_from_sequence( mutations, seq_input3, chainS3, "seq3", outdir+parent)
+    if uniprot1 != "" and chainU1 != '':
+        uni_file = outdir + uniprot1
+        download_uniprot( uniprot1, uni_file)
+        target = seq_from_fasta( uni_file)
+        add_mutations_from_sequence( mutations, target, chainU1, outdir + parent)
+    if uniprot2 != "" and chainU2 != '':
+        uni_file = outdir + uniprot2
+        download_uniprot( uniprot2, uni_file)
+        target = seq_from_fasta( uni_file)
+        add_mutations_from_sequence( mutations, target, chainU2, outdir + parent)
+    if uniprot3 != "" and chainU3 != '':
+        uni_file = outdir + uniprot3
+        download_uniprot( uniprot3, uni_file)
+        target = seq_from_fasta( uni_file)
+        add_mutations_from_sequence( mutations, target, chainU3, outdir + parent)
+    print(__name__, 'total number of mutations:', len(mutations))
     if len(mutations) != 0:
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
@@ -373,7 +446,7 @@ def get_status(tag, filename):
     done = os.path.isfile(dirname)
     status = "done"
     msg = ""
-    print( 'get_status', dirname, str(done))
+    #print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
 
@@ -388,21 +461,28 @@ def build_list(d):
         link = "<a id='" + ke + "' href='' class='structures'>" + ke + "</a><br>"
         if d[ke] != {}:
             s += "<li><i class='toggle material-icons tiny rot'>play_arrow</i>" + link + "</li>"
-            s += "<ul class='browser-default non' style='list-style-type: none'>" + build_list(d[ke]) + "</ul>"
+            s += "<ul class='browser-default' style='list-style-type: none'>" + build_list(d[ke]) + "</ul>"
         else:
             s += "<li><i class='material-icons tiny grey-text'>play_arrow</i>" + link + "</li>"
 
     return s
 
 
-@app.route('/explore/<tag>', methods=['GET', 'POST'])
-def explore(tag):
+@app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
+def explore(tag,filename):
     if request.method == 'GET':
         mut_tree = build_mutation_tree(tag, "-")
         print('explore::tree', mut_tree)
         structures = "<ul>" + build_list(mut_tree) + "</ul>"
         print('explore::tree:', structures)
-        return render_template("explore.html", tag = tag, structures = structures)
+        parent = ""
+        mutations = ""
+        with open( app.config['USER_DATA_DIR'] + tag + "/info/" + filename[:-4] + ".txt") as r:
+            parent = r.readline().strip()
+            mutations += r.readline().strip()
+            for l in r:
+                mutations += ',' + l.strip()
+        return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations)
 
     # get form values
     mutations = request.form['mutations'].strip().replace(' ', '').split(',')
@@ -472,6 +552,8 @@ def mutations_to_resfile( mutations, resfile):
         f.write('start\n')
         prev_chains = []
         for mut in mutations:
+            if len(mut) == 0: continue
+            print(__name__, mut)
             chain = mut[0]
             resid = mut[2:-1]
             res = mut[-1]
@@ -481,16 +563,20 @@ def mutations_to_resfile( mutations, resfile):
                 prev_chains.append(chain)
                 
             f.write(resid + ' ' + chain + ' PIKAA ' + res + '\n')
+                
 
             
 def resid( line):
     return int( line[22:26].strip() )
 
+
 def residue_name( line ):
     return line[17:20]
 
+
 def chain( line ):
     return line[21]
+
 
 def single_letter( residue ):
     if residue.upper() == "Gly".upper(): return "G"
@@ -532,6 +618,8 @@ def sequence_chain_resids( parent):
                 prev_chain = c
                 prev_id = res
     return chains
+
+
 
 def alignment_from_mutations( mutations, parent, align,mutant_file):
     chains = sequence_chain_resids( parent)
@@ -617,17 +705,66 @@ def add_mutations_from_vcf( mutations, vcf_file, parent):
     print('chris...')
 
 
+def write_clustal( s1, s2, filename):
+    c = filename.split('/')[-1][:-4].split('_')
+    a = c[0]
+    for i in range(1,len(c)-1):
+        a += '_' + c[i]
+    b = c[i]
+    m = max( len(a), len(b))
+    a = a.ljust(m)
+    b = b.ljust(m)
+    e = ''.ljust(m)
+    cons = conservation( s1,s2)
+    with open( filename, 'w') as w:
+        w.write( 'CLUSTAL W formatted output, created by MutationExplorer\n\n')
+        count = 0
+        step = 60
+        while count < len(s1):
+            w.write( a + '\t' + s1[count:count+step] + '\n')
+            w.write( b + '\t' + s2[count:count+step] + '\n')
+            w.write( e + '\t' + cons[count:count+step] + '\n\n')
+            count += step
+    
 
-def add_mutations_from_sequence( mutations, target, chain, parent):
-    print()
-
-def seq_from_fasta( mutations, target, parent):
-    print()
+def add_mutations_from_sequence( mutations, target, chain, idy, parent):
+    h1 = idy
+    h2 = os.path.basename(parent)[:-4]
+    outdir = os.path.dirname( parent) + '/'
+    f1 =  outdir + h1 + '.fa'
+    f2 =  outdir + h2 + '.fa'
+    f3 =  outdir + h2 + '_' + h1 + '.clw'
+    pdb_seq = pdb2seq( parent)
+    write_fasta(f1,target,h1)
+    write_fasta(f2,pdb_seq[chain][0],h2)
+    cmd = "python3  " + app.config['SCRIPTS_PATH'] + "seq_align.py " + f1 + ' ' + f2 + ' ' + f3 + ' clw'
+    print(cmd)
+    p = subprocess.check_output( cmd.split())
+    print(p)
+    mutations.extend( mutations_from_alignment( f3, parent) )
 
     
-def add_mutations_from_alignment( mutations, clustal_files, parent):
-    for cf in clustal_files:
-        mutations.extend( mutations_from_alignment( cf, parent ) )
+def seq_from_fasta( filename):
+    seq = ''
+    head = ''
+    with open( filename) as r:
+        l = r.readline()
+        if l[0] != '>':
+            print( "WARNING!:",filename, 'does not start with ">" in first line! First line is ignored!!!' )
+        head = l[1:].strip()
+        for l in r:
+            if l[0] == '>':
+                return head,seq
+            seq += l.strip()
+    return head,seq
+
+def write_fasta( filename, seq, header=""):
+    with open(filename,'w') as w:
+        w.write('>' + header + '\n')
+        w.write(seq + '\n')
+    
+def add_mutations_from_alignment( mutations, clustal_file, parent):
+    mutations.extend( mutations_from_alignment( clustal_file, parent ) )
 
 
         
@@ -641,12 +778,16 @@ def read_clustal( clust):
             if len(c) != 2: continue
             ali[c[0]] += c[1]
     return ali
-    
+
+
+
 def sequences( ali):
     seqs = []
     for k,v in ali.items():
         seqs.append( v.replace('-','') )
     return seqs
+
+
 
 # nearly same as sequence_chain_resids()
 def pdb2seq( pdb):
@@ -664,7 +805,8 @@ def pdb2seq( pdb):
                 prev_chain = c
                 prev_id = res
     return chains
-    
+
+
     
 def mutations_from_alignment( clustal, parent ):
     mutations = []
@@ -688,22 +830,25 @@ def mutations_from_alignment( clustal, parent ):
     if count == 0:
         print('bye')
         exit(1)
-    count = 0
     ### this will not work for MSA!!
     for a,b in ali.items():
         if a != ali_id:
             aligned = b
             break
     pdbseq = chains[chain_in_pdb][0]
+    pdbres = chains[chain_in_pdb][1]
+    #print( __name__)
     #print( pdbseq)
     #print( aligned)
-    pdbres = chains[chain_in_pdb][1]
+    #print( pdbres[:3] )
+    count = 0
     for i in range( len( pdbseq )):
         while aligned[count] == '-':
             count += 1
         if aligned[count] != pdbseq[i]:
             mutations.append( chain_in_pdb + ':' + str(pdbres[i]) + aligned[count] )
         count += 1
+    print( __name__, 'found', len(mutations), 'mutations')
     return mutations
 
                     
@@ -711,4 +856,12 @@ def mutations_from_alignment( clustal, parent ):
 def wait( filename):
     while not os.path.isfile(filename):
         time.sleep(1)
+
+
+        
+def download_uniprot( unid, filename):
+    link = "https://www.uniprot.org/uniprot/" + secure_filename(unid) + '.fasta'
+    req = requests.get(link)
+    with open(filename, "w") as f:
+        f.write(req.content)
 
