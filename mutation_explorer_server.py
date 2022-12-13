@@ -482,7 +482,8 @@ def explore(tag,filename):
             mutations += r.readline().strip()
             for l in r:
                 mutations += ',' + l.strip()
-        return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations)
+        print( __name__, filename , tag)
+        return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename)
 
     # get form values
     mutations = request.form['mutations'].strip().replace(' ', '').split(',')

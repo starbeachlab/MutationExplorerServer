@@ -8,80 +8,89 @@
 
 {% block content %}
 
-<center>
-<h4>Exploration {{tag}}</h4>
-</center>
-
-<div class="row">
-
-<div class="col s3">
-
-    <div id="tree-viewer">
-        <h4 class="center-align toggle-card">Select</h4>
-        <div>
-
-            {{structures|safe}}
-
-            <div class="center-align">
-                <a id="res-download" href="{{url_for('download', tag = tag, filename = 'results' + tag + '.zip')}}" download class="btn">download all</a>
-            </div>
+<div class="row whole-container grey lighten-5">
+  
+  <div class="col s3 sidebar card">
     
-        </div>
+    <div id="tree-viewer" >
+      <h4 class="center-align toggle-card">Select</h4>
+      <div>
+	
+	{{structures|safe}}
+	
+	<div class="input-field">
+	  <select id="selecter" onchange="changeColoring();">
+	    <option value="" disabled selected>Color by</option>
+	    <option value="1">Absolute energy</option>
+	    <option value="2">Energy difference to parent</option>
+	    <option value="3">Absolute hydrophobicity</option>
+	    <option value="4">Difference in hydrophobicity</option>
+	  </select>
+	</div>
+	
+	<div>
+	  <p>Currently displayed:</p>
+	  <div id="discol">n o t h i n g</div>
+	</div>
+	
+	<div class="center-align">
+          <a id="res-download" href="{{url_for('download', tag = tag, filename = 'results' + tag + '.zip')}}" download class="btn">download all</a>
+	</div>
+	
+      </div>
     </div>
-
-
+    
+    
     <div id="mutation-view">
-        <form id="submitForm" method="POST" enctype="multipart/form-data" target="_blank">
+      <form id="submitForm" method="POST" enctype="multipart/form-data" target="_blank">
         <h4 class="center-align toggle-card">Mutate</h4>
         <div>
-            <div class="input-field">
-                <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
-                <label for="chain">Enter mutations</label>
-            </div>
+          <div class="input-field">
+            <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+            <label for="chain">Enter mutations</label>
+          </div>
+	  
+          <div class="input-field">
+            <input id="chain" type="text" name="structure" class="validate" placeholder="mut_0.pdb" required>
+            <label for="chain">Source structure (from 'Select' list with '.pdb' ending)</label>
+          </div>
 
-            <div class="input-field">
-                <input id="chain" type="text" name="structure" class="validate" placeholder="structure.pdb" required>
-                <label for="chain">Source structure (from list)</label>
-            </div>
-
-            <div class="input-field">
-                <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-                <label for="name">Name new structure</label>
-            </div>
-
-            <div class="center-align">
-                <input id="submit-btn" type="submit" value="submit" class="btn" form="submitForm">
-            </div>
+          <div class="input-field">
+            <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
+            <label for="name">Name new structure</label>
+          </div>
+	  
+          <div class="center-align">
+            <input id="submit-btn" type="submit" value="submit" class="btn" form="submitForm">
+          </div>
         </div>
-        </form>
+      </form>
     </div>
 
 
     <div id="info-view">
 
       <span>Parent: {{parent}} </span>
-
-      <br>
-
-      <span>Mutations: {{mutations}} </span>
-
-      <br>
-      <br>
-      <br>
+      
       <br>
       
+      <span>Mutations: {{mutations}} </span>
+      
+      <br>
+      
+      <span>Exploration: {{tag }} </span>
+      
     </div>
+    <br>
+    <br>
+    
+  </div>
 
-</div>
-
-<div class="col s9">
+  <div class="col s9">
     <div id="viewport"></div>
-
-    <div id="strc-download">
-        <a href="{{url_for('download', tag = tag, filename = 'structure.pdb')}}" download class="btn inv">download structure</a>
-    </div>
-</div>
-
+  </div>
+  
+  
 </div>
 
 
@@ -94,14 +103,20 @@
 <script type="text/javascript" src="https://molstar.org/viewer/molstar.js"></script>
 
 <script type="text/javascript">
+  
+  $(document).ready(function(){
+      $('select').formSelect();
+  });
 
-    function getURL(fname) {
-        var loc = window.location;
-        var command = loc.protocol + "//" + loc.host + "{{url_for('download', tag=tag, filename='')}}" + fname; 
-        return command;
-    }
+  
+  function getURL(fname) {
+      var loc = window.location;
+      var command = loc.protocol + "//" + loc.host + "{{url_for('download', tag=tag, filename='')}}" + fname;
+      return command;
+  }
 
-    var viewer = new molstar.Viewer.create('viewport', {
+  
+  var viewer = new molstar.Viewer.create('viewport', {
         layoutIsExpanded: false,
         layoutShowControls: false,
         layoutShowRemoteState: false,
@@ -115,42 +130,67 @@
 
         pdbProvider: 'rcsb',
         emdbProvider: 'rcsb',
-    });    
+  });    
 
-    function loadPdb(name) {
+  
+  function loadPdb(name) {
         viewer.then(function(val) {
             val.plugin.clear()
             val.loadStructureFromUrl(getURL(name), format='pdb')
         })
-    }
-    
-    $(".structures").click(function(e) {
-        e.preventDefault()
-        name = $(this).text()
-        //href = $("#strc-download a").attr("href")
-        strc = name + ".pdb"
-        $("#strc-download a").attr("href", getURL(strc))
-        $("#strc-download a").text("download " + strc)
-        $("#strc-download a").removeClass("inv")
+  }
 
-        $(".structures").removeClass("bld")
-        $(this).addClass("bld")
-        loadPdb(strc)
-    })
-
-    $(".toggle").click(function(e) {
+  
+  $(".toggle").click(function(e) {
         l = $(this).parent().next()
         // if is redundant
         if (l.children().length > 0) {
             $(this).toggleClass("rot")
             l.toggleClass("non")
         }
-    })
+  })
 
-    $(".toggle-card").click(function() {
+  $(".toggle-card").click(function() {
         $(this).next().toggleClass("non")
-    })
+  })
 
+  
+  let the_ending = "_absE.pdb"; // for communication between 2 fct below
+  name = "{{filename}}";
+  let the_name = name.substr(0,name.length - 4);
+  document.getElementById('discol').innerHTML = the_name + the_ending;
+  loadPdb( the_name + the_ending);
+
+  
+  $(".structures").click(function(e) {
+      e.preventDefault();
+      this_name = $(this).text();
+      strc = this_name + the_ending;
+      // highlight:
+      $(".structures").removeClass("bld");  // unbold all
+      $(this).addClass("bld");              // bold current
+      // load:
+      loadPdb(strc);
+      document.getElementById('discol').innerHTML = strc;
+      loadPdb( strc );
+  })
+
+  
+  function changeColoring() {
+      var selectBox = document.getElementById("selecter");
+      var selected = selectBox.options[selectBox.selectedIndex];
+      var selectedText = selected.innerHTML;
+      var id = selected.value;
+      if( id == "1"){ the_ending = "_absE.pdb";}
+      else if( id == "2"){ the_ending = "_diffE.pdb";}
+      else if( id == "3"){ the_ending = "_HyPh.pdb"; }
+      else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
+      //alert(selectedValue);
+      document.getElementById('discol').innerHTML = the_name + the_ending;
+      loadPdb( the_name + the_ending );
+  }
+
+  
 </script>
 
 
