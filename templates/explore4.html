@@ -8,15 +8,6 @@
         display: none;
     }
 
-    /*
-    #viewport {
-        height: 100vh;
-        width: 100vw;
-        position: absolute;
-        top: 0;
-        left: 0;
-    }*/
-
     footer {
         display: none;
     }
@@ -52,6 +43,10 @@
         top: 100px;
         width: 800px;
         height: 600px;
+    }
+
+    .msp-plugin-content {
+        position: relative !important;
     }
 </style>
 
@@ -89,7 +84,7 @@
 
         //if (pdbFile && clustalFile) viewer.loadMutationExplorer(pdbFile, clustalFile);
         var pdbFile = getURL("mut_0_1.pdb");
-        var clustalFile = getURL("mut_0_1.clw");
+        var clustalFile = getURL("mut_0_1_A.clw");
         viewer.loadMutationExplorer(pdbFile, clustalFile);
     });
     // --------------------

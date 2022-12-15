@@ -23,7 +23,7 @@ nav li a {
 /* content */
 
 #content {
-    padding: 0 30vw;
+    padding: 0 20vw;
 }
 
 h1 {
@@ -56,4 +56,8 @@ h1 {
 #error-msg {
     color: red;
     font-size: 1.5rem;
+}
+
+#pos-box {
+    height: 100%;
 }

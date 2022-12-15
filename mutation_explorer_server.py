@@ -79,7 +79,7 @@ def name_mutation(base_structure, tag):
 
 def fixbb(tag, structure, resfile, out_file_name, logfile):
     out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open( out + logfile, 'a')
+    #log = open( out + logfile, 'a')
     ### Ich wuerde Funktionen immer so einfach wie moeglich halten und auf eine Aufgabe fokusieren, d.h. hier die Ausfuehrung von fixbb
     
 
@@ -91,9 +91,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
 
     # call rosetta
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out + ext + '_'
-    log.write(cmd+'\n')
+    #log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    #log.write(p+'\n')
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
@@ -102,37 +102,37 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
     
     cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + out_file_name
-    log.write(cmd+'\n')
+    #log.write(cmd+'\n')
     p = subprocess.check_output( cmd.split())
-    log.write(p+'\n')
+    #log.write(p+'\n')
     
     cmd = "tsp " + bfac + out + out_file_name + ' ' + out + out_file_name[:-4] + '_absE.pdb'
-    log.write(cmd+'\n')
+    #log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    #log.write(p+'\n')
 
     if "mut" in structure:
         cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffE.pdb'
-        log.write(cmd+'\n')
+        #log.write(cmd+'\n')
         p = subprocess.check_output(cmd.split())
-        log.write(p+'\n')
+        #log.write(p+'\n')
 
     cmd = "tsp " + hydro + out +  out_file_name + ' ' + out +  out_file_name[:-4] + '_HyPh.pdb'
-    log.write(cmd+'\n')
+    #log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    #log.write(p+'\n')
 
     cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb'
-    log.write(cmd+'\n')
+    #log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
 
     if "mut" in structure:
         cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + ' ' + out + out_file_name[:-4] + '_diffHyPh.pdb'
-        log.write(cmd+'\n')
+        #log.write(cmd+'\n')
         p = subprocess.check_output(cmd.split())
-        log.write(p+'\n')
+        #log.write(p+'\n')
 
-    log.write("### THREAD FINISHED ###\n")
+    #log.write("### THREAD FINISHED ###\n")
 
         
 
@@ -504,11 +504,37 @@ def explore(tag,filename):
 
 
 # Testing molstar / mdsrv
-@app.route('/molstar/<tag>')
+@app.route('/molstar/<tag>/')
 def molstar(tag):
     mut_tree = build_mutation_tree(tag, "-")
     structures = "<ul>" + build_list(mut_tree) + "</ul>"
     return render_template("explore4.html", tag = tag, structures = structures)
+    
+    
+@app.route('/reference/<tag>/')
+def reference(tag):
+    mut_tree = build_mutation_tree(tag, "-")
+    structures = "<ul>" + build_list(mut_tree) + "</ul>"
+    return render_template("explore4_copy.html", tag = tag, structures = structures)
+
+
+@app.route('/exploreframe/<tag>/')
+def idea(tag):
+    mut_tree = build_mutation_tree(tag, "-")
+    structures = "<ul>" + build_list(mut_tree) + "</ul>"
+    return render_template("explore999.html", tag = tag, structures = structures)
+
+
+@app.route('/move/<tag>/')
+def move(tag):
+    mut_tree = build_mutation_tree(tag, "-")
+    structures = "<ul>" + build_list(mut_tree) + "</ul>"
+    return render_template("explore5.html", tag = tag, structures = structures)
+
+
+@app.route('/canvas')
+def canvas():
+    return render_template("canvas.html")
     
     
 @app.route('/examples')

@@ -14,7 +14,7 @@
 
     <!-- fonts -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="{{url_for('static', filename='ngl_menu/css/font-awesome.min.css')}}" />
+    <!--<link rel="stylesheet" href="{{url_for('static', filename='ngl_menu/css/font-awesome.min.css')}}" />-->
 
 </head>
 <body>
@@ -33,7 +33,7 @@
           <ul id="nav-mobile" class="right hide-on-med-and-down">
               <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
               <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">upload structure and mutations</a></li>
-              <li><a href="{{ url_for('vcf') }}" class="white-text text-darken-3">vcf analysis</a></li>
+              <li><a href="{{ url_for('vcf') }}" class="white-text text-darken-3">upload vcf</a></li>
               <li><a href="{{ url_for('examples') }}" class="white-text text-darken-3">examples</a></li>
               <li><a href="{{ url_for('faq') }}" class="white-text text-darken-3">faq</a></li>
           </ul>
@@ -44,7 +44,7 @@
 <ul class="sidenav" id="mobile-nav">
   <li>
     <a class="brand-logo" href="{{ url_for('index') }}">
-      <img src="{{ url_for( 'static', filename ='logo.svg' )}}">
+      <!--<img src="{{ url_for( 'static', filename ='logo.svg' )}}">-->
     </a>
   </li>
   <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
@@ -56,7 +56,7 @@
  
 
 <div id="content">
-  {% block content %}
+{% block content %}
 {% endblock %}
 </div>
 

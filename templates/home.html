@@ -11,10 +11,13 @@
   various ways and study mutation effects in 3D.
   The only required inputs are a structural model and a list of mutations of
   interest.
+  Alternatively, the user can upload human SNPs in the VCF format.
 </p>
   
 <h4>Main steps</h4>
-<p>
+<p> <b>Either:</b>
+  <ul><li> upload human SNPs in VCF format</li></ul>
+  <b>Or:</b>
   <ul>
     <li> upload structure </li>
     <li> define mutations </li>
@@ -36,15 +39,22 @@
 <h4> Define mutations </h4>
 
 <p>
-  Mutations can be defined in five different ways:
+  Mutations can be defined in three different ways:
   <ul>
-    <li> Key or paste into GUI, using a simple syntax </li>
-    <li> Upload VCF file</li>
-    <li> Upload ClustalW file </li>
-    <li> Upload Fasta file </li>
-    <li> Provide Uniprot-ID </li>
+    <li> Key or paste into GUI, using a simple syntax:</li>
+    <li> Upload alignment in ClustalW format </li>
+    <li> Upload target sequence either by pasting the sequence, uploading a FASTA file or specifying a Uniprot ID </li>
   </ul>
 </p>
+
+<h4> Mutation syntax </h4>
+<ul>
+  <li> A comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
+  <li> Example: 'A:23G,B:123A'</li>
+  <li> This mutates the residue in chain A with the PDB residue ID 23 to Glycine and in chain B the residue with residue ID 123 to Alanine.</li> 
+</ul>
+
+
 
 <h4> Explorations </h4>
 <p> You can select a model and further mutate this using the mutation window. </p>
