@@ -13,7 +13,7 @@
   <div class="col s3 sidebar card">
     
     <div id="tree-viewer" >
-      <h4 class="center-align toggle-card">Select  <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modal1" style="float:right;">i</a></h4>
+      <h4 class="center-align toggle-card">Select  <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modal1" title="Further information" style="float:right;">i</a></h4>
 
       <!-- Modal Structure -->
       <div id="modal1" class="modal">
@@ -21,14 +21,16 @@
 	  <h4>Select a variant to be displayed</h4>
 	  <p>First you select the variant to be displayed from the list.<br>
 	    mut_0: is the original protein that you uploaded<br>
-	    mut_0_1: the first mutation you applied to the original model (this was created when you see this)<br>
+	    mut_0_1: the first mutation you applied to the original model (this was created during first upload)<br>
 	    mut_0_1_1: would be a further mutation applied to mut_0_1<br>
-	    mut_0_2: the second mutation applied to the original model<br>
+	    mut_0_2: the second independent mutation applied to mut_0<br>
 	    The last variant created is displayed by default.</p>
 	  <h4> Select coloring scheme </h4>
 	  <p> You can color either by energy or by hydrophobicity.<br>
 	    For each you can choose between the difference of mutated to original or the absolute value.<br>
-	    The default is by energy difference. </p>
+	    The default is coloring by energy difference.<br> </p>
+	  <p> For each combination variant/coloring, there is a PDB file in the download. <br>
+	  The values used for the coloring are written in beta-factor column, respectively.</p>
 	</div>
 	<div class="modal-footer">
 	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
@@ -64,7 +66,7 @@
     
     <div id="mutation-view">
       <form id="submitForm" method="POST" enctype="multipart/form-data" target="_blank">
-        <h4 class="center-align toggle-card">Mutate   <button data-target="modal2" class="btn modal-trigger grey lighten-2" style="float:right;">i</button> </h4>
+        <h4 class="center-align toggle-card">Mutate   <button data-target="modal2" class="btn modal-trigger grey lighten-2" title="Further information" style="float:right;">i</button> </h4>
 	<!-- Modal Structure -->
 	<div id="modal2" class="modal">
 	  <div class="modal-content">
@@ -104,7 +106,7 @@
 
 
     <div id="info-view">
-      <h4 class="center-align toggle-card">Info   <button data-target="modal3" class="btn modal-trigger grey lighten-2" style="float:right;">i</button> </h4>
+      <h4 class="center-align toggle-card">Info   <button data-target="modal3" class="btn modal-trigger grey lighten-2" style="float:right;"title="Further information">i</button> </h4>
 	<!-- Modal Structure -->
 	<div id="modal3" class="modal">
 	  <div class="modal-content">

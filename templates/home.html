@@ -12,6 +12,19 @@
   The only required inputs are a structural model and a list of mutations of
   interest.
   Alternatively, the user can upload human SNPs in the VCF format.
+  <br>
+  You can click on the       <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">i</button> </span> buttons at each field in the forms to get further information.
+  <!-- Modal Structure -->
+  <div id="modal3" class="modal">
+    <div class="modal-content">
+      <h4>Happy mutating!</h4>
+      <p> </p>
+    </div>
+    <div class="modal-footer">
+	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+
 </p>
   
 <h4>Main steps</h4>
@@ -19,9 +32,9 @@
   <ul><li> upload human SNPs in VCF format</li></ul>
   <b>Or:</b>
   <ul>
-    <li> upload structure </li>
-    <li> define mutations </li>
-    <li> mutate again and again ... </li>
+    <li> upload structure, </li>
+    <li> define mutations, </li>
+    <li> explore: mutate again and again ... </li>
   </ul>
 </p>
 
@@ -30,9 +43,9 @@
 <p>
   Structures can be uploaded in three different ways:
   <ul>
-    <li> PDB ID </li>
-    <li> AlphaFold ID </li>
-    <li> Upload local PDB file </li>
+    <li> PDB ID, </li>
+    <li> AlphaFold ID, </li>
+    <li> upload local PDB file </li>
   </ul>
 </p>
 
@@ -51,7 +64,7 @@
 <ul>
   <li> A comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
   <li> Example: 'A:23G,B:123A'</li>
-  <li> This mutates the residue in chain A with the PDB residue ID 23 to Glycine and in chain B the residue with residue ID 123 to Alanine.</li> 
+  <li> This mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the residue with residue ID 123 to alanine.</li> 
 </ul>
 
 

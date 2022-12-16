@@ -469,7 +469,8 @@ def build_list(d):
 
 
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
-def explore(tag,filename):
+@app.route('/explore/<tag>/', methods=['GET', 'POST'])
+def explore(tag,filename=""):
     if request.method == 'GET':
         mut_tree = build_mutation_tree(tag, "-")
         print('explore::tree', mut_tree)
@@ -477,6 +478,8 @@ def explore(tag,filename):
         print('explore::tree:', structures)
         parent = ""
         mutations = ""
+        if filename == "":
+            filename = "mut_0.pdb"
         with open( app.config['USER_DATA_DIR'] + tag + "/info/" + filename[:-4] + ".txt") as r:
             parent = r.readline().strip()
             mutations += r.readline().strip()
