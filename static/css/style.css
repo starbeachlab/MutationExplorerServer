@@ -30,7 +30,7 @@ h1 {
     margin-bottom: 4rem !important;
 }
 
-.btn {
+.btn, .btn-small {
     text-transform: unset !important;
 }
 
@@ -60,4 +60,8 @@ h1 {
 
 #pos-box {
     height: 100%;
+}
+
+.additional {
+    display: none !important;
 }

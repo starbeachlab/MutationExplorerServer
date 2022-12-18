@@ -3,6 +3,13 @@
 {% block head %}
 <link rel="stylesheet" type="text/css" href="https://molstar.org/viewer/molstar.css" />
 <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/exploreStyle.css')}}" media="all">
+
+<style>
+    #content {
+        height: 100%;
+    }
+</style>
+
 {% endblock %}
 
 
@@ -45,9 +52,9 @@
 	  <select id="selecter" onchange="changeColoring();">
 	    <option value="" disabled selected>Color by</option>
 	    <option value="1">Absolute energy</option>
-	    <option value="2">Energy difference to parent</option>
+	    <option value="2" id="ediff" disabled>Energy difference to parent</option>
 	    <option value="3">Absolute hydrophobicity</option>
-	    <option value="4">Difference in hydrophobicity</option>
+	    <option value="4" class="diff">Difference in hydrophobicity</option>
 	  </select>
 	</div>
 	
@@ -65,7 +72,7 @@
     
     
     <div id="mutation-view">
-      <form id="submitForm" method="POST" enctype="multipart/form-data" target="_blank">
+      <form id="submitForm" method="POST" enctype="multipart/form-data"> <!-- onsubmit="getFileName()" -->
         <h4 class="center-align toggle-card">Mutate   <button data-target="modal2" class="btn modal-trigger grey lighten-2" title="Further information" style="float:right;">i</button> </h4>
 	<!-- Modal Structure -->
 	<div id="modal2" class="modal">
@@ -84,21 +91,13 @@
             <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
             <label for="chain">Enter mutations</label>
           </div>
+	  <div>
+	    <input id="fname" name="fname" type="hidden"> <!--to communicate filename-->
+	  </div>
 
-	  <!--
-          <div class="input-field">
-            <input id="chain" type="text" name="structure" class="validate" placeholder="mut_0.pdb" required>
-            <label for="chain">Source structure (from 'Select' list with '.pdb' ending)</label>
-          </div>
-
-          <div class="input-field">
-            <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
-            <label for="name">Name new structure</label>
-          </div>
-	  -->
 
           <div class="center-align">
-            <input id="submit-btn" type="submit" value="submit" class="btn" form="submitForm">
+            <input id="subm" type="submit" value="submit" class="btn" form="submitForm">
           </div>
         </div>
       </form>
@@ -136,8 +135,10 @@
     
   </div>
 
-  <div class="col s9">
-    <div id="viewport"></div>
+  <div class="col s9" style="height: 100%;">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/molstar/{{tag}}/">
+        <b>IFrame is unavailable here</b>
+    </iframe>
   </div>
   
   
@@ -150,12 +151,36 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="https://molstar.org/viewer/molstar.js"></script>
+<script type="text/javascript" src="{{url_for('static', filename='v2/mdsrv.js')}}"></script>
 
 <script type="text/javascript">
   
+
+  // set default structure
+  name = "{{filename}}";
+  if (name == "") {
+    name = "mut_0.pdb";
+  }
+  let the_name = name.substr(0,name.length - 4);
+  let the_ending = "_absE.pdb"; // for communication between fct
+  allchains = "{{chains}}"
+
+
+  // highlight selected structure
+  strcs = $(".structures")
+  for(i = 0; i < strcs.length; i++) {
+    if (strcs[i].text == the_name) {
+      $(strcs[i]).addClass("bld")
+    }
+  }
+  $("#discol").html(the_name + the_ending)
+
   $(document).ready(function(){
       $('select').formSelect();
+
+      setDiffOptions();
+
+      loadPdb(the_name, the_ending);
   });
 
   
@@ -165,30 +190,26 @@
       return command;
   }
 
-  
-  var viewer = new molstar.Viewer.create('viewport', {
-        layoutIsExpanded: false,
-        layoutShowControls: false,
-        layoutShowRemoteState: false,
-        layoutShowSequence: true,
-        layoutShowLog: false,
-        layoutShowLeftPanel: true,
 
-        viewportShowExpand: true,
-        viewportShowSelectionMode: false,
-        viewportShowAnimation: false,
+  function loadPdb(name, coloring) {
+    // input files
+    var pdbFile = getURL(name + coloring);
+    if (name == "mut_0") {
+      name = name + "_1"
+    }
+    var clustalFile = getURL(name + "_" + allchains[0] + ".clw" );
 
-        pdbProvider: 'rcsb',
-        emdbProvider: 'rcsb',
-  });    
+    // wait until loadViewer is defined
+    var interval = setInterval(function() {
+      var loadViewer = document.getElementById('ms').contentWindow.loadViewer
+      if (typeof loadViewer == 'undefined') return;
+      clearInterval(interval);
 
-  
-  function loadPdb(name) {
-        viewer.then(function(val) {
-            val.plugin.clear()
-            val.loadStructureFromUrl(getURL(name), format='pdb')
-        })
+      // update viewer
+      loadViewer(pdbFile, clustalFile)
+    }, 100);
   }
+  
 
   
   $(".toggle").click(function(e) {
@@ -200,29 +221,26 @@
         }
   })
 
+
   $(".toggle-card").click(function() {
         $(this).next().toggleClass("non")
   })
 
-  
-  let the_ending = "_absE.pdb"; // for communication between 2 fct below
-  name = "{{filename}}";
-  let the_name = name.substr(0,name.length - 4);
-  document.getElementById('discol').innerHTML = the_name + the_ending;
-  loadPdb( the_name + the_ending);
 
-  
   $(".structures").click(function(e) {
       e.preventDefault();
       this_name = $(this).text();
       strc = this_name + the_ending;
+
       // highlight:
       $(".structures").removeClass("bld");  // unbold all
       $(this).addClass("bld");              // bold current
+
       // load:
-      loadPdb(strc);
+      loadPdb(this_name, the_ending);
       document.getElementById('discol').innerHTML = strc;
-      loadPdb( strc );
+
+      setDiffOptions();
   })
 
   
@@ -237,10 +255,30 @@
       else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
       //alert(selectedValue);
       document.getElementById('discol').innerHTML = the_name + the_ending;
-      loadPdb( the_name + the_ending );
+      loadPdb(the_name, the_ending);
+  }
+
+
+  // if mut_0.pdb is selected, there are no _diffE and _diffHyp colorings => disable select options
+  function setDiffOptions() {
+    opts = $("ul:contains('Color by')")[0].children
+    if(the_name == "mut_0") {
+      $(opts[2]).addClass("disabled")
+      $(opts[4]).addClass("disabled")
+    } else {
+      $(opts[2]).removeClass("disabled")
+      $(opts[4]).removeClass("disabled")
+    }
+    //$($("ul:contains(Energy)")[0].children[2]).addClass("disabled")
   }
 
   
+  /*
+  function getFileName(){
+  alert( the_name);
+        document.getElementById('fname').value = the_name + ".pdb"
+  } */
+
 </script>
 
 

@@ -1,5 +1,17 @@
 {% extends "base.html" %}
 
+
+{% block head %}
+<style>
+    .file-field {
+        display: flex;
+    }
+</style>
+{% endblock %}
+
+
+
+
 {% block content %}
 
 <center>
@@ -19,12 +31,14 @@
 
    <ul class="collapsible s12">
 
+
+	<!-- MANUAL MUTATIONS -->
     <li>
       <div class="collapsible-header grey lighten-3">
 	<h5 class="center-align"> Manual mutation definition</h5>
       </div>
       <div class="collapsible-body">
-	<h4> <button data-target="modal1" class="btn modal-trigger grey lighten-2" title="Further information" style="float:right;">?</button> </h4>
+	<h4> <button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
 	<!-- Modal Structure -->
 	<div id="modal1" class="modal">
 	  <div class="modal-content">
@@ -47,12 +61,15 @@
       </div>
     </li>
 
+
+	<!-- SEQUENCE ALIGNMENT -->
+
     <li>
       <div class="collapsible-header grey lighten-4">
-	<h5 class="center-align"> Sequence alignment </h5>
+		<h5 class="center-align"> Sequence alignment </h5>
       </div>
       <div class="collapsible-body">
-	<h4> <button data-target="modal2" class="btn modal-trigger grey lighten-2" title="Further information" style="float:right;">i</button> </h4>
+	<h4> <button data-target="modal2" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
 	<!-- Modal Structure -->
 	<div id="modal2" class="modal">
 	  <div class="modal-content">
@@ -69,45 +86,49 @@
 
 	<br>
 	
-	<div class="row">
-	  <div class="col s12">
-	    <div class="btn">
-	      <span>Upload a ClustalW file</span>
-	      <input type="file" name="clustal1" class="validate">
-	    </div>
-	  </div>
-	</div>
-	<br>
-	<div id="msgclw"> <span> <i class="material-icons medium" onclick="document.getElementById('addclw').style.display= 'grid';document.getElementById('msgclw').style.display='none';">add_circle</i> add 2 more alignment upload blocks</span></div>
-	<br>
-	<div id="addclw" style="display:none;">
-	  <div class="row">
-	    <div class="col s12">
-	      <div class="btn">
-		<span>Upload a ClustalW file</span>
-		<input type="file" name="clustal2">
-	      </div>
-	    </div>
-	  </div>
-	  
-	  <br>
+    <div class="row">
 
-	  <div class="row">
-	    <div class="col s12">
-	      <div class="btn">
-		<span>Upload a ClustalW file</span>
-		<input type="file" name="clustal3">
-	      </div>
-	    </div>
-	  </div>
-	</div>
-	  
-	<br>
+		<div class="col offset-s3 s6">
+			<div class="file-field input-field" style="width: 100%">
+				<div class="btn" style="width: 100%">
+					<span>Upload a ClustalW file</span>
+					<input type="file" name="clustal1">
+				</div>
+			</div>
+		</div>
+
+		<div class="col offset-s3 s6">
+			<div class="file-field input-field additional clw1" style="width: 100%">
+				<div class="btn" style="width: 100%">
+					<span>Upload a ClustalW file</span>
+					<input type="file" name="clustal2">
+				</div>
+			</div>
+		</div>
+
+		<div class="col offset-s3 s6">
+			<div class="file-field input-field additional clw2" style="width: 100%">
+				<div class="btn" style="width: 100%">
+					<span>Upload a ClustalW file</span>
+					<input type="file" name="clustal3">
+				</div>
+			</div>
+		</div>
+
+		<div style="width: 100%; display: flex; justify-content: center">
+			<div id="add-clw" style="margin-top: 2rem">
+				<a class="btn-small grey lighten-1" onclick="addAlignments()">Add more Alignments</a>
+			</div>
+		</div>
+
+    </div>
 	
-      </div>
     </li>
 
     
+
+	<!-- TARGET SEQUENCE -->
+	
     <li>
       <div class="collapsible-header grey lighten-3">
 	<h5 class="center-align"> Target sequence</h5>
@@ -115,7 +136,7 @@
       <div class="collapsible-body">
  	
 	<div class="row center-align">
-	  <h4> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="float:right;">info</button> </h4>
+	  <h4> <button data-target="modal3" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
 	  <!-- Modal Structure -->
 	  <div id="modal3" class="modal">
 	    <div class="modal-content left-align">
@@ -136,153 +157,182 @@
 	  </div>
 	</div>
 	<br>
-	<div class="row">
-	  <div class="col s3">
-	    <div class="input-field">
-	      <input id="chainF1" type="text" name="chainF1" class="validate" >
-	      <label for="chainF1">PDB Chain</label>
-	    </div>
-	  </div>
-	  <div class="col s9">
-            <div class="btn">
-              <span>Upload a FASTA file</span>
-              <input type="file" name="fasta1">
-            </div>
-	  </div>
+
+
+	<!-- 1) FASTA uploads -->
+	<div>
+		<div class="row">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainF1" type="text" name="chainF1" class="validate" >
+					<label for="chainF1">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="file-field input-field" style="width: 100%">
+					<div class="btn" style="width: 100%">
+						<span>Upload a FASTA file</span>
+						<input type="file" name="fasta1">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row additional fasta1">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainF2" type="text" name="chainF2" class="validate" >
+					<label for="chainF2">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="file-field input-field" style="width: 100%">
+					<div class="btn" style="width: 100%">
+						<span>Upload a FASTA file</span>
+						<input type="file" name="fasta2">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row additional fasta2">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainF3" type="text" name="chainF3" class="validate" >
+					<label for="chainF3">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="file-field input-field" style="width: 100%">
+					<div class="btn" style="width: 100%">
+						<span>Upload a FASTA file</span>
+						<input type="file" name="fasta3">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div style="width: 100%; display: flex; justify-content: center">
+			<div id="add-fasta" style="margin-bottom: 2rem">
+				<a class="btn-small grey lighten-1" onclick="addFastas()">Add more FASTAs</a>
+			</div>
+		</div>
 	</div>
+
 	<br>
 	
-	<div class="row">
-	  <div class="col s3">
-	    <div class="input-field">
-	      <input id="chainS1" type="text" name="chainS1" class="validate" >
-	      <label for="chainS1">PDB Chain</label>
-	    </div>
-	  </div>
-	  <div class="col s9">
-	    <div class="input-field">
-	      <input id="seq1" type="text" name="sequence1" class="validate" placeholder="ABBA...ACDC">
-	      <label for="seq1"> Paste a sequence</label>
-	    </div>
-	  </div>
+	<!-- 2) Sequence upload -->
+	<div>
+		<div class="row">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainS1" type="text" name="chainS1" class="validate" >
+					<label for="chainS1">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="seq1" type="text" name="sequence1" class="validate" placeholder="ABBA...ACDC">
+					<label for="seq1"> Paste a sequence</label>
+				</div>
+			</div>
+		</div>
+
+		<div class="row additional pseq1">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainS1" type="text" name="chainS2" class="validate" >
+					<label for="chainS1">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="seq2" type="text" name="sequence2" class="validate" placeholder="ABBA...ACDC">
+					<label for="seq2"> Paste a sequence</label>
+				</div>
+			</div>
+		</div>
+
+		<div class="row additional pseq2">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainS3" type="text" name="chainS3" class="validate" >
+					<label for="chainS3">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="seq3" type="text" name="sequence3" class="validate" placeholder="ABBA...ACDC">
+					<label for="seq3"> Paste a sequence</label>
+				</div>
+			</div>
+		</div>
+
+		<div style="width: 100%; display: flex; justify-content: center">
+			<div id="add-seq" style="margin-bottom: 2rem">
+				<a class="btn-small grey lighten-1" onclick="addSequences()">Add more Sequences</a>
+			</div>
+		</div>
 	</div>
- 	<br>
-	<div class="row">
-	  <div class="col s3">
-	    <div class="input-field">
-	      <input id="chainU1" type="text" name="chainU1" class="validate" >
-	      <label for="chainU1">PDB Chain</label>
-	    </div>
-	  </div>
-	  <div class="col s9">
-	    <div class="input-field">
-	      <input id="U1" type="text" name="uniprot1" class="validate" placeholder="Uniprot ID">
-	      <label for="U1">Load sequence from UniProt</label>
-	    </div>
-	  </div>
-	</div>
- 	<br>
-	<div id="msg"> <span> <i class="material-icons medium" onclick="document.getElementById('addseq').style.display= 'grid';document.getElementById('msg').style.display='none';">add_circle</i> add 2 more sequence upload blocks</span></div>
+
 	<br>
 
+	<!-- 3) Uniprot upload -->
+	<div>
+		<div class="row">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainU1" type="text" name="chainU1" class="validate" >
+					<label for="chainU1">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="U1" type="text" name="uniprot1" class="validate" placeholder="Uniprot ID">
+					<label for="U1">Load sequence from UniProt</label>
+				</div>
+			</div>
+		</div>
 
-	<div id="addseq" style="display:none;">
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainF2" type="text" name="chainF2" class="validate" >
-		<label for="chainF2">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-              <div class="btn">
-		<span>Upload a FASTA file</span>
-		<input type="file" name="fasta2">
-              </div>
-	    </div>
-	  </div>
-	  <br>
-	  
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainS2" type="text" name="chainS2" class="validate" >
-		<label for="chainS2">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-	      <div class="input-field">
-		<input id="seq2" type="text" name="sequence2" class="validate" placeholder="ABBA...ACDC">
-		<label for="seq2"> Paste a sequence</label>
-	      </div>
-	    </div>
-	  </div>
- 	  <br>
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainU2" type="text" name="chainU2" class="validate" >
-		<label for="chainU2">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-	      <div class="input-field">
-		<input id="U2" type="text" name="uniprot2" class="validate" placeholder="Uniprot ID">
-		<label for="U2">Load sequence from UniProt</label>
-	      </div>
-	    </div>
-	  </div>
+		<div class="row additional up1">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainU2" type="text" name="chainU2" class="validate" >
+					<label for="chainU2">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="U2" type="text" name="uniprot2" class="validate" placeholder="Uniprot ID">
+					<label for="U2">Load sequence from UniProt</label>
+				</div>
+			</div>
+		</div>
 
+		<div class="row additional up2">
+			<div class="col s3">
+				<div class="input-field">
+					<input id="chainU3" type="text" name="chainU3" class="validate" >
+					<label for="chainU3">PDB Chain</label>
+				</div>
+			</div>
+			<div class="col s9">
+				<div class="input-field">
+					<input id="U3" type="text" name="uniprot3" class="validate" placeholder="Uniprot ID">
+					<label for="U3">Load sequence from UniProt</label>
+				</div>
+			</div>
+		</div>
 
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainF3" type="text" name="chainF3" class="validate" >
-		<label for="chainF3">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-              <div class="btn">
-		<span>Upload a FASTA file</span>
-		<input type="file" name="fasta3">
-              </div>
-	    </div>
-	  </div>
-	  <br>
-	  
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainS3" type="text" name="chainS3" class="validate" >
-		<label for="chainS3">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-	      <div class="input-field">
-		<input id="seq3" type="text" name="sequence3" class="validate" placeholder="ABBA...ACDC">
-		<label for="seq3"> Paste a sequence</label>
-	      </div>
-	    </div>
-	  </div>
- 	  <br>
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field">
-		<input id="chainU3" type="text" name="chainU3" class="validate" >
-		<label for="chainU3">PDB Chain</label>
-	      </div>
-	    </div>
-	    <div class="col s9">
-	      <div class="input-field">
-		<input id="U3" type="text" name="uniprot3" class="validate" placeholder="Uniprot ID">
-		<label for="U3">Load sequence from UniProt</label>
-	      </div>
-	    </div>
-	  </div>
-
+		<div style="width: 100%; display: flex; justify-content: center">
+			<div id="add-up" style="margin-bottom: 2rem">
+				<a class="btn-small grey lighten-1" onclick="addUniprots()">Add more Uniprots</a>
+			</div>
+		</div>
 	</div>
+
 	
-      </div>
+
     </li>
     
     
@@ -325,6 +375,63 @@
 {% endblock %}
 
 {% block scripts %}
+
+<script>
+
+	initUploads();
+
+	var aligns = 0;
+	var fastas = 0;
+	var seqs = 0;
+	var uniprots = 0;
+
+	function addAlignments() {
+		aligns += 1;
+		$(".clw" + aligns).removeClass("additional");
+		if (aligns == 2) {
+			$("#add-clw").css("display", "none");
+		}
+	}
+
+	function addFastas() {
+		fastas += 1;
+		$(".fasta" + fastas).removeClass("additional");
+		if (fastas == 2) {
+			$("#add-fasta").css("display", "none");
+		}
+	}
+
+	function addSequences() {
+		seqs += 1;
+		$(".pseq" + seqs).removeClass("additional");
+		if (seqs == 2) {
+			$("#add-seq").css("display", "none");
+		}
+	}
+
+	function addUniprots() {
+		uniprots += 1;
+		$(".up" + uniprots).removeClass("additional");
+		if (uniprots == 2) {
+			$("#add-up").css("display", "none");
+		}
+	}
+
+	// showFilename, initUploads are slightly different to submit.html versions
+    function showFilename() {
+        var fname = $(this).val().replace(/^.*[\\\/]/, '')
+        $(this).parent().parent().parent().find(".filename").html(fname)
+    }
+
+    function initUploads() {
+        var uploads = $(".file-field")
+        for (i = 0; i < uploads.length; i++) {
+            $(uploads[i]).parent().append('<center><div class="filename"></div></center>')
+            $($(uploads[i]).find("input")).on("change", showFilename)
+        }
+    }
+
+</script>
 
 
 {% endblock %}

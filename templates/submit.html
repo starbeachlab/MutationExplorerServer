@@ -18,7 +18,7 @@
     <div class="file-field input-field" style="width: 100%">
         <div class="btn" style="width: 100%">
             <span>Upload a PDB file</span>
-            <input type="file" name="pdbfile">
+            <input id="pdb-upl" type="file" name="pdbfile">
         </div>
     </div>
     </div>
@@ -47,5 +47,36 @@
 
 </form>
 
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+    function showFilename() {
+        var fname = $(this).val().replace(/^.*[\\\/]/, '')
+        $(this).parent().parent().find(".filename").html(fname)
+    }
+
+    function initUploads() {
+        var uploads = $(".file-field")
+        for (i = 0; i < uploads.length; i++) {
+            $(uploads[i]).append('<center><div class="filename"></div></center>')
+            $($(uploads[i]).find("input")).on("change", showFilename)
+        }
+    }
+
+    initUploads()
+
+    /*
+    $("#pdb-upl").parent().parent().append('<center><div class="filename"></div></center>');
+
+    $("#pdb-upl").on("change", function() {
+        var fname = $(this).val().replace(/^.*[\\\/]/, '')
+        $(this).parent().parent().find(".filename").html(fname)
+    })*/
+
+</script>
 
 {% endblock %}

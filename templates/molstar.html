@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+
+<style>
+    .navbar-fixed {
+        display: none;
+    }
+
+    footer {
+        display: none;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+</style>
+
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='v2/mdsrv.css')}}" /> 
+
+{% endblock %}
+
+
+{% block content %}
+
+<div id="port"></div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript" src="{{url_for('static', filename='v2/mdsrv.js')}}"></script>
+<script type="text/javascript">
+
+
+    var loadViewer = function loadViewer(pdbFile, clustalFile) {
+        // reset canvas
+        $("#port").remove();
+        $("#content").append("<div id='port'></div>")
+
+        //var vw = mdsrv.Viewer.create('port', {});
+        
+        mdsrv.Viewer.create('port', {}).then(viewer => {
+            viewer.loadMutationExplorer(pdbFile, clustalFile);
+        });
+    }
+
+</script>
+
+
+
+
+{% endblock %}
