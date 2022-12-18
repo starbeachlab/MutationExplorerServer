@@ -89,7 +89,7 @@
 	<div>
           <div class="input-field">
             <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
-            <label for="chain">Enter mutations</label>
+            <label for="mutations">Enter mutations</label>
           </div>
 	  <div>
 	    <input id="fname" name="fname" type="hidden"> <!--to communicate filename-->
@@ -162,18 +162,19 @@
     name = "mut_0.pdb";
   }
   let the_name = name.substr(0,name.length - 4);
-  let the_ending = "_absE.pdb"; // for communication between fct
+  let the_ending = "_diffE.pdb"; // for communication between fct
   allchains = "{{chains}}"
 
 
   // highlight selected structure
-  strcs = $(".structures")
+  strcs = $(".structures");
   for(i = 0; i < strcs.length; i++) {
-    if (strcs[i].text == the_name) {
-      $(strcs[i]).addClass("bld")
+      if (strcs[i].text == the_name) {
+      $(strcs[i]).addClass("bld");
     }
   }
-  $("#discol").html(the_name + the_ending)
+  $("#discol").html(the_name + the_ending);
+  document.getElementById('fname').value = the_name; // + ".pdb";
 
   $(document).ready(function(){
       $('select').formSelect();
@@ -192,6 +193,10 @@
 
 
   function loadPdb(name, coloring) {
+    // fill html elements
+    document.getElementById('discol').innerHTML = the_name + the_ending;
+    document.getElementById('fname').value = the_name; // + ".pdb";
+
     // input files
     var pdbFile = getURL(name + coloring);
     if (name == "mut_0") {
@@ -238,7 +243,7 @@
 
       // load:
       loadPdb(this_name, the_ending);
-      document.getElementById('discol').innerHTML = strc;
+      //document.getElementById('discol').innerHTML = strc;
 
       setDiffOptions();
   })
@@ -254,7 +259,7 @@
       else if( id == "3"){ the_ending = "_HyPh.pdb"; }
       else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
       //alert(selectedValue);
-      document.getElementById('discol').innerHTML = the_name + the_ending;
+      //document.getElementById('discol').innerHTML = the_name + the_ending;
       loadPdb(the_name, the_ending);
   }
 

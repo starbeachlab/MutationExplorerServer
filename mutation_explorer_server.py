@@ -74,30 +74,25 @@ def name_mutation(base_structure, tag):
         if strc in ke:
             nums.append(int(ke.split("_")[-1]))
     
-    return strc + "_" + str(max(nums) + 1) # + ".pdb"
+    return strc + "_" + str(max(nums) + 1)  + ".pdb"
 
 
 def fixbb(tag, structure, resfile, out_file_name, logfile):
-    if out_file_name[-4] == ".":
-        print("################ DANGER")
-    print("######## fixbb")
-    print("out_file_name: ", out_file_name)
+    print("######## fixbb  #######")
+    print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
-    #log = open( out + logfile, 'a')
-    ### Ich wuerde Funktionen immer so einfach wie moeglich halten und auf eine Aufgabe fokusieren, d.h. hier die Ausfuehrung von fixbb
+    log = open( out + logfile, 'a')
     
+    if out_file_name[-4:] == '.pdb':
+        out_file_name = out_file_name[:-4]
 
-    # generate unique extension (temp file)  ## WARUM?
-    while(True):
-        ext = "m" + str(random.randint(0, 999))
-        if not glob.glob(out + ext + r'.*\.pdb$'):
-            break
+    ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out + ext + '_'
-    #log.write(cmd+'\n')
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    #log.write(p+'\n')
+    log.write(p+'\n')
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
@@ -105,39 +100,40 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     hydro = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_to_bfactor.py '
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
     
-    cmd = "tsp mv " + out + ext + "_" + structure.split('.')[0] + "_0001.pdb " + out + out_file_name + ".pdb"
-    #log.write(cmd+'\n')
+    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
+    log.write(cmd+'\n')
     p = subprocess.check_output( cmd.split())
-    #log.write(p+'\n')
+    log.write(p+'\n')
     
     cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
-    #log.write(cmd+'\n')
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    #log.write(p+'\n')
+    log.write(p+'\n')
 
     if "mut" in structure:
         cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffE.pdb' 
-        #log.write(cmd+'\n')
+        log.write(cmd+'\n')
         p = subprocess.check_output(cmd.split())
-        #log.write(p+'\n')
+        log.write(p+'\n')
 
     cmd = "tsp " + hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
-    #log.write(cmd+'\n')
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-    #log.write(p+'\n')
+    log.write(p+'\n')
 
     cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb'
-    #log.write(cmd+'\n')
+    log.write(cmd+'\n')
     p = subprocess.check_output(cmd.split())
-
+    log.write(p + '\n')
+    
     if "mut" in structure:
         cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffHyPh.pdb'
-        #log.write(cmd+'\n')
+        log.write(cmd+'\n')
         p = subprocess.check_output(cmd.split())
-        #log.write(p+'\n')
+        log.write(p+'\n')
 
-    #log.write("### THREAD FINISHED ###\n")
-
+    log.write("### THREAD FINISHED ###\n")
+    log.close()
         
 
 
@@ -172,8 +168,9 @@ def submit():
         return render_template("submit.html", error = "Please provide a structure")
 
     # create log file
-    with open(outdir + "log.txt", "w") as f:
-        f.write("submit\n")
+    print("submit\n")
+    if os.path.isfile( file_path):
+        print( file_path + ' is downloaded\n')
         # TODO: actually log something
 
     # create list file
@@ -191,17 +188,19 @@ def submit():
 
     # relax structure
     start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt"], "minimisation")
-
+    print( 'fixbb started for initial upload\n')
     return redirect(url_for('mutate', tag = tag))
 
 
 @app.route('/mutate/<tag>', methods=['GET', 'POST'])
 def mutate(tag):
-    if request.method == 'GET':
-        return render_template("mutate.html", tag = tag, error = "")
 
     outdir =   app.config['USER_DATA_DIR'] + tag + "/"
-    #w = open( outdir + 'log.txt', 'a')
+    
+    if request.method == 'GET':
+        chains = get_chains( outdir + "structure.pdb")
+        return render_template("mutate.html", tag = tag, chains=chains, error = "")
+
     ###  get form values
     mutations = request.form['mutations'].strip().replace( ' ','').split(',')
     if len(mutations)==1 and mutations[0] == '':
@@ -247,14 +246,14 @@ def mutate(tag):
     #    name = request.form['name'].strip() + ".pdb"  
     #    if name == ".pdb":
 
-    name = name_mutation("mut_0", tag)
-    #w.write( name + '\n')
-    print(name)
+    mutant = name_mutation("mut_0", tag)
+    print( 'mutate: ' + mutant + '\n')
+    print(mutant)
 
     parent =   "mut_0.pdb"
-    resfile =  name + "_resfile.txt"
-    align =    name + ".clw"  # align with parent
-    mutfile =  "info/" + name + ".txt"  # parent and mutations
+    resfile =  mutant[:-4] + "_resfile.txt"
+    align =    mutant[:-4] + ".clw"  # align with parent
+    mutfile =  "info/" + mutant[:-4] + ".txt"  # parent and mutations
     
     ###  return error message if no mutations given
     if len(mutations) == 0 and   clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
@@ -263,6 +262,7 @@ def mutate(tag):
     else:
         print( 'mutations defined')
 
+    print( 'wait for parent to exist\n')
     ### wait for parent to exist:
     wait( outdir + parent)
     
@@ -288,21 +288,21 @@ def mutate(tag):
         chainF1 = chainF1[0]
         fasta_file =  outdir + fasta1.filename
         fasta1.save(fasta_file)
-        target = seq_from_fasta( fasta_file) # TODO: sollte target nicht ein String sein? Ist ein Error bei mir
+        head,target = seq_from_fasta( fasta_file) # TODO: sollte target nicht ein String sein? Ist ein Error bei mir
         add_mutations_from_sequence( mutations, target, chainF1, "fa1", outdir+parent)
     if fasta2.filename != "" and chainF2 != "":
         secure_str(chainF2)
         chainF2 = chainF2[0]
         fasta_file =  outdir + fasta2.filename
         fasta2.save(fasta_file)
-        target = seq_from_fasta( fasta_file)
+        head,target = seq_from_fasta( fasta_file)
         add_mutations_from_sequence( mutations, target, chainF2, "fa2", outdir+parent)
     if fasta3.filename != "" and chainF3 != "":
         secure_str(chainF3)
         chainF3 = chainF3[0]
         fasta_file =  outdir + fasta3.filename
         fasta3.save(fasta_file)
-        target = seq_from_fasta( fasta_file)
+        head,target = seq_from_fasta( fasta_file)
         add_mutations_from_sequence( mutations, target, chainF3, "fa3", outdir+parent)
     if seq_input1 != "" and chainS1 != "":
         secure_str( chainS1)
@@ -338,9 +338,11 @@ def mutate(tag):
     else:
         print("no mutations")
 
-    start_thread(fixbb, [tag, parent, resfile, name, "log.txt"], "mutti")
-        
-    return redirect(url_for('status', tag = tag, filename = name + ".pdb"))
+    start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti")
+
+    print( 'started with nr mutations: ' + str( len(mutations) ) + '\n')
+    
+    return redirect(url_for('status', tag = tag, filename = mutant))
 
 
 @app.route('/vcf', methods=['GET', 'POST'])
@@ -354,7 +356,7 @@ def get_status(tag, filename):
     done = os.path.isfile(dirname)
     status = "done"
     msg = ""
-    #print( 'get_status', dirname, str(done))
+    print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
 
@@ -403,19 +405,21 @@ def explore(tag, filename = ""):
 
     # get form values
     mutations = request.form['mutations'].strip().replace(' ', '').split(',')
-    strc = request.form['fname'].strip() 
-    if strc == "":
-        strc = name_mutation(strc, tag)
+    parent = request.form['fname'].strip()
+    if parent[-4:] != ".pdb":
+        parent += '.pdb'
+    mutant = name_mutation(parent, tag)
     
-    print(__name__, 'original:', request.form['fname'].strip(), 'novel mutant:', strc)
+    print(__name__, 'original:', parent, 'novel mutant:', mutant)
     # OUTDIR ???
         
     # mutate structure
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
-    helper_files_from_mutations( mutations, outdir + strc, outdir + strc + '_resfile.txt', outdir + strc + '.clw', outdir + "info/" + strc + '.txt' ) 
-    start_thread(fixbb, [tag, strc,  strc + '_resfile.txt', strc, "log.txt"], "remutate")
+    helper_files_from_mutations( mutations, outdir + parent, outdir + mutant[:-4] + '_resfile.txt', outdir + mutant[:-4] + '.clw', outdir + "info/" + mutant[:-4] + '.txt' ) 
+
+    start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
     
-    return redirect(url_for('status', tag = tag, filename = strc))
+    return redirect(url_for('status', tag = tag, filename = mutant))
 
 
 
@@ -813,6 +817,7 @@ def download_uniprot( unid, filename):
 
 def get_chains( fname):
     chains = ""
+    print( __name__, 'get', fname)
     with open( fname) as r:
         for l in r:
             if l[:4] == "ATOM" or l[:6] == "HETATM":
