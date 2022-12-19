@@ -411,17 +411,18 @@
       select.add( new Option( 0, 'Chain in PDB'));
       for (var i = 0; i < chains.length; i++)
       {
-	   select.add(new Option( i, chains.charAt(i)));
+	   select.options.add(new Option( i, chains.charAt(i)));
            //var opt = document.createElement('option');
            //opt.value = i;
            //opt.innerHTML = chains.charAt(i);
            //select.appendChild(opt);
            //alert( target + ' ' + i + ' ' + chains.charAt(i) + ' ' + opt.innerHTML );
       }
+      M.FormSelect.init( select);
   }
-  addOpt('chainF1');
-  addOpt('chainF2');
-  addOpt('chainS1');
+  //addOpt('chainF1');
+  //addOpt('chainF2');
+  //addOpt('chainS1');
 
   initUploads();
 
