@@ -353,8 +353,48 @@ def mutate(tag):
 
 @app.route('/vcf', methods=['GET', 'POST'])
 def vcf():
-    return render_template("vcf.html", error = "")
+    if request.method == 'GET':
+        return render_template("vcf.html", error = "")
+    
+    # generate tag
+    while(True):
+        tag = str(random.randint(0, 999999))
+        outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        if not os.path.exists(outdir):
+            break
+    os.mkdir(outdir)
 
+    vcf = request.files['vcf']
+    vcf_file = vcf.filename
+    if vcf_file == "":
+        return render_template("vcf.html", error = "no filename was given")
+    vcf.safe( outdir + vcf_file)
+    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file;
+    print(cmd)
+    p = subprocess.check_output(cmd.split())
+    print(p)
+
+    structure = "mut_0.pdb"
+    outfile_name = "mut_0_1"
+
+    # create info file
+    os.mkdir(outdir + "info/")
+    with open(outdir + "info/mut_0.txt", "w") as f:
+        f.write("-")
+    
+    # relax structure
+    start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
+    print( 'fixbb started for initial upload\n')
+
+    wait( outfile + 'mut_0.pdb')
+    
+    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt"], "mutti")
+
+
+    
+    return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
+    
+    
 
 @app.route('/get_status/<tag>/<filename>')
 def get_status(tag, filename):
@@ -564,7 +604,7 @@ def sequence_chain_resids( parent):
         prev_chain = 'xxx'
         prev_id = -9999
         for l in r:
-            if l[:4] != "ATOM" and l[:6] != "HETATM": continue
+            if l[:4] != "ATOM": continue
             c = chain(l)
             res = resid(l)
             if prev_chain != c or prev_id != res:

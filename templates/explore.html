@@ -151,18 +151,19 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="{{url_for('static', filename='v2/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='v3/mdsrv.js')}}"></script>
 
 <script type="text/javascript">
   
 
   // set default structure
   name = "{{filename}}";
+  let the_ending = "_diffE.pdb"; // for communication between fct
   if (name == "") {
     name = "mut_0.pdb";
+    the_ending = "_absE.pdb";
   }
   let the_name = name.substr(0,name.length - 4);
-  let the_ending = "_diffE.pdb"; // for communication between fct
   allchains = "{{chains}}"
 
 
@@ -198,11 +199,20 @@
     document.getElementById('fname').value = the_name; // + ".pdb";
 
     // input files
-    var pdbFile = getURL(name + coloring);
+    console.log(name)
+    console.log("#1 coloring", coloring)
+    var c_name = name;
     if (name == "mut_0") {
-      name = name + "_1"
+      c_name = name + "_1"
+      if (coloring == "_diffE.pdb" ) {
+        coloring = "_absE.pdb";
+      } else if (coloring == "diffHyPh.pdb") {
+        coloring = "_HyPh.pdb";
+      }
     }
-    var clustalFile = getURL(name + "_" + allchains[0] + ".clw" );
+    var pdbFile = getURL(name + coloring);
+    console.log("#2 coloring", coloring)
+    var clustalFile = getURL(c_name + "_" + allchains[0] + ".clw" );
 
     // wait until loadViewer is defined
     var interval = setInterval(function() {
@@ -234,15 +244,17 @@
 
   $(".structures").click(function(e) {
       e.preventDefault();
-      this_name = $(this).text();
-      strc = this_name + the_ending;
+      the_name = $(this).text();
+      console.log("structure click")
+      console.log(the_name)
+      strc = the_name + the_ending;
 
       // highlight:
       $(".structures").removeClass("bld");  // unbold all
       $(this).addClass("bld");              // bold current
 
       // load:
-      loadPdb(this_name, the_ending);
+      loadPdb(the_name, the_ending);
       //document.getElementById('discol').innerHTML = strc;
 
       setDiffOptions();
@@ -266,7 +278,8 @@
 
   // if mut_0.pdb is selected, there are no _diffE and _diffHyp colorings => disable select options
   function setDiffOptions() {
-    opts = $("ul:contains('Color by')")[0].children
+    //opts = $("ul:contains('Color by')")[0].children
+    opts = $(".dropdown-content:contains('Energy')")[0].children
     if(the_name == "mut_0") {
       $(opts[2]).addClass("disabled")
       $(opts[4]).addClass("disabled")
