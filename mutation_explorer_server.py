@@ -99,6 +99,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
     hydro = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_to_bfactor.py '
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
+    mutti = app.config['SCRIPTS_PATH'] + 'pdb_mutated_aa.py '
     
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     log.write(cmd+'\n')
@@ -132,6 +133,11 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
         p = subprocess.check_output(cmd.split())
         log.write(p+'\n')
 
+        cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
+        log.write( cmd + '\n')
+        p = subprocess.check_output(cmd.split())
+        log.write( p + '\n')
+        
     log.write("### THREAD FINISHED ###\n")
     log.close()
         
