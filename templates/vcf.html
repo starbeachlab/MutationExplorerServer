@@ -4,17 +4,56 @@
 
 <center>
   <br>
-  <br>
   <h3>Upload human SNPs in VCF format</h3>
   <br>
-  <br>
-  <p> At the moment, MutationExplorer automatically loads alphafold models <br>for human transcripts with 2700 or fewer residues. </p>
 
-  <p> Details of the workflow are outlined in FAQs. </p>
-  <br>
-  <div id="err" style="color:red;"><b>{{error}}</b></div>
-  <br>
- 
+    <!-- modal body -->
+    <div id="modal1" class="modal">
+      <div class="modal-content">
+        <h4>Example of an VCF file:</h4>
+        <div style="text-align: center">
+	  <pre>
+          <div align="left" style="display: inline-block !important">
+          #CHROM  POS ID  REF ALT 
+          1   160092317   .   C   T 
+          1   116967141   .   C   T 
+          6   129250113   .   T   C 
+          15  34359248    .   G   C 
+          15  34359655    .   G   A 
+          13  110642401   .   G   A 
+          13  76992000    .   G   C 
+          2   206786779   .   A   T 
+          17  80108808    .   C   T 
+          17  80118731    .   G   A 
+          1   235806656   .   A   T 
+          17  9023271     .   G   T 
+          19  18166175    .   C   T 
+          13  36819698    .   A   T 
+          20  63690136    .   C   T 
+          9   128607988   .   C   G 
+          1   47280395    .   G   A 
+          19  36058855    .   G   A 
+          </div>
+	  </pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+      </div>
+    </div>
+
+
+  <div class="row">
+    <div class="col offset-s2 s8">
+      <p style="text-align: justify"> 
+        At the moment, <span style="font-variant:small-caps"> MutationExplorer </span> automatically loads AlphaFold models
+        for human transcripts with 2700 or fewer residues.  GRCh38 coordinates are required in the VCF file, which is forwarded to ENSEMBL VEP to identify missense variant(s).  Only missense variants which impact canonical UniProtKB/Swiss-Prot transcripts are further explored. 
+      </p>
+      <p> Details of the workflow are outlined in FAQs. </p>
+      <br>
+      <div id="err" style="color:red;"><b>{{error}}</b></div>
+    </div>
+  </div>
   
 </center>
 
@@ -22,7 +61,15 @@
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
   
 
+  <!-- modal vcf demo 
+  <div class="col offset-s2 s8">
+    <button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float: right;">demo vcf file</button>
+  </div>
+
+
 <br>
+<br>
+<br>-->
 
 <div class="col offset-s3 s6 center-align">
   <div class="">
@@ -46,6 +93,14 @@
 
 <div class="col offset-s3 s6 center-align">
 <input id="submit-btn" type="submit" value="submit" class="btn">
+<br>
+<br>
+<br>
+<div style="display: flex; justify-content: center">
+<a href="{{url_for('load_example', tag='vcf_demo')}}" class="btn-small grey lighten-1">load example</a>
+<div style="width: 2vh"></div>
+<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information">demo vcf file</button>
+</div>
 </div>
 
 
@@ -57,4 +112,26 @@
 
 
 
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+
+    function showFilename() {
+        var fname = $(this).val().replace(/^.*[\\\/]/, '')
+        $(this).parent().parent().find(".filename").html(fname)
+    }
+
+    function initUploads() {
+        var uploads = $(".file-field")
+        for (i = 0; i < uploads.length; i++) {
+            $(uploads[i]).append('<center><div class="filename"></div></center>')
+            $($(uploads[i]).find("input")).on("change", showFilename)
+        }
+    }
+
+    initUploads()
+
+</script>
 {% endblock %}

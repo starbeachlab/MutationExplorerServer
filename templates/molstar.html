@@ -26,7 +26,7 @@
 
 </style>
 
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='v2/mdsrv.css')}}" /> 
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='v7/mdsrv.css')}}" /> 
 
 {% endblock %}
 
@@ -39,21 +39,30 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="{{url_for('static', filename='v3/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
 <script type="text/javascript">
 
+    var vw = mdsrv.Viewer.create('port', {});
 
+    var loadViewer = function loadViewer(pdbFile, clustalFiles) {
+        vw.then(viewer => {
+            viewer.clear()
+            viewer.loadMutationExplorer(pdbFile, clustalFiles)
+        })
+    }
+
+
+    /*
     var loadViewer = function loadViewer(pdbFile, clustalFile) {
         // reset canvas
         $("#port").remove();
         $("#content").append("<div id='port'></div>")
 
-        //var vw = mdsrv.Viewer.create('port', {});
-        
+
         mdsrv.Viewer.create('port', {}).then(viewer => {
-            viewer.loadMutationExplorer(pdbFile, clustalFile);
+            viewer.loadMutationExplorer(pdbFile, [clustalFile]);
         });
-    }
+    }*/
 
 </script>
 

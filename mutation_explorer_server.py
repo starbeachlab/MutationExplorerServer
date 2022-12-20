@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 
 app.config['USER_DATA_DIR'] = "/disk/user_data/mutation_explorer_gamma/"
+app.config['EXAMPLE_DIR'] = "/disk/data/mutation_explorer_gamma/examples/"
 app.config['ROSETTA_PATH']  = "/home/hildilab/dev/ext/rosetta/bin/"
 app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_gamma/scripts/"
 
@@ -25,10 +26,25 @@ def secure_str( string):
         print( "WARNING:", __name__, 'empty string after cleanup!')
     return string
 
+
 def download_file(url, file_path):
         req = requests.get(url)
         with open(file_path, 'w') as f:
             f.write(req.content)
+
+
+def get_alphafold_id(af):
+    # get_alphafold_id tries to match various fractions of "AF-<UniProt>-F<X>-model_v<y>.pdb" to the full ID
+    if af[:3] != "AF-":
+        af = "AF-" + af
+    if af[-3:] != "pdb":
+        if af[-9:-1] != "-model_v":
+            if af[-3:-1] != "-F":
+                af += "-F1"
+            af += "-model_v4"
+        af += ".pdb"
+    return af
+
 
 
 def start_thread(function, args, name):
@@ -51,8 +67,8 @@ def build_tree(node, links):
     return tree
 
 
-def build_mutation_tree(tag, root):
-    info = app.config['USER_DATA_DIR'] + tag + "/info/"
+def build_mutation_tree(out, tag, root):
+    info = out + tag + "/info/"
     files = os.listdir(info)
 
     links = []
@@ -65,9 +81,9 @@ def build_mutation_tree(tag, root):
     return build_tree(root, links)
 
 
-def name_mutation(base_structure, tag):
+def name_mutation(out, base_structure, tag):
     strc = base_structure.split(".")[0]
-    mut_tree = build_mutation_tree(tag, strc)
+    mut_tree = build_mutation_tree(out, tag, strc)
 
     nums = [0]
     for ke in mut_tree.keys():
@@ -75,6 +91,12 @@ def name_mutation(base_structure, tag):
             nums.append(int(ke.split("_")[-1]))
     
     return strc + "_" + str(max(nums) + 1)  + ".pdb"
+
+
+def bash_cmd(cmd, log):
+    log.write(cmd + '\n')
+    p = subprocess.check_output(cmd.split())
+    log.write(p + '\n')
 
 
 def fixbb(tag, structure, resfile, out_file_name, logfile):
@@ -90,9 +112,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
 
     # call rosetta
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
-    log.write(cmd+'\n')
-    p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    bash_cmd(cmd, log)
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
@@ -102,45 +122,37 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     mutti = app.config['SCRIPTS_PATH'] + 'pdb_mutated_aa.py '
     
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
-    log.write(cmd+'\n')
-    p = subprocess.check_output( cmd.split())
-    log.write(p+'\n')
+    bash_cmd(cmd, log)
     
     cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
-    log.write(cmd+'\n')
-    p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    bash_cmd(cmd, log)
 
     if "mut" in structure:
         cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffE.pdb' 
-        log.write(cmd+'\n')
-        p = subprocess.check_output(cmd.split())
-        log.write(p+'\n')
+        bash_cmd(cmd, log)
 
     cmd = "tsp " + hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
-    log.write(cmd+'\n')
-    p = subprocess.check_output(cmd.split())
-    log.write(p+'\n')
+    bash_cmd(cmd, log)
 
-    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb'
-    log.write(cmd+'\n')
-    p = subprocess.check_output(cmd.split())
-    log.write(p + '\n')
+    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name?
+    bash_cmd(cmd, log)
     
     if "mut" in structure:
         cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffHyPh.pdb'
-        log.write(cmd+'\n')
-        p = subprocess.check_output(cmd.split())
-        log.write(p+'\n')
+        bash_cmd(cmd, log)
 
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
-        log.write( cmd + '\n')
-        p = subprocess.check_output(cmd.split())
-        log.write( p + '\n')
+        bash_cmd(cmd, log)
+
+    
+    if not os.path.exists(out + "fin/"):
+        os.mkdir(out + "fin/")
+
+    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"
+    bash_cmd(cmd, log)
         
     log.write("### THREAD FINISHED ###\n")
     log.close()
-        
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -170,12 +182,9 @@ def submit():
             pdb = pdb[:-4]
         download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
-        if af[:3] != "AF-":
-            af = "AF-" + af
-        if af[-3:-1] != "-F":
-            af += "-F1"
+        af = get_alphafold_id(af)
         print( 'alphafold:', af)
-        download_file("https://alphafold.ebi.ac.uk/files/" + af + "-model_v4.pdb", file_path)
+        download_file("https://alphafold.ebi.ac.uk/files/" + af, file_path)
     else:
         # no structure -> error
         return render_template("submit.html", error = "Please provide a structure")
@@ -262,7 +271,7 @@ def mutate(tag):
     #    name = request.form['name'].strip() + ".pdb"  
     #    if name == ".pdb":
 
-    mutant = name_mutation("mut_0", tag)
+    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     print( 'mutate: ' + mutant + '\n')
     print(mutant)
 
@@ -386,8 +395,9 @@ def vcf():
     p = subprocess.check_output(cmd.split())
     print(p)
 
-    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 45) == False:
+    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 90) == False:
         return render_template("vcf.html", error = "No missense was found.")
+    
     # create info file
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
@@ -421,10 +431,19 @@ def vcf():
 
 @app.route('/get_status/<tag>/<filename>')
 def get_status(tag, filename):
-    dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + filename )
-    done = os.path.isfile(dirname)
-    status = "done"
+    status = ""
     msg = ""
+    dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/fin/" + filename)
+    done = os.path.isfile(dirname)
+    if done:
+        dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + filename )
+        successful = os.path.isfile(dirname)
+        if successful:
+            status = "done"
+            msg = ""
+        else:
+            status = "error"
+            msg = "Rosetta calculation encountered an error"
     print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
@@ -447,37 +466,41 @@ def build_list(d):
     return s
 
 
+def load_explore_page(out, tag, filename):
+    mut_tree = build_mutation_tree(out, tag, "-")
+    print('explore::tree', mut_tree)
+    structures = "<ul>" + build_list(mut_tree) + "</ul>"
+    print('explore::tree:', structures)
+    parent = ""
+    mutations = ""
+    if filename == "":
+        filename = "mut_0.pdb"
+    with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
+        parent = r.readline().strip()
+        mutations += r.readline().strip()
+        for l in r:
+            mutations += ',' + l.strip()
+    outdir = out + tag + "/"
+    if parent == "-":
+        chains = get_chains(outdir + filename)
+    else:
+        chains = get_chains( outdir + parent) 
+    print( __name__, filename , tag, chains)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains)
+
+
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/', methods=['GET', 'POST'])
 def explore(tag, filename = ""):
     if request.method == 'GET':
-        mut_tree = build_mutation_tree(tag, "-")
-        print('explore::tree', mut_tree)
-        structures = "<ul>" + build_list(mut_tree) + "</ul>"
-        print('explore::tree:', structures)
-        parent = ""
-        mutations = ""
-        if filename == "":
-            filename = "mut_0.pdb"
-        with open( app.config['USER_DATA_DIR'] + tag + "/info/" + filename[:-4] + ".txt") as r:
-            parent = r.readline().strip()
-            mutations += r.readline().strip()
-            for l in r:
-                mutations += ',' + l.strip()
-        outdir = app.config['USER_DATA_DIR'] + tag + "/"
-        if parent == "-":
-            chains = get_chains(outdir + filename)
-        else:
-            chains = get_chains( outdir + parent) 
-        print( __name__, filename , tag, chains)
-        return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains)
+        return load_explore_page(app.config['USER_DATA_DIR'], tag, filename)
 
     # get form values
     mutations = request.form['mutations'].strip().replace(' ', '').split(',')
     parent = request.form['fname'].strip()
     if parent[-4:] != ".pdb":
         parent += '.pdb'
-    mutant = name_mutation(parent, tag)
+    mutant = name_mutation(app.config['USER_DATA_DIR'], parent, tag)
     
     print(__name__, 'original:', parent, 'novel mutant:', mutant)
     # OUTDIR ???
@@ -495,41 +518,17 @@ def explore(tag, filename = ""):
 # Testing molstar / mdsrv
 @app.route('/molstar/<tag>/')
 def molstar(tag):
-    mut_tree = build_mutation_tree(tag, "-")
-    structures = "<ul>" + build_list(mut_tree) + "</ul>"
-    return render_template("molstar.html", tag = tag, structures = structures)
+    return render_template("molstar.html")
     
-    
-"""
-@app.route('/reference/<tag>/')
-def reference(tag):
-    mut_tree = build_mutation_tree(tag, "-")
-    structures = "<ul>" + build_list(mut_tree) + "</ul>"
-    return render_template("explore4_copy.html", tag = tag, structures = structures)
-
-
-@app.route('/exploreframe/<tag>/')
-def idea(tag):
-    mut_tree = build_mutation_tree(tag, "-")
-    structures = "<ul>" + build_list(mut_tree) + "</ul>"
-    return render_template("explore999.html", tag = tag, structures = structures, filename = "mut_0.pdb", chains = "A")
-
-
-@app.route('/move/<tag>/')
-def move(tag):
-    mut_tree = build_mutation_tree(tag, "-")
-    structures = "<ul>" + build_list(mut_tree) + "</ul>"
-    return render_template("explore5.html", tag = tag, structures = structures)
-
-@app.route('/canvas')
-def canvas():
-    return render_template("canvas.html")
-"""
-
     
 @app.route('/examples')
 def examples():
     return render_template("examples.html")
+
+
+@app.route('/examples/<tag>/')
+def load_example(tag):
+    return load_explore_page(app.config['EXAMPLE_DIR'], tag, "mut_0_1.pdb")
 
 
 @app.route('/faq')
@@ -539,7 +538,10 @@ def faq():
 
 @app.route('/downloads/<tag>/<filename>')
 def download(tag, filename):
-    path = app.config['USER_DATA_DIR'] + tag + "/"
+    if tag.isdigit():
+        path = app.config['USER_DATA_DIR'] + tag + "/"
+    else:
+        path = app.config['EXAMPLE_DIR'] + tag + "/"
     if filename == "results" + tag + ".zip":
         if not os.path.isfile(path + filename):
             # create zip file
@@ -600,9 +602,9 @@ def mutations_from_vcf( fname):
             c = l.split(',')
             if alphafold == "":
                 alphafold = c[-1]
-                mutations.append( c[-2][0] + ':' + c[-2][1:] )
+                mutations.append( 'A:' + c[-2][1:] )
             elif c[-1] == alphafold:
-                mutations.append( c[-2][0] + ':' + c[-2][1:] )
+                mutations.append( 'A:' + c[-2][1:] )
     return alphafold,mutations
 
 def resid( line):

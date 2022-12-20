@@ -206,13 +206,18 @@
       c_name = name + "_1"
       if (coloring == "_diffE.pdb" ) {
         coloring = "_absE.pdb";
-      } else if (coloring == "diffHyPh.pdb") {
+      } else if (coloring == "_diffHyPh.pdb") {
         coloring = "_HyPh.pdb";
       }
     }
     var pdbFile = getURL(name + coloring);
     console.log("#2 coloring", coloring)
-    var clustalFile = getURL(c_name + "_" + allchains[0] + ".clw" );
+    var clustalFiles = []
+
+    for (i = 0; i < allchains.length; i++) {
+      console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
+      clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+    }
 
     // wait until loadViewer is defined
     var interval = setInterval(function() {
@@ -221,7 +226,7 @@
       clearInterval(interval);
 
       // update viewer
-      loadViewer(pdbFile, clustalFile)
+      loadViewer(pdbFile, clustalFiles)
     }, 100);
   }
   

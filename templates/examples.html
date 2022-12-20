@@ -1,16 +1,62 @@
 {% extends "base.html" %}
 
+
+{% block head %}
+<style>
+    #input-list {
+        padding-left: revert !important;
+        margin-top: 0.2rem;
+    }
+
+    #input-list li {
+        list-style-type: disc !important;
+    }
+
+    #list-head {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <center>
-<h1>Examples</h1>
+<br>
+<h3>Examples</h3>
 </center>
 
-<p>
-- explore individual mutations <br>
-- use an alignment for mutations <br>
-- backmutate a PDB to the wildtype sequence <br>
-- use sequencing data <br>
-</p>
+
+<h4>Point Mutations</h4>
+
+<a href="{{url_for('load_example', tag='1lib')}}" class="btn">load 1lib</a>
+
+<br>
+<br>
+
+<p id="list-head">Options used to create the example:</p>
+
+<ul id="input-list">
+    <li>PDB ID: 1lib</li>
+    <li>Mutations: A:1A</li>
+</ul>
+
+<br>
+
+
+
+<h4>VCF Demo</h4>
+
+<a href="{{url_for('load_example', tag='vcf_demo')}}" class="btn">load demo</a>
+
+<br>
+<br>
+
+<p>You can download the file used to create the example here:</p>
+
+<a href="{{url_for('download', tag = 'vcf_demo', filename = 'demo.vcf')}}" download class="btn">demo.vcf</a>
+<br>
+
+
+
 
 {% endblock %}

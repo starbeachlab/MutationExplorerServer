@@ -38,7 +38,19 @@
 	<h5 class="center-align"> Manual mutation definition</h5>
       </div>
       <div class="collapsible-body">
-	<h4> <button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
+
+	  <button data-target="modalPDB" class="btn-small modal-trigger grey lighten-1" title="PDB chains" style="float:left;"> available PDB chains</button>
+	  <div id="modalPDB" class="modal">
+	    <div class="modal-content left-align">
+	      <h4> Available PDB chains</h4>
+	      <p> The PDB that you uploaded contains the following chains: <div id="chain_list"></div> </p>
+	    </div>
+	    <div class="modal-footer">
+	      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+	    </div>
+	  </div>								   
+
+	<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button>
 	<!-- Modal Structure -->
 	<div id="modal1" class="modal">
 	  <div class="modal-content">
@@ -50,6 +62,118 @@
 	  </div>
 	</div>
 
+	<br>
+	<br>
+
+	<button data-target="modalCode" class="btn-small modal-trigger grey lighten-1" title="PDB chains" style="float:left;">one letter code</button>
+	<div id="modalCode" class="modal">
+	<div class="modal-content left-align">
+		<h4> Amino acid one letter code </h4>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>One letter code</th>
+				</tr>
+			</thead>
+
+			<tbody>
+				<tr>
+					<th>Alanine</th>
+					<th>A</th>
+				</tr>
+				<tr>
+					<th>Arginine</th>
+					<th>R</th>
+				</tr>
+				<tr>
+					<th>Asparagine</th>
+					<th>N</th>
+				</tr>
+				<tr>
+					<th>Aspartic Acid</th>
+					<th>D</th>
+				</tr>
+				<tr>
+					<th>Cysteine</th>
+					<th>C</th>
+				</tr>
+				<tr>
+					<th>Gluatmic Acid</th>
+					<th>E</th>
+				</tr>
+				<tr>
+					<th>Glutamine</th>
+					<th>Q</th>
+				</tr>
+				<tr>
+					<th>Glycine</th>
+					<th>G</th>
+				</tr>
+				<tr>
+					<th>Histidine</th>
+					<th>H</th>
+				</tr>
+				<tr>
+					<th>Isoleucin</th>
+					<th>I</th>
+				</tr>
+				<tr>
+					<th>Leucine</th>
+					<th>L</th>
+				</tr>
+				<tr>
+					<th>Lysine</th>
+					<th>K</th>
+				</tr>
+				<tr>
+					<th>Methionine</th>
+					<th>M</th>
+				</tr>
+				<tr>
+					<th>Phenylalanine</th>
+					<th>F</th>
+				</tr>
+				<tr>
+					<th>Proline</th>
+					<th>P</th>
+				</tr>
+				<tr>
+					<th>Serine</th>
+					<th>S</th>
+				</tr>
+				<tr>
+					<th>Threonine</th>
+					<th>T</th>
+				</tr>
+				<tr>
+					<th>Tryptophan</th>
+					<th>W</th>
+				</tr>
+				<tr>
+					<th>Tyrosine</th>
+					<th>Y</th>
+				</tr>
+				<tr>
+					<th>Valine</th>
+					<th>V</th>
+				</tr>
+				<tr>
+					<th>Alanine</th>
+					<th>A</th>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+	<div class="modal-footer">
+		<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+	</div>
+	</div>								   
+
+	<br>
+	<br>
 	<br>
 	<div class="row">
 	  <div id="mutation" class="input-field col s12">
@@ -134,37 +258,6 @@
       </div>
       <div class="collapsible-body">
  	
-	<div class="row center-align">
-	  <h4> <button data-target="modalPDB" class="btn-small modal-trigger grey lighten-1" title="PDB chains" style="float:left;"> available PDB chains</button></h4>
-	  <div id="modalPDB" class="modal">
-	    <div class="modal-content left-align">
-	      <h4> Available PDB chains</h4>
-	      <p> The PDB that you uploaded contains the following chains: <div id="chain_list"></div> </p>
-	    </div>
-	    <div class="modal-footer">
-	      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	    </div>
-	  </div>								   
-	  <h4> <button data-target="modal3" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
-	  <!-- Modal Structure -->
-	  <div id="modal3" class="modal">
-	    <div class="modal-content left-align">
-	      <h4>Target sequences</h4>
-	      <p> You can define any number of mutations by uploading a target sequence. <br>
-		You have to assign the target sequence(s) to chains in the PDB file that you uploaded in the previous step. <br>
-		The sequence you upload has to have exactly the same size as the chain in the PDB.<br>
-		You can upload sequences in three ways:
-		<ul><li> files in FASTA format</li><li>pasting</li><li>via Uniprot-ID</li></ul>
-		<br>
-		You can extend this list to 9 input fields, allowing you to mutate 9 chains in a PDB with this method.<br>
-		You can combine this with alignments or manual definitions.<br>
-	      </p>
-	    </div>
-	    <div class="modal-footer">
-	      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	    </div>
-	  </div>
-	</div>
 	<br>
 
 
@@ -172,10 +265,10 @@
 	<div>
 	  <div class="row">
 	    <div class="col s3">
-	      <div class="input-field">
+	      <div class="input-field chain-select-field" sel="chainF1">
 		<!--<select id="chainF1"></select>-->
-		<input id="chainF1" type="text" name="chainF1" class="validate" >
-		<label for="chainF1">PDB Chain</label>
+		<!--<input id="chainF1" type="text" name="chainF1" class="validate" >
+		<label for="chainF1">PDB Chain</label>-->
 	
 	      </div>
 	    </div>
@@ -191,10 +284,10 @@
 	  
 	  <div class="row additional fasta1">
 	    <div class="col s3">
-	      <div class="input-field">
+	      <div class="input-field chain-select-field" sel="chainF2">
 		<!--<select id="chainF2"></select>-->
-		<input id="chainF2" type="text" name="chainF2" class="validate" >
-		<label for="chainF2">PDB Chain</label>
+		<!--<input id="chainF2" type="text" name="chainF2" class="validate" >
+		<label for="chainF2">PDB Chain</label>-->
 	      </div>
 	    </div>
 	    <div class="col s6">
@@ -209,12 +302,16 @@
 	  
 	  <div class="row additional fasta2">
 	    <div class="col s3">
-	      <div class="input-field">
+	      <div class="input-field chain-select-field" sel="chainF3">
 		<!--<select id="chainF3">
 		  <option value="" disabled selected>PDB chain</option>
 		</select> -->
+
+		<!--
 		<input id="chainF3" type="text" name="chainF3" class="validate" >
-		<label for="chainF3">PDB Chain</label>
+		<label for="chainF3">PDB Chain</label>-->
+
+
 	      </div>
 	    </div>
 	    <div class="col s6">
@@ -240,9 +337,10 @@
 	<div>
 	  <div class="row">
 	    <div class="col s3">
-	      <div class="input-field">
+	      <div class="input-field chain-select-field" sel="chainS1">
+			<!--
 		<input id="chainS1" type="text" name="chainS1" class="validate" >
-		<label for="chainS1">PDB Chain</label> 
+		<label for="chainS1">PDB Chain</label> -->
 		<!--<select id="chainS1"></select>-->
 	      </div>
 			</div>
@@ -256,9 +354,10 @@
 
 		<div class="row additional pseq1">
 			<div class="col s3">
-				<div class="input-field">
+				<div class="input-field chain-select-field" sel="chainS2">
+					<!--
 					<input id="chainS2" type="text" name="chainS2" class="validate" >
-					<label for="chainS2">PDB Chain</label>
+					<label for="chainS2">PDB Chain</label>-->
 				</div>
 			</div>
 			<div class="col s9">
@@ -271,9 +370,10 @@
 
 		<div class="row additional pseq2">
 			<div class="col s3">
-				<div class="input-field">
+				<div class="input-field chain-select-field" sel="chainS3">
+					<!--
 					<input id="chainS3" type="text" name="chainS3" class="validate" >
-					<label for="chainS3">PDB Chain</label>
+					<label for="chainS3">PDB Chain</label>-->
 				</div>
 			</div>
 			<div class="col s9">
@@ -297,9 +397,10 @@
 	<div>
 		<div class="row">
 			<div class="col s3">
-				<div class="input-field">
+				<div class="input-field chain-select-field" sel="chainU1">
+					<!--
 					<input id="chainU1" type="text" name="chainU1" class="validate" >
-					<label for="chainU1">PDB Chain</label>
+					<label for="chainU1">PDB Chain</label>-->
 				</div>
 			</div>
 			<div class="col s9">
@@ -312,9 +413,10 @@
 
 		<div class="row additional up1">
 			<div class="col s3">
-				<div class="input-field">
+				<div class="input-field chain-select-field" sel="chainU2">
+					<!--
 					<input id="chainU2" type="text" name="chainU2" class="validate" >
-					<label for="chainU2">PDB Chain</label>
+					<label for="chainU2">PDB Chain</label>-->
 				</div>
 			</div>
 			<div class="col s9">
@@ -327,9 +429,10 @@
 
 		<div class="row additional up2">
 			<div class="col s3">
-				<div class="input-field">
+				<div class="input-field chain-select-field" sel="chainU3">
+					<!--
 					<input id="chainU3" type="text" name="chainU3" class="validate" >
-					<label for="chainU3">PDB Chain</label>
+					<label for="chainU3">PDB Chain</label>-->
 				</div>
 			</div>
 			<div class="col s9">
@@ -356,7 +459,7 @@
    <br>
   
    <div class="col offset-s3 s6 center-align">
-     <input id="submit-btn" type="submit" value="submit" class="btn">
+     <input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
    </div>
 <br>
 <br>
@@ -401,6 +504,8 @@
   var uniprots = 0;
 
   document.getElementById( 'chain_list').innerHTML = "{{chains}}".split('');
+
+  chainSelect();
   
   function addOpt( target){
       if(!target){
@@ -473,6 +578,26 @@
             $($(uploads[i]).find("input")).on("change", showFilename)
         }
     }
+
+
+	function chainSelect() {
+
+		var chains = "{{chains}}".split("")
+		var selectHtml = "<select name='XYZ'><option value='' selected>Select a Chain</option>"
+		for (i = 0; i < chains.length; i++) {
+			c = chains[i]
+			selectHtml += "<option value='" + c + "'>" + c + "</option>"
+		}
+		selectHtml += "</select>"
+
+		var fields = $(".chain-select-field")
+		for (i = 0; i < fields.length; i++) {
+			sel = $(fields[i]).attr("sel")
+			$(fields[i]).append(selectHtml.replace("XYZ", sel))
+		}
+
+      	$('select').formSelect();
+	}
 
 
 

@@ -3,10 +3,13 @@
 {% block content %}
 
 <center>
-  <br>
-  <h3>Upload structure or model</h3>
-  <br>
-  <p> Choose one of the following options: </p>
+<br>
+<h3>Upload structure or model</h3>
+
+
+
+<br>
+<p> Choose one of the following options: </p>
 </center>
 
 
@@ -40,12 +43,15 @@
 </div>
 
 <div class="col offset-s3 s6 center-align">
-<input id="submit-btn" type="submit" value="submit" class="btn">
+<input id="submit-btn" type="submit" value="Next: input mutations" class="btn">
+<br>
+<br>
+<br>
+<a href="{{url_for('load_example', tag='1lib')}}" class="btn-small grey lighten-1">load example</a>
 </div>
 
-
-
 </form>
+
 
 
 {% endblock %}
