@@ -166,13 +166,23 @@ def submit():
     if upload.filename != "":
         upload.save(file_path)
     elif pdb != "":
+        if pdb[-4:] == ".pdb":
+            pdb = pdb[:-4]
         download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
-        download_file("https://alphafold.ebi.ac.uk/files/AF-" + af + "-F1-model_v4.pdb", file_path)
+        if af[:3] != "AF-":
+            af = "AF-" + af
+        if af[-3:-1] != "-F":
+            af += "-F1"
+        print( 'alphafold:', af)
+        download_file("https://alphafold.ebi.ac.uk/files/" + af + "-model_v4.pdb", file_path)
     else:
         # no structure -> error
         return render_template("submit.html", error = "Please provide a structure")
 
+    if not is_pdb( file_path):
+        return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
+    
     # create log file
     print("submit\n")
     if os.path.isfile( file_path):
@@ -270,7 +280,8 @@ def mutate(tag):
 
     print( 'wait for parent to exist\n')
     ### wait for parent to exist:
-    wait( outdir + parent)
+    if wait( outdir + parent, 1, 20) == False:
+        return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
     
     ###  case separation
     #    if vcf.filename != "":
@@ -343,7 +354,8 @@ def mutate(tag):
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
         print("no mutations")
-
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+    
     start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti")
 
     print( 'started with nr mutations: ' + str( len(mutations) ) + '\n')
@@ -355,7 +367,7 @@ def mutate(tag):
 def vcf():
     if request.method == 'GET':
         return render_template("vcf.html", error = "")
-    
+  
     # generate tag
     while(True):
         tag = str(random.randint(0, 999999))
@@ -368,32 +380,43 @@ def vcf():
     vcf_file = vcf.filename
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
-    vcf.safe( outdir + vcf_file)
+    vcf.save( outdir + vcf_file)
     cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file;
     print(cmd)
     p = subprocess.check_output(cmd.split())
     print(p)
 
-    structure = "mut_0.pdb"
-    outfile_name = "mut_0_1"
-
+    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 45) == False:
+        return render_template("vcf.html", error = "No missense was found.")
     # create info file
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("-")
-    
+    with open( outdir + "mut_0_resfile.txt", 'w') as w:
+        w.write('NATRO\nstart\n')
+
+    alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
+    print( 'alphafold:', alphafold)
+    download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+    if not is_pdb( outdir + 'structure.pdb'):
+        return render_template("vcf.html", error = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded")
+
+            
     # relax structure
     start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
     print( 'fixbb started for initial upload\n')
 
-    wait( outfile + 'mut_0.pdb')
-    
+    if wait( outdir + 'mut_0.pdb', 1, 30) == False:
+        return render_template("vcf.html", error = "Your structure could not be minimized.")
+
+    helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
+
     start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt"], "mutti")
 
 
     
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
-    
+
     
 
 @app.route('/get_status/<tag>/<filename>')
@@ -557,9 +580,31 @@ def mutations_to_resfile( mutations, resfile):
                 prev_chains.append(chain)
                 
             f.write(resid + ' ' + chain + ' PIKAA ' + res + '\n')
-                
+"""                
+def mutations_from_resfile( resfile):
+    mutations = []
+    with open( resfile) as r:
+        r.readline()
+        r.readline()
+        for l in r:
+            if 'NATAA' in 
+"""
 
-            
+def mutations_from_vcf( fname):
+    mutations = []
+    alphafold = ""
+    print( 'get mutations from:', fname)
+    with open( fname) as r:
+        r.readline()
+        for l in r:
+            c = l.split(',')
+            if alphafold == "":
+                alphafold = c[-1]
+                mutations.append( c[-2][0] + ':' + c[-2][1:] )
+            elif c[-1] == alphafold:
+                mutations.append( c[-2][0] + ':' + c[-2][1:] )
+    return alphafold,mutations
+
 def resid( line):
     return int( line[22:26].strip() )
 
@@ -693,10 +738,13 @@ def helper_files_from_mutations( mutations, parent, resfile, align, mutfile):
     mutation_parent_file( mutations, parent, mutfile)
     alignment_from_mutations( mutations, parent, align, mutfile)
 
-    
-    
-def add_mutations_from_vcf( mutations, vcf_file, parent):
-    print('chris...')
+
+'''    
+def helper_files_from_resfile( resfile, parent, mutfile, align):
+    mutations = mutations_from_resfile( resfile)
+    mutation_parent_file( mutations, parent, mutfile)
+    alignment_from_mutations(mutations, parent, align, mutfile)
+'''    
 
 
 def write_clustal( s1, s2, filename):
@@ -796,6 +844,10 @@ def pdb2seq( pdb):
             c = chain(l)
             res = resid(l)
             if prev_chain != c or prev_id != res:
+                print("######### check")
+                print(prev_chain)
+                print(prev_id)
+                print(chains)
                 chains[c][0] += single_letter( residue_name(l))
                 chains[c][1].append( res )
                 prev_chain = c
@@ -838,9 +890,15 @@ def mutations_from_alignment( clustal, parent ):
     #print( aligned)
     #print( pdbres[:3] )
     count = 0
+    at_end = False
     for i in range( len( pdbseq )):
         while aligned[count] == '-':
             count += 1
+            if count == len(aligned) - 1:
+                at_end = True
+                break
+        if at_end:
+            break
         if aligned[count] != pdbseq[i]:
             mutations.append( chain_in_pdb + ':' + str(pdbres[i]) + aligned[count] )
         count += 1
@@ -849,11 +907,12 @@ def mutations_from_alignment( clustal, parent ):
 
                     
             
-def wait( filename):
-    while not os.path.isfile(filename):
-        time.sleep(1)
-
-
+def wait( filename, step, maxw):
+    for i in range(0, maxw):
+        time.sleep(step)
+        if os.path.isfile(filename):
+            return True
+    return False
         
 def download_uniprot( unid, filename):
     link = "https://www.uniprot.org/uniprot/" + secure_filename(unid) + '.fasta'
@@ -871,3 +930,12 @@ def get_chains( fname):
                 if c not in chains:
                     chains += c
     return chains
+
+def is_pdb( fname):
+    if not os.path.isfile(fname):
+        return False
+    with open( fname) as r:
+        for l in r:
+            if l[:4] == "ATOM" or l[:6] == "HETATM":
+                return True
+    return False

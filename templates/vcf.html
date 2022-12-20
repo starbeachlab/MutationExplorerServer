@@ -8,10 +8,13 @@
   <h3>Upload human SNPs in VCF format</h3>
   <br>
   <br>
+  <p> At the moment, MutationExplorer automatically loads alphafold models <br>for human transcripts with 2700 or fewer residues. </p>
+
   <p> Details of the workflow are outlined in FAQs. </p>
   <br>
   <div id="err" style="color:red;"><b>{{error}}</b></div>
   <br>
+ 
   
 </center>
 
@@ -27,7 +30,7 @@
       <div class="file-field input-field" style="width: 100%">
 	<div class="btn" style="width: 100%">
 	  <span>Upload a VCF file</span>
-	  <input type="file" name="vcf">
+	  <input type="file" name="vcf" id="vcf">
 	</div>
       </div>
     </div>
