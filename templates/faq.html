@@ -1,79 +1,142 @@
 {% extends "base.html" %}
 
+
+{% block head %}
+
+<style>
+    .bld {
+        font-weight: 600;
+    }
+
+    .true-list {
+        padding-left: revert !important;
+    }
+
+    .true-list li {
+        list-style-type: disc !important;
+    }
+
+    .mut-ex {
+        font-variant: small-caps;
+    }
+
+    .collapsible-header .mut-ex {
+        margin: 0 0.4rem;
+    }
+
+    .collapsible-body {
+        text-align: justify;
+    }
+</style>
+
+{% endblock %}
+
 {% block content %}
 
 <center>
   <br>
   <h3>Frequently Asked Questiones</h3>
+  <br>
+  <br>
 </center>
 
 <ul class="collapsible">
 
 <li>
-    <div class="collapsible-header">
-        How can I upload structures?
+    <div class="collapsible-header grey lighten-5">
+        How do I upload structures?
     </div>
     <div class="collapsible-body"><span>
-        There are three different ways of uploading: from the Protein Databank (PDB), from
-	the AlphaFold website, from your local machine. All three possibilities are shown on the
-	initial submit page. You have to provide the PDB ID, the AlphaFold ID, or select a file
-	from your computer, accordingly.
-	
+At the top of the main web page, click the “upload structure” menu button. This 
+displays a form which offers three ways to upload a structure: from the Protein Databank
+(PDB), from the AlphaFold-EBI website, or from your local machine. To use an AlphaFold
+model, enter either the UniProt ID (e.g. ‘Q969P0’), the full AlphaFold ID (‘AF-Q969P0-
+F1’) or the full filename (‘AF-Q969P0-F1-model_v4.pdb’). (UniProt and AlphaFold IDs
+are automatically extended to download the corresponding AlphaFold model).     
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-4">
         How can I define mutations?
     </div>
     <div class="collapsible-body"><span>
-        Once you submitted the structure, a second page opens. On that page you are asked
-	to define your mutations. There are four ways of defining your mutations:
+Once you submit a structure, you are forwarded to the mutation definition page. Three
+ways of defining mutations are offered (click on the field to open the actual sub-form):
 	<ol>
-	  <li> define any number of mutations manually using the graphical user interface.
-See FAQ (link to next) for a detailed explanation of the syntax.</li>
-	  <li> upload sequencing data (VCF format).</li>
-	  <li> upload a sequence alignment (clustalW format) </li>
-	  <li> provide a target sequence </li>
-	  <ol>
-	    <li> upload file (Fasta format) </li>
-	    <li> Uniprot-ID </li>
-	    <li> paste sequence </li>
-	  </ol>
+	  <li>  Define any number of mutations ‘manually’ using the simple syntax explained via the
+info button text (also in an FAQ below). </li>
+	  <li> Upload a sequence alignment (ClustalW format) </li>
+      <li> Provide a target sequence and select the chain in the PDB to which the target 
+sequence belongs. You can extend the form to have three input fields for each of these
+upload methods: </li>
+	  <ul class="true-list">
+	    <li> Fasta file upload. The fasta file should only contain one sequence and must be
+assigned to one of the chains. For each chain, only one sequence can be assigned. </li>
+	    <li> Paste sequence. The sequences must have the same length as the protein chain
+it is assigned to. </li>
+	    <li> UniProt ID. The sequence will be retrieved directly from the UniProt website. </li>
+      </ul>
 	</ol>
+
+    <br>
+
+    <span class="bld">There is no limit to the number of simultaneous mutations which can be explored. </span>
     </span></div>
 </li>
 
 <li>
-  <div class="collapsible-header">
+  <div class="collapsible-header grey lighten-5">
     What is the syntax for manually defining mutations?
   </div>
   <div class="collapsible-body">
     <span>
-      For each mutation you have to provide in this order:
-      <ol>
-	<li> the chain as written in the PDB file </li>
-	<li> the ’:’ separator </li>
-	<li> the residue number </li>
-	<li> the one letter code of the target amino acid </li>
-      </ol>
-      
-      You can define any number of mutations, separated by commas.
-      Example: ”A:12G,B:123W”: two mutations are defined, first, in chain A residue 12 is
-      mutated into glycine, second, in chain B residue 123 is mutated into tryptophan.
+      Each amino acid mutation must be input in the simple yet strict format X:nnnA where
+      <ul class="true-list">
+	<li> X is the chain as given in the PDB file, followed by the ’:’ separator </li>
+	<li> nnn is the residue number </li>
+	<li> A is the one letter code of the new (standard) amino acid to which you are mutating
+the residue. </li>
+    </ul>
+
+    <br>
+    Separate multiple mutations with commas. Do not enter spaces.
+    <br>
+Example: “A:12G,B:123W” defines two simultaneous mutations.
+Chain A residue 12
+will be mutated to glycine. Chain B residue 123 will be mutated to tryptophan.  
     </span>
   </div>
 </li>
 
 
 <li>
-  <div class="collapsible-header">
-    How is the VCF sequencing format evaluated?
+  <div class="collapsible-header grey lighten-4">
+    What do I do if my structure is no longer visible? <!-- TODO: remove? -->
   </div>
   <div class="collapsible-body">
     <span>
-      First, a suitable PDB is determined.
-      Second, the mutations are applied.
+Undo any difference colorings that you applied to the original protein ’mut 0’.
+Since
+’mut 0 ’ lacks a parent structure for comparison, difference colorings (ex. of energies or
+hydrophobicities) can result in the ’mut 0 ’ protein atoms colored the same as the 
+background. Hence, the atoms disappear.
+    </span>
+  </div>
+</li>
+
+
+<li>
+  <div class="collapsible-header grey lighten-5">
+    What is your naming convention for structures?
+  </div>
+  <div class="collapsible-body">
+    <span>
+      “mut 0.pdb” is the original protein without mutation. Subsequent naming reflects the tree-like
+progress of explorations which grow from the ’mut 0’ root. You can select any listed file
+to mutate it. “mut 0 1.pdb” is the first mutation of the original protein, “mut 0 1 1.pdb”
+would be a further mutation of the first mutant. “mut 0 2.pdb” is the second independent
+mutation of the original protein.
     </span>
   </div>
 </li>
@@ -81,149 +144,275 @@ See FAQ (link to next) for a detailed explanation of the syntax.</li>
 
 
 <li>
-  <div class="collapsible-header">
+  <div class="collapsible-header grey lighten-4">
     What coloring schemes are available?
   </div>
   <div class="collapsible-body"><span>
-      You can color structures by energy, sequence conservation and properties such as hydropho-
-bicities. For the energy coloring red means an increased energy due to the mutation(s),
-blue an increased energy, and white no change. For sequence conservation blue means
-conserved and red means not conserved. For hydrophobicity blue means hydrophilic and
-red means hydrophobic.
+    From the “Color by” drop down in the “Select” area (upper left of structure view page),
+you can choose colorings from:
+    <ul class="true-list">
+    <li> absolute rosetta energy</li>
+    <li> energy difference with parent</li>
+    <li> absolute hydrophobicity</li>
+    <li> hydrophobicity difference with parent</li>
+    </ul>
+For energy values, the color scale ranges from red (negative values) over white (zero) to
+blue (positive values). Restated, red represents increased energy from mutation(s), blue
+represents decreased energy, and white conveys no energetic change. For hydrophobicity
+coloring, red indicates a hydrophobic residue, blue hydrophilic.
   </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        How to use an alignment to define mutations?
+    <div class="collapsible-header grey lighten-5">
+        How do I use an alignment to define mutations?
     </div>
     <div class="collapsible-body"><span>
-        There are two reasons for using alignments. First, an alignment is a way of defining
-potentially many mutations. Second, by looking at differences in structure and energy can
-provide deep insights into the alignment itself. Obviously, only aligned positions can be
-used to define mutations. Gaps cannot be translated into mutations.
+        There are two reasons for using alignments. First, an alignment can define potentially
+many more mutations, more efficiently, than a manual input.
+Second, the differences
+in structure and energy provide deep insights into the alignment itself. Obviously, only <!-- TODO: remove obviously -->
+aligned positions can be used to define mutations. Gaps cannot be translated into
+mutations. Thus, one sequence in the alignment must exactly match one chain in your PDB.
+<br>
+It’s easy to upload an alignment. Click ‘upload structure and mutations’, upload a structure
+and then select to upload an alignment file in ClustalW format.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        How can I color a structure by sequence conservation?
-    </div>
-    <div class="collapsible-body"><span>
-        MICHELLE
-    </span></div>
-</li>
-
-<li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-4">
         Which parameters were used in examples?
     </div>
     <div class="collapsible-body"><span>
-        A
+        Each example includes all settings and files needed to re-run and replicate the example
+outputs. The three examples in the first row demonstrate ’upload structure and mutations’.
+The fourth example in the second row demonstrates ’upload vcf’.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-5">
         Is it possible to mutate peptides?
     </div>
     <div class="collapsible-body"><span>
-        The smaller the peptide the more likely it is to be flexible. MutationExplorer has no restrictions concerning the size of the protein being uploaded. However, you should be aware that any conformation is just a snapshot and the smaller your peptide the more likely a given conformation may not represent the effect of a mutation on another conformation.
+        Yes, it is. <span class="mut-ex">MutationExplorer</span> has no restrictions concerning the size of uploaded proteins.
+However, when interpreting calculated energies, be mindful of limitations (see FAQ
+”Limitations”). Energies in flexible regions should be interpreted with particular care, and
+shorter peptides are more likely to be flexible. Moreover, every protein conformation is
+just one snapshot. The smaller the peptide, the more likely a given conformation might
+not well represent the effect of mutation vis-à-vis an alternate conformations.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-4">
         Is it possible to mutate transmembrane proteins?
     </div>
     <div class="collapsible-body"><span>
-        In general yes. However, there is no energetic effect due to the lipid bilayer considered at this point. 
+        In general, yes. However, the Rosetta energy function that we use is optimized for soluble
+proteins and does not consider the lipid bilayer.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        What about nonstandard AA, lipids, ions?
+    <div class="collapsible-header grey lighten-5">
+        What about nonstandard amino acids, lipids, ions?
     </div>
     <div class="collapsible-body"><span>
-        A
+        Currently, nonstandard amino acids are not supported as mutation targets. Nevertheless,
+nonstandard amino acids occur frequently in the PDB (along with all manner of non-amino
+acid molecular species). <span class="mut-ex">MutationExplorer</span> will consider nonstandard source residues
+when performing mutations. However, we recommend removal of ions or water molecules
+so that variant residues can fit more easily into the structure. In general, small molecules
+such as lipids, drugs, ions, or water, are not included in <span class="mut-ex">MutationExplorer</span> calculations.
     </span></div>
 </li>
 
 <!--  NOT BEFORE ACCEPTED !!!
 <li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-5">
         What version of Rosetta is being used?
     </div>
     <div class="collapsible-body"><span>
-        A
+        We currently use Rosetta 2020 Mar f1c7e97 together with a fixbb protocol to allow fast
+mutations and structure relaxation. More information about reproducibility of individual
+values and energies can be found in the manual/benchmark.
     </span></div>
 </li>
 -->
 
 <li>
-    <div class="collapsible-header">
-        How to mutate a mutant? How to perform multiple rounds of mutations?
+    <div class="collapsible-header grey lighten-4">
+        How do you mutate a mutant (perform multiple rounds of mutations)?
     </div>
     <div class="collapsible-body"><span>
-        Once you performed your first mutations, the results are displayed, together with a window where you can enter other mutations.
+        Once you performed your first mutations, the results are displayed, together with a window
+where you can enter additional mutations to the mutated structure. 
+<br>
+First, in the ‘Select’ region, select the variant you want to mutate. The displayed protein
+is mutated in the next step.
+<br>
+Second, in the ‘Mutate’ section, define any number of mutations. As always, you will use
+the ”X:nnnA” mutation syntax explained above.
     </span></div>
 </li>
 
+<!-- TODO: Interface
 <li>
-    <div class="collapsible-header">
-        How to link an alignment server for 3D visualisation to MutationExplorer?
+    <div class="collapsible-header grey lighten-5">
+        How to link an alignment server for 3D visualisation to <span class="mut-ex">MutationExplorer</span>?
     </div>
     <div class="collapsible-body"><span>
         A
     </span></div>
-</li>
+</li>-->
 
 <li>
-    <div class="collapsible-header">
-        Can I use multichain proteins? 
+    <div class="collapsible-header grey lighten-5">
+        Does  <span class="mut-ex">MutationExplorer</span>  handle multichain proteins?
     </div>
     <div class="collapsible-body"><span>
-        Yes. For mutations you have to specify the chain to be mutated.
+        Yes. <span class="mut-ex">MutationExplorer</span> always performs calculations in global protein complex context.
+You must take care to match alignments to specific chains, and specify the correct
+chain ID when inputting manual mutations. (Presently, VCF inputs are only displayed
+automatically on single-chain AlphaFold models).
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
+    <div class="collapsible-header grey lighten-4">
         How can I change the representation of the models?
     </div>
     <div class="collapsible-body"><span>
-        A
+        Currently, we only offer a cartoon representation for the structures. We want to include
+more representations in the future.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        Are there more options to the viewer? 
+    <div class="collapsible-header grey lighten-5">
+        I don’t see an alignment?
     </div>
     <div class="collapsible-body"><span>
-        A
+        Most likely you defined mutations by uploading a target sequence or alignment that does
+not match the PDB chain exactly. Then, the alignment can not be displayed.
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">
-        Where can I find more information about MDsrv/Mol*?
+    <div class="collapsible-header grey lighten-4">
+        Where can I find more information about the tools used on the server, i.e. MDsrv/mol*/Rosetta?
     </div>
     <div class="collapsible-body"><span>
-        A
+        MDsrv: <br>
+        <a href="https://proteininformatics.informatik.uni-leipzig.de/mdsrv">https://proteininformatics.informatik.uni-leipzig.de/mdsrv</a>
+        <br>
+        <br>
+        mol* viewer: <br>
+        <a href="https://molstar.org/">https://molstar.org/</a>
+        <br>
+        <br>
+        Rosetta:<br>
+        <a href="https://www.rosettacommons.org/">https://www.rosettacommons.org/</a>
+        <br>
+        <br>
+        Varient Effect Predictor:<br>
+        <a href="https://www.ensembl.org/info/docs/tools/vep/">https://www.ensembl.org/info/docs/tools/vep/</a>
     </span></div>
 </li>
 
 <li>
-    <div class="collapsible-header">Q</div>
-    <div class="collapsible-body"><span>A</span></div>
+    <div class="collapsible-header grey lighten-5">
+        Can I upload data from sequencing experiments?
+    </div>
+    <div class="collapsible-body"><span> 
+        Yes, you can upload files in VCF format (<a href="https://docs.gdc.cancer.gov/Data/File_Formats/VCF_Format/">https://docs.gdc.cancer.gov/Data/File_Formats/VCF_Format/</a>).
+           <br>
+           <br>
+        However, only human SNP data can be evaluated currently. Further restrictions are listed
+on screen under ’upload vcf’.
+    </span></div>
 </li>
 
+<li>
+    <div class="collapsible-header grey lighten-4">
+       How are VCF uploads processed? 
+    </div>
+    <div class="collapsible-body"><span>
+        VCF files are forwarded to the ENSEMBL Variant Effect Predictor (GRCh38 version
+105). The returned missense variants are filtered to retain only ENST transcript IDs that
+directly cross-reference to curated UniProtKB/Swiss-Pro UniProt IDs. To ease AlphaFold
+integration, only records that refer to canonical UniProt sequences with length ≤ 2700 are
+processed further. From the UniProt ID, the AlphaFold model is automatically selected.
+The model and its computed missense variants are together submitted to <span class="mut-ex">MutationExplorer</span>.
+    </span></div>
+</li>
+
+
+<li>
+    <div class="collapsible-header grey lighten-5">
+        Why does mut 0 diffE.pdb not show up?
+    </div>
+    <div class="collapsible-body"><span>
+        The energy difference can only be displayed for mutants. mut 0 is the original protein
+and has no parent to which it could be compared.
+    </span></div>
+</li>
+
+
+<li>
+    <div class="collapsible-header grey lighten-4">
+        How are the energies calculated?
+    </div>
+    <div class="collapsible-body"><span>
+        Rosetta performs the mutation and calculates the energy of a structure as a the sum
+of energies computed for each residue. In the difference coloring, we see the mutant (mutated
+result structure) minus the WT (parent structure) energy for each residue. Be aware
+that those energies are indicative and should be revisited with care. For qualitative values
+that reflect experimental data, other, more time-intensive protocols should be used, e.g.
+<a href="https://pubmed.ncbi.nlm.nih.gov/36173174/">https://pubmed.ncbi.nlm.nih.gov/36173174/</a>
+    </span></div>
+</li>
+
+<li>
+    <div class="collapsible-header grey lighten-5">
+        Why do some of my mutations exhibit high energies?
+    </div>
+    <div class="collapsible-body"><span>
+        <span class="mut-ex">MutationExplorer</span> is a platform which must calculate and present energy differences
+to users in near real-time.
+Minimizing the protein backbone is not possible given the
+tight run-time constraints of the application. Thus, mutations can cause in-silico clashes
+which cannot be resolved without more exhaustive sampling and relaxation techniques. In
+particular, mutations of residues from or to proline or glycine tend to greatly challenge
+Rosetta’s minimizer.
+    </span></div>
+</li>
+
+
+<li>
+    <div class="collapsible-header grey lighten-4">
+        Why do some distant residues have a change in energy?
+    </div>
+    <div class="collapsible-body"><span>
+        When a mutation is introduced, side-chain optimization is not limited to immediately
+adjacent residues. As the minimizer descends the energy landscape of the entire protein,
+distant side-chains can be re-oriented by the algorithm.
+    </span></div>
+</li>
 
 </ul>
 
+  <br>
 
+<h5>Happy mutating!</h5>
+
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
 
 {% endblock %}
 

@@ -300,15 +300,15 @@ def mutate(tag):
     if clustal1.filename != "":
         clustal_file = os.path.join( outdir , clustal1.filename )
         clustal1.save( clustal_file)
-        add_mutations_from_alignment( mutations, clustal_file, "aln1", outdir + parent)
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
     if clustal2.filename != "":
         clustal_file = os.path.join( outdir , clustal2.filename )
         clustal2.save( clustal_file)
-        add_mutations_from_alignment( mutations, clustal_file, "aln2", outdir + parent)
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
     if clustal3.filename != "":
         clustal_file = os.path.join( outdir , clustal3.filename )
         clustal3.save( clustal_file)
-        add_mutations_from_alignment( mutations, clustal_file, "aln3", outdir + parent)
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
     if fasta1.filename != "" and chainF1 != "":
         secure_str(chainF1)
         chainF1 = chainF1[0]
