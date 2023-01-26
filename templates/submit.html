@@ -38,20 +38,33 @@
     <label for="chain">Load prediction from AlphaFold DB</label>
 </div>
 
-<!--
 <div class="col offset-s3 s6 center-align">
-<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">filter structkure</button>
+<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information">filter structure</button>
 </div>
-<-- Modal Structure ->
+<!-- Modal Structure -->
 <div id="modal1" class="modal">
     <div class="modal-content">
     <h4>Filter structure</h4>
 
-    <div class="input-field">
-        <input id="chain" type="text" name="alphafoldid" class="validate" placeholder="Uniprot ID">
-        <label for="chain">filter chains</label>
-    </div>
+    <br>
+    <br>
 
+    <div class="row">
+        <div class="input-field col offset-s2 s8">
+            <input id="chain" type="text" name="chain_filter" class="validate" placeholder="A B C">
+            <label for="chain">filter chains</label>
+        </div>
+
+        <div class="col offset-s2 s8">
+            <p>
+                <label>
+                    <input type="checkbox" name="hetatom_filter"/>
+                    <span>remove hetatoms</span>
+                </label>
+            </p>
+        </div>
+
+    </div>
     
 
     </div>
@@ -59,7 +72,6 @@
     <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
 </div>
--->
 
 
 <div class="col offset-s3 s6 center-align">

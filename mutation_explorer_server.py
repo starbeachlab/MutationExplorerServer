@@ -111,7 +111,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
     bash_cmd(cmd, log)
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
@@ -172,6 +172,8 @@ def submit():
     upload = request.files['pdbfile']
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
+    chain_filter = request.form['chain_filter'].strip().upper()
+    hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
 
     # save file
     file_path = outdir + "structure.pdb"    
@@ -191,7 +193,25 @@ def submit():
 
     if not is_pdb( file_path):
         return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
-    
+
+    # filter structure
+    remove_hets = (hetatom_filter is not None)
+    if chain_filter != "" or remove_hets:
+        chains = chain_filter.split()
+
+        with open(file_path, "r") as f_in:
+            with open(outdir + "structure2.pdb", "w") as f_out:
+                for line in f_in:
+                    if line[:4] == "ATOM":
+                        if chain(line) in chains:
+                            continue
+                    if line[:6] == "HETATM":
+                        if remove_hets:
+                            continue
+                    f_out.write(line)
+
+        bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
+
     # create log file
     print("submit\n")
     if os.path.isfile( file_path):
@@ -426,6 +446,76 @@ def vcf():
 
     
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
+
+
+
+@app.route('/interface', methods=["GET", "POST"])
+def interface():
+    if request.method == 'POST':
+
+        # get data from form
+
+        tag = str(random.randint(0, 999999))
+        outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        while os.path.exists(outdir):
+            tag = str(random.randint(0, 999999))
+            outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
+        print("############## DELTA INTERFACE ##############")
+        print(tag)
+        os.mkdir(outdir)
+
+        #conv_file_upload = True
+        conv_filename = ""
+
+        file_conv = request.files['file_conv']
+        if file_conv.filename != "":
+            file_conv.save(outdir + secure_filename(file_conv.filename))
+            conv_filename = secure_filename(file_conv.filename)
+        else:
+            conv_file_upload = False
+            pdb_conv = request.form.getlist('pdb_conv')[0]
+            file_conv_link = "https://files.rcsb.org/download/" + pdb_conv + ".pdb"
+            req = requests.get(file_conv_link)
+            with open(outdir + pdb_conv + ".pdb", "w") as f:
+                f.write(req.content)
+            conv_filename = pdb_conv + ".pdb"
+
+        superimpose = False
+        #super_file_upload = True
+        super_filename = ""
+
+        file_super = request.files['file_super']
+        if file_super.filename != "":
+            superimpose = True
+            file_super.save(outdir + secure_filename(file_super.filename))
+            super_filename = secure_filename(file_super.filename)
+        else:
+            pdb_super = request.form.getlist('pdb_super')[0]
+            if pdb_super != "":
+                file_super_link = "https://files.rcsb.org/download/" + pdb_super + ".pdb"
+                superimpose = True
+                #super_file_upload = False
+                req = requests.get(file_super_link)
+                with open(outdir + pdb_super + ".pdb", "w") as f:
+                    f.write(req.content)
+                super_filename = pdb_super + ".pdb"
+
+
+        alignment_link = request.form.getlist('alignment_link')[0]
+        #alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
+        #alignment = outdir + "alignment.aln"
+        print("########### alignment link")
+        print(alignment_link)
+        
+        """
+        #alignment_link = app.config['USER_DATA_DIR'] + "alignment.aln"
+
+        req = requests.get(alignment_link)
+        with open(alignment, "w") as f:
+            f.write(req.content)
+        """
+        return "<h1>Hallo Welt</h1>"
 
     
 

@@ -402,24 +402,6 @@ distant side-chains can be re-oriented by the algorithm.
     </span></div>
 </li>
 
-<li>
-    <div class="collapsible-header grey lighten-4">
-        How can I improve the quality of my results?
-    </div>
-    <div class="collapsible-body"><span>
-	Key to high-quality results is the input structure.
-	<span class="mut-ex">MutationExplorer</span> performs first a short minimization using Rosetta's fixbb application by default.
-	Mutations are then performed and the side-chains are again minimized.
-	If the first minimization was not able to completely minimize the structure, many energetic changes will occur simply because side-chain conformations were optimized. These might be completely unrelated to your mutations and might be therefore misleading.
-
-	Therefore, it is recommended to minimize the structure before uploading it.
-	You can either rely only on Rosetta's tools or first perform e.g. MD and then Rosetta. Rosetta should always finish up your optimization since the mutations are performed with Rosetta and evaluated with its energy functions. 
-    </span></div>
-</li>
-
-
-
-
 </ul>
 
   <br>
