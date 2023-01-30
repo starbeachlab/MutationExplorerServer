@@ -100,10 +100,11 @@ def bash_cmd(cmd, log):
 
 
 def fixbb(tag, structure, resfile, out_file_name, logfile):
-    print("######## fixbb  #######")
-    print('infile:', structure, "out_file_name: ", out_file_name)
+    #print("######## fixbb  #######")
+    #print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open( out + logfile, 'a')
+    
     
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
@@ -111,7 +112,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -out:pdb -out:prefix ' + out
+    if structure == "structure.pdb":
+        cmd += " -linmem_ig 10  -ex1 -ex2  "
     bash_cmd(cmd, log)
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
@@ -309,7 +312,7 @@ def mutate(tag):
 
     print( 'wait for parent to exist\n')
     ### wait for parent to exist:
-    if wait( outdir + parent, 1, 20) == False:
+    if wait( outdir + parent, 1, 600) == False:
         return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
     
     ###  case separation
@@ -423,7 +426,7 @@ def vcf():
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("-")
     with open( outdir + "mut_0_resfile.txt", 'w') as w:
-        w.write('NATRO\nstart\n')
+        w.write('NATAA\nstart\n')
 
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
@@ -436,7 +439,7 @@ def vcf():
     start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
     print( 'fixbb started for initial upload\n')
 
-    if wait( outdir + 'mut_0.pdb', 1, 30) == False:
+    if wait( outdir + 'mut_0.pdb', 1, 120) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
 
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
@@ -534,7 +537,7 @@ def get_status(tag, filename):
         else:
             status = "error"
             msg = "Rosetta calculation encountered an error"
-    print( 'get_status', dirname, str(done))
+    #print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
 
@@ -657,7 +660,7 @@ if __name__ == "__main__":
     
 def mutations_to_resfile( mutations, resfile):
     with open(resfile, 'w') as f:
-        f.write('NATRO\n')
+        f.write('NATAA\n')
         f.write('start\n')
         prev_chains = []
         for mut in mutations:
