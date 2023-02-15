@@ -131,7 +131,7 @@
       
       <br>
       
-      <span>Total energy: {{total_energy}} </span>
+      <span>Total energy: {{energy}} </span>
       
     </div>
     <br>
@@ -140,7 +140,7 @@
   </div>
 
   <div class="col s9" style="height: 100%;">
-    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/molstar/{{tag}}/">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_delta/molstar/{{tag}}/">
         <b>IFrame is unavailable here</b>
     </iframe>
   </div>
@@ -155,7 +155,7 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="{{url_for('static', filename='v3/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
 
 <script type="text/javascript">
   

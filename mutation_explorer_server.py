@@ -312,7 +312,7 @@ def mutate(tag):
 
     print( 'wait for parent to exist\n')
     ### wait for parent to exist:
-    if wait( outdir + parent, 1, 600) == False:
+    if wait( outdir + parent, 1, 900) == False:
         return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
     
     ###  case separation
@@ -418,7 +418,7 @@ def vcf():
     p = subprocess.check_output(cmd.split())
     print(p)
 
-    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 90) == False:
+    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 900) == False:
         return render_template("vcf.html", error = "No missense was found.")
     
     # create info file
@@ -439,7 +439,7 @@ def vcf():
     start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
     print( 'fixbb started for initial upload\n')
 
-    if wait( outdir + 'mut_0.pdb', 1, 120) == False:
+    if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
 
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
@@ -577,9 +577,10 @@ def load_explore_page(out, tag, filename):
     if parent == "-":
         chains = get_chains(outdir + filename)
     else:
-        chains = get_chains( outdir + parent) 
+        chains = get_chains( outdir + parent)
+    energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
 
 
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
@@ -1025,6 +1026,14 @@ def get_chains( fname):
                 if c not in chains:
                     chains += c
     return chains
+
+def get_energy( fname):
+    print( __name__, 'get', fname)
+    with open( fname) as r:
+        for l in r:
+            if l[:4] == "pose":
+                return float( l.split()[-1])
+
 
 def is_pdb( fname):
     if not os.path.isfile(fname):
