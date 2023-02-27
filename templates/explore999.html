@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://molstar.org/viewer/molstar.css" />
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/exploreStyle.css')}}" media="all">
+<style>
+    #content {
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="row whole-container grey lighten-5" style="height: 100%; margin-bottom: 0;">
+  
+  <div class="col s3 sidebar card">
+    
+    <div id="tree-viewer" >
+      <h4 class="center-align toggle-card">Select</h4>
+      <div>
+	
+	{{structures|safe}}
+	
+	<div class="input-field">
+	  <select id="selecter" onchange="changeColoring();">
+	    <option value="" disabled selected>Color by</option>
+	    <option value="1">Absolute energy</option>
+	    <option value="2">Energy difference to parent</option>
+	    <option value="3">Absolute hydrophobicity</option>
+	    <option value="4">Difference in hydrophobicity</option>
+	  </select>
+	</div>
+	
+	<div>
+	  <p>Currently displayed:</p>
+	  <div id="discol">n o t h i n g</div>
+	</div>
+	
+	<div class="center-align">
+          <a id="res-download" href="{{url_for('download', tag = tag, filename = 'results' + tag + '.zip')}}" download class="btn">download all</a>
+	</div>
+	
+      </div>
+    </div>
+    
+    
+    <div id="mutation-view">
+      <form id="submitForm" method="POST" enctype="multipart/form-data" target="_blank">
+        <h4 class="center-align toggle-card">Mutate</h4>
+        <div>
+          <div class="input-field">
+            <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+            <label for="chain">Enter mutations</label>
+          </div>
+	  
+          <div class="input-field">
+            <input id="chain" type="text" name="structure" class="validate" placeholder="mut_0.pdb" required>
+            <label for="chain">Source structure (from 'Select' list with '.pdb' ending)</label>
+          </div>
+
+          <div class="input-field">
+            <input id="name" type="text" name="name" class="validate" placeholder="(optional)" pattern="^[a-zA-Z0-9 ]+$">
+            <label for="name">Name new structure</label>
+          </div>
+	  
+          <div class="center-align">
+            <input id="submit-btn" type="submit" value="submit" class="btn" form="submitForm">
+          </div>
+        </div>
+      </form>
+    </div>
+
+
+    <div id="info-view">
+
+      <span>Parent: {{parent}} </span>
+      
+      <br>
+      
+      <span>Mutations: {{mutations}} </span>
+      
+      <br>
+      
+      <span>Exploration: {{tag }} </span>
+      
+    </div>
+    <br>
+    <br>
+    
+  </div>
+
+  <div class="col s9" style="height: 100%;">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/molstar/{{tag}}/">
+        <b>IFrame is unavailable here</b>
+    </iframe>
+  </div>
+  
+  
+</div>
+
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript" src="{{url_for('static', filename='v2/mdsrv.js')}}"></script>
+
+<script type="text/javascript">
+  
+  let the_ending = "_absE.pdb"; // for communication between fct
+
+  name = "{{filename}}";
+  if (name == "") {
+    name = "mut_0.pdb";
+  }
+  let the_name = name.substr(0,name.length - 4);
+
+  allchains = "{{chains}}"
+
+  $(document).ready(function(){
+      $('select').formSelect();
+
+
+    document.getElementById('discol').innerHTML = the_name + the_ending;
+
+    loadPdb( the_name, the_ending);
+  });
+
+  
+  function getURL(fname) {
+      var loc = window.location;
+      var command = loc.protocol + "//" + loc.host + "{{url_for('download', tag=tag, filename='')}}" + fname;
+      return command;
+  }
+
+
+  function loadPdb(name, coloring) {
+    console.log("load PDB")
+
+    // input files
+    var pdbFile = getURL(name + coloring);
+    if (name == "mut_0") {
+      name = name + "_1"
+    }
+    var clustalFile = getURL(name + "_" + allchains[0] + ".clw" );
+
+    console.log(pdbFile)
+    console.log(clustalFile)
+
+    // wait until loadViewer is defined
+    var interval = setInterval(function() {
+      console.log("wait")
+      var loadViewer = document.getElementById('ms').contentWindow.loadViewer
+      if (typeof loadViewer == 'undefined') return;
+      clearInterval(interval);
+
+      // update viewer
+      loadViewer(pdbFile, clustalFile)
+    }, 100);
+
+  }
+
+  
+  $(".toggle").click(function(e) {
+        l = $(this).parent().next()
+        // if is redundant
+        if (l.children().length > 0) {
+            $(this).toggleClass("rot")
+            l.toggleClass("non")
+        }
+  })
+
+  /*
+  $(".toggle-card").click(function() {
+        $(this).next().toggleClass("non")
+  }) */
+
+  
+
+  
+  $(".structures").click(function(e) {
+      e.preventDefault();
+      this_name = $(this).text();
+      strc = this_name + the_ending;
+      // highlight:
+      $(".structures").removeClass("bld");  // unbold all
+      $(this).addClass("bld");              // bold current
+      // load:
+      loadPdb(this_name, the_ending);
+      document.getElementById('discol').innerHTML = strc;
+      //loadPdb( this_name,  );
+  })
+
+  
+  function changeColoring() {
+      var selectBox = document.getElementById("selecter");
+      var selected = selectBox.options[selectBox.selectedIndex];
+      var selectedText = selected.innerHTML;
+      var id = selected.value;
+      if( id == "1"){ the_ending = "_absE.pdb";}
+      else if( id == "2"){ the_ending = "_diffE.pdb";}
+      else if( id == "3"){ the_ending = "_HyPh.pdb"; }
+      else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
+      //alert(selectedValue);
+      document.getElementById('discol').innerHTML = the_name + the_ending;
+      loadPdb( the_name, the_ending );
+  }
+
+  
+</script>
+
+
+
+
+{% endblock %}

@@ -178,6 +178,13 @@ def submit():
     chain_filter = request.form['chain_filter'].strip().upper()
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
 
+    email = request.form['email'].strip()
+    min_type = request.form['min-selector'] # = short | long
+
+    if email:
+        results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "")
+        write_email(outdir + "mail.txt", email, results_link)
+
     # save file
     file_path = outdir + "structure.pdb"    
     if upload.filename != "":
@@ -240,20 +247,104 @@ def submit():
     return redirect(url_for('mutate', tag = tag))
 
 
+def add_mutations(tag, mutant, inputs):
+
+    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
+    
+    mutations = inputs["mutations"]
+    if len(mutations) == 1 and mutations[0] == '':
+        print(__name__, 'reset')
+        mutations = []
+
+    #mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+    print( 'mutate: ' + mutant + '\n')
+    print(mutant)
+
+    parent =   "mut_0.pdb"
+    resfile =  mutant[:-4] + "_resfile.txt"
+    align =    mutant[:-4] + ".clw"  # align with parent
+    mutfile =  "info/" + mutant[:-4] + ".txt"  # parent and mutations
+    
+    """
+    ###  return error message if no mutations given
+    if len(mutations) == 0 and   clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
+        print( 'no mutations defined')
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation") # nutzlos, da javascript das gar nicht durchlaesst ohne eingabe 
+    else:
+        print( 'mutations defined')
+    """
+    
+    print( 'wait for parent to exist\n')
+    ### wait for parent to exist:
+    if wait( outdir + parent, 1, 900) == False:
+        #return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
+        return
+
+    
+    # get all mutations
+    i = 0
+    for clustal in inputs["clustals"]:
+        if clustal.filename != "":
+            clustal_file = os.path.join( outdir , clustal.filename )
+            clustal.save( clustal_file)
+            add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+        i += 1
+        if fasta.filename != "" and chainF != "":
+            secure_str(chainF)
+            chainF = chainF[0]
+            fasta_file =  outdir + fasta.filename
+            fasta.save(fasta_file)
+            head, target = seq_from_fasta( fasta_file) 
+            add_mutations_from_sequence( mutations, target, chainF, "fa" + (i % 3), outdir+parent)
+    for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
+        i += 1
+        if seq_input != "" and chainS != "":
+            secure_str(chainS)
+            chainS = chainS[0]
+            secure_str(seq_input)
+            add_mutations_from_sequence( mutations, seq_input, chainS, "seq" + (i % 3), outdir+parent)
+    for uniprot, chainU in zip(inputs["uniprots"], inputs["chainUs"]):
+        i += 1
+        if uniprot != "" and chainU != '':
+            uni_file = outdir + uniprot
+            download_uniprot( uniprot, uni_file)
+            target = seq_from_fasta( uni_file)
+            add_mutations_from_sequence( mutations, target, chainU, "uni" + (i % 3), outdir + parent)
+
+    print(__name__, 'total number of mutations:', len(mutations))
+    if len(mutations) != 0:
+        helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+    else:
+        print("no mutations")
+        #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        return
+    
+    #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") 
+    fixbb(tag, parent, resfile, mutant, "log.txt")
+
+    send_email(outdir + "mail.txt")
+
+
 @app.route('/mutate/<tag>', methods=['GET', 'POST'])
 def mutate(tag):
 
-    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
+    outdir =   app.config['USER_DATA_DIR'] + tag + "/" # TR
+    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     
     if request.method == 'GET':
         chains = get_chains( outdir + "structure.pdb")
         return render_template("mutate.html", tag = tag, chains=chains, error = "")
 
     ###  get form values
-    mutations = request.form['mutations'].strip().replace( ' ','').split(',')
-    if len(mutations)==1 and mutations[0] == '':
+    mutations = request.form['mutations'].strip().replace(' ','').split(',')
+
+    """ # TR
+    if len(mutations) == 1 and mutations[0] == '':
         print(__name__, 'reset')
         mutations = []
+    """
+
     #for m in mutations:
     #    w.write( m + '\n')
     #w.write( '?\n')
@@ -287,6 +378,19 @@ def mutate(tag):
     chainU1 = request.form['chainU1']
     chainU2 = request.form['chainU2']
     chainU3 = request.form['chainU3']
+
+    inputs = {}
+    inputs["mutations"] = mutations
+    inputs["clustals"] = [clustal1, clustal2, clustal3]
+    inputs["fastas"] = [fasta1, fasta2, fasta3]
+    inputs["chainFs"] = [chainF1, chainF2, chainF3]
+    inputs["seq_inputs"] = [seq_input1, seq_input2, seq_input3]
+    inputs["chainSs"] = [chainS1, chainS2, chainS3]
+    inputs["uniprots"] = [uniprot1, uniprot2, uniprot3]
+    inputs["chainUs"] = [chainU1, chainU2, chainU3]
+
+    start_thread(add_mutations, [tag, mutant, inputs], "add_muts")
+    #add_mutations(tag, mutant, inputs)
     
     #w.write( "chain: " +  uniprot_chain1+ '\n')
     #
@@ -294,6 +398,7 @@ def mutate(tag):
     #    name = request.form['name'].strip() + ".pdb"  
     #    if name == ".pdb":
 
+    """ # TR
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     print( 'mutate: ' + mutant + '\n')
     print(mutant)
@@ -391,7 +496,8 @@ def mutate(tag):
     start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti")
 
     print( 'started with nr mutations: ' + str( len(mutations) ) + '\n')
-    
+    """
+
     return redirect(url_for('status', tag = tag, filename = mutant))
 
 
@@ -413,7 +519,7 @@ def vcf():
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
     vcf.save( outdir + vcf_file)
-    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file;
+    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file
     print(cmd)
     p = subprocess.check_output(cmd.split())
     print(p)
@@ -1043,3 +1149,38 @@ def is_pdb( fname):
             if l[:4] == "ATOM" or l[:6] == "HETATM":
                 return True
     return False
+
+
+def write_email(fil, user, link):
+    with open(fil, 'w') as out:
+        out.write('From: mutex@proteinformatics.de\n')
+        out.write('Subject: MutationExplorer results \n')
+        out.write('To: ' + user + '\n\n')
+        out.write('Hello  ' + user + '!\n\n')
+        out.write('Your MutationExplorer calculation is done. \n')
+        out.write('You can view the results here: \n\n' + link + '\n\n')
+        out.write('Thanks for using MutEx.\n\n')
+        out.write('Have a nice day!\n\n')
+
+def send_email(fil):
+    if(os.path.exists(fil)):
+        os.system('sendmail -t < ' + fil)
+
+
+"""
+def send_email(user, link):
+    #log = open( 'calc.log', 'w' )
+    #log.write( 'send mail\n')
+    #log.write( os.getcwd() + '\n')
+    with open( '/home/hildilab/app/mutation_explorer_delta/mail/mail.txt', 'w') as out:
+        out.write('From: voronoia@proteinformatics.de\n')
+        out.write('Subject: MutationExplorer results \n')
+        out.write('To: ' + user + '\n\n')
+        out.write('hello  ' + user + '!\n\n')
+        out.write('your voronoia calculation is done. \n')
+        out.write('you can view the results here: \n\n' + link + '\n\n')
+        out.write('thanks for using voronoia.\n\n')
+        out.write('have a nice day!\n\n')
+    os.system( 'sendmail -t < /home/hildilab/app/mutation_explorer_delta/mail/mail.txt' )
+    #log.close()
+"""
