@@ -503,7 +503,7 @@
   var seqs = 0;
   var uniprots = 0;
 
-  document.getElementById( 'chain_list').innerHTML = "{{chains}}".split('');
+  document.getElementById( 'chain_list').innerHTML = "{{chains}}".replace( /,/g, '<br/>');  // .split('');
 
   chainSelect();
   

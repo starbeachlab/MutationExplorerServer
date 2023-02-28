@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config['USER_DATA_DIR'] = "/disk/user_data/mutation_explorer_gamma/"
 app.config['EXAMPLE_DIR'] = "/disk/data/mutation_explorer_gamma/examples/"
 app.config['ROSETTA_PATH']  = "/home/hildilab/dev/ext/rosetta/bin/"
-app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_gamma/scripts/"
+app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_delta/scripts/"
 
 
 @app.route('/')
@@ -151,9 +151,12 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
 
-    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"
+    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  ### TODO: what was this for??
     bash_cmd(cmd, log)
-        
+
+    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
+    bash_cmd(cmd, log)
+    
     log.write("### THREAD FINISHED ###\n")
     log.close()
 
@@ -204,6 +207,17 @@ def submit():
     if not is_pdb( file_path):
         return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
 
+    # extract first model in PDB (NMR structures)  ### REPLACE THIS WITH CLEANUP SCRIPT! 
+    with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
+        model_count = 0
+        for l in r:
+            if l[:5] == "MODEL":
+                model_count += 1
+            if l[:6] == 'ENDMDL' or model_count > 1:
+                break
+            w.write(l)
+        os.rename( file_path[:-4] + '.tmp', file_path )
+
     # filter structure
     remove_hets = (hetatom_filter is not None)
     if chain_filter != "" or remove_hets:
@@ -222,6 +236,7 @@ def submit():
 
         bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
 
+    
     # create log file
     print("submit\n")
     if os.path.isfile( file_path):
@@ -235,7 +250,7 @@ def submit():
     # create info file
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
-        f.write("-")
+        f.write("none\n")
 
 
     resfile =  "mut_0_resfile.txt"   
@@ -320,8 +335,11 @@ def add_mutations(tag, mutant, inputs):
         #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
         return
     
-    #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") 
+    #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") # fixbb sends all cmds to threads 
     fixbb(tag, parent, resfile, mutant, "log.txt")
+
+    #add_energy(  outdir + mutant, outdir +  mutfile ) # part of fixbb now !!
+    
 
     send_email(outdir + "mail.txt")
 
@@ -333,7 +351,7 @@ def mutate(tag):
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     
     if request.method == 'GET':
-        chains = get_chains( outdir + "structure.pdb")
+        chains = get_chains_and_range( outdir + "structure.pdb")
         return render_template("mutate.html", tag = tag, chains=chains, error = "")
 
     ###  get form values
@@ -527,23 +545,24 @@ def vcf():
     if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 900) == False:
         return render_template("vcf.html", error = "No missense was found.")
     
-    # create info file
-    os.mkdir(outdir + "info/")
-    with open(outdir + "info/mut_0.txt", "w") as f:
-        f.write("-")
-    with open( outdir + "mut_0_resfile.txt", 'w') as w:
-        w.write('NATAA\nstart\n')
-
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
     download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
     if not is_pdb( outdir + 'structure.pdb'):
         return render_template("vcf.html", error = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded")
 
+    # create info file
+    os.mkdir(outdir + "info/")
+    with open(outdir + "info/mut_0.txt", "w") as f:
+        f.write("none\n")
+    with open( outdir + "mut_0_resfile.txt", 'w') as w:
+        w.write('NATAA\nstart\n')
+
             
     # relax structure
     start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
     print( 'fixbb started for initial upload\n')
+
 
     if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
@@ -651,6 +670,21 @@ def get_status(tag, filename):
 def status(tag, filename):
     return render_template("status.html", tag = tag, filename = filename)
 
+@app.route('/info/<tag>/<filename>')
+def info(tag, filename):
+    outdir = app.config['USER_DATA_DIR'] + tag + "/info/"
+    print( 'info', tag, filename)
+    mutations = ""
+    with open( outdir + filename + ".txt") as r:
+        lines = r.readlines()
+        parent = lines[0].strip()
+        energy = lines[-1].strip()
+        if len(lines) > 2:
+            mutations += lines[1].strip()
+            for i in range(2,len(lines)-1):
+                mutations += ',' + lines[i].strip()
+    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy)
+
 
 def build_list(d):
     s = ""
@@ -676,6 +710,7 @@ def load_explore_page(out, tag, filename):
         filename = "mut_0.pdb"
     with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
         parent = r.readline().strip()
+        energy = r.readline().strip()
         mutations += r.readline().strip()
         for l in r:
             mutations += ',' + l.strip()
@@ -684,7 +719,7 @@ def load_explore_page(out, tag, filename):
         chains = get_chains(outdir + filename)
     else:
         chains = get_chains( outdir + parent)
-    energy = get_energy (outdir + filename)
+    #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
     return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
 
@@ -932,7 +967,7 @@ def mutation_parent_file( mutations, parent, mutfile):
             for mut in mutations:
                 f.write(mut + "\n")
         else:
-            f.write("-\n")
+            f.write("none\n")
 
             
 def helper_files_from_mutations( mutations, parent, resfile, align, mutfile):
@@ -1133,14 +1168,37 @@ def get_chains( fname):
                     chains += c
     return chains
 
+def get_chains_and_range( fname):
+    chains = {}
+    with open( fname) as r:
+        for l in r:
+            if l[:4] == "ATOM":  # does not make sense: or l[:6] == "HETATM":
+                c = chain(l)
+                r = resid(l)
+                if c not in chains.keys():
+                    chains[c] = [r,r]
+                else:
+                    chains[c][1] = r
+    chainstr = ""
+    for c,v in chains.items():
+        chainstr += c + ': ' + str(v[0]) + '-' + str(v[1]) + ', '
+    #print( chainstr)
+    return chainstr
+    
+
 def get_energy( fname):
     print( __name__, 'get', fname)
     with open( fname) as r:
         for l in r:
             if l[:4] == "pose":
                 return float( l.split()[-1])
+    print( 'WARNING: no energy found in', fname)
+    return -0
 
-
+def add_energy( fromfile, tofile):
+    with open( tofile, 'a') as w:
+        w.write( str( get_energy(fromfile)) + '\n')
+        
 def is_pdb( fname):
     if not os.path.isfile(fname):
         return False

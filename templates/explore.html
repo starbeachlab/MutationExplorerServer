@@ -88,7 +88,7 @@
 
 	<div>
           <div class="input-field">
-            <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+            <input type="text" name="mutations" class="validate" placeholder="X:123L,A:45G" required>
             <label for="mutations">Enter mutations</label>
           </div>
 	  <div>
@@ -119,20 +119,8 @@
 	  </div>
 	</div>
 
-      <span>Parent: {{parent}} </span>
-      
-      <br>
-      
-      <span>Mutations: {{mutations}} </span>
-      
-      <br>
-      
-      <span>Exploration: {{tag}} </span>
-      
-      <br>
-      
-      <span>Total energy: {{energy}} </span>
-      
+	<div id="info-corner"></div>
+	
     </div>
     <br>
     <br>
@@ -179,7 +167,7 @@
     }
   }
   $("#discol").html(the_name + the_ending);
-  document.getElementById('fname').value = the_name; // + ".pdb";
+  document.getElementById('fname').value = the_name; // + ".pdb";  // TODO: check fname concept, maybe it is not doing anything
 
   $(document).ready(function(){
       $('select').formSelect();
@@ -201,7 +189,7 @@
     // fill html elements
     document.getElementById('discol').innerHTML = the_name + the_ending;
     document.getElementById('fname').value = the_name; // + ".pdb";
-
+    updateInfoSection( the_name);
     // input files
     console.log(name)
     console.log("#1 coloring", coloring)
@@ -299,7 +287,17 @@
     //$($("ul:contains(Energy)")[0].children[2]).addClass("disabled")
   }
 
-  
+    function updateInfoSection(fname) {
+      var loc = window.location;
+      var command = loc.protocol + "//" + loc.host + "{{url_for('info', tag=tag, filename='')}}" + fname;
+      console.log( "updateInfoSection: " + command);
+      $.get( command, function(response) {
+        $("#info-corner").html(response);
+       });
+    }
+
+    
+ 
   /*
   function getFileName(){
   alert( the_name);
