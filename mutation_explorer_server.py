@@ -99,7 +99,7 @@ def bash_cmd(cmd, log):
     log.write(p + '\n')
 
 
-def fixbb(tag, structure, resfile, out_file_name, logfile):
+def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     #print("######## fixbb  #######")
     #print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
@@ -112,9 +112,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -out:pdb -out:prefix ' + out
-    if structure == "structure.pdb":
-        cmd += " -linmem_ig 10  -ex1 -ex2  "
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
+    if longmin == True:
+        cmd += " -ex1 -ex2  "
     bash_cmd(cmd, log)
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
@@ -183,6 +183,9 @@ def submit():
 
     email = request.form['email'].strip()
     min_type = request.form['min-selector'] # = short | long
+    longmin = False
+    if min_type == 'long':
+        longmin = True
 
     if email:
         results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "")
@@ -257,7 +260,7 @@ def submit():
     mutations_to_resfile( [] , outdir + resfile )    
 
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt"], "minimisation")
+    start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
     print( 'fixbb started for initial upload\n')
     return redirect(url_for('mutate', tag = tag))
 

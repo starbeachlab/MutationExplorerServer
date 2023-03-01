@@ -81,3 +81,17 @@ h1 {
 #radio-field {
     margin-top: 0 !important;
 }
+
+.codebox {
+        /* Below are styles for the codebox (not the code itself) */
+        border:1px solid black;
+        background-color:#EEEEFF;
+        width:100%;
+        overflow:auto;    
+        padding:10px;
+    }
+    .codebox code {
+        /* Styles in here affect the text of the codebox */
+        font-size:0.9em;
+        /* You could also put all sorts of styling here, like different font, color, underline, etc. for the code. */
+    }
