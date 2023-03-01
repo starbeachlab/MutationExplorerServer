@@ -110,7 +110,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
 
-    ext = out_file_name
+    #ext = out_file_name
 
     # call rosetta
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
@@ -118,6 +118,15 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
         cmd += " -ex1 -ex2  "
     bash_cmd(cmd, log)
 
+    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
+    bash_cmd(cmd, log)
+
+    file_processing( tag, structure, out_file_name, logfile)
+
+    log.close()
+
+    
+def file_processing( tag, structure, out_file_name, logfile):
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
@@ -125,8 +134,11 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
     mutti = app.config['SCRIPTS_PATH'] + 'pdb_mutated_aa.py '
     
-    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
-    bash_cmd(cmd, log)
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open( out + logfile, 'a')
+    
+    if out_file_name[-4:] == '.pdb':
+        out_file_name = out_file_name[:-4]
     
     cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
     bash_cmd(cmd, log)
@@ -158,7 +170,6 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, log)
     
-    log.write("### THREAD FINISHED ###\n")
     log.close()
 
 
@@ -267,7 +278,11 @@ def submit():
     mutations_to_resfile( [] , outdir + resfile )    
 
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
+    if msg != "found":
+        start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
+    else:
+        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
     return redirect(url_for('mutate', tag = tag, msg=msg))
 
@@ -717,7 +732,7 @@ def build_list(d):
 
 
 def load_explore_page(out, tag, filename):
-    mut_tree = build_mutation_tree(out, tag, "-")
+    mut_tree = build_mutation_tree(out, tag, "none")
     print('explore::tree', mut_tree)
     structures = "<ul>" + build_list(mut_tree) + "</ul>"
     print('explore::tree:', structures)
@@ -786,6 +801,10 @@ def load_example(tag):
 @app.route('/faq')
 def faq():
     return render_template("faq.html")
+
+@app.route('/tutorial')
+def tutorial():
+    return render_template("tutorial.html")
 
 
 @app.route('/downloads/<tag>/<filename>')
