@@ -5,6 +5,7 @@ import requests
 import glob
 from collections import defaultdict
 from werkzeug.utils import secure_filename
+import shutil
 
 app = Flask(__name__)
 
@@ -192,13 +193,19 @@ def submit():
         write_email(outdir + "mail.txt", email, results_link)
 
     # save file
+    msg = "x"
     file_path = outdir + "structure.pdb"    
     if upload.filename != "":
         upload.save(file_path)
     elif pdb != "":
         if pdb[-4:] == ".pdb":
             pdb = pdb[:-4]
-        download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+        if is_in_db( pdb):
+            msg="found"
+            cp_from_db(pdb,file_path)
+        else:
+            msg="notfound"
+            download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
         af = get_alphafold_id(af)
         print( 'alphafold:', af)
@@ -262,7 +269,7 @@ def submit():
     # relax structure
     start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
     print( 'fixbb started for initial upload\n')
-    return redirect(url_for('mutate', tag = tag))
+    return redirect(url_for('mutate', tag = tag, msg=msg))
 
 
 def add_mutations(tag, mutant, inputs):
@@ -348,14 +355,21 @@ def add_mutations(tag, mutant, inputs):
 
 
 @app.route('/mutate/<tag>', methods=['GET', 'POST'])
-def mutate(tag):
+@app.route('/mutate/<tag>/<msg>', methods=['GET', 'POST'])
+def mutate(tag,msg=""):
 
     outdir =   app.config['USER_DATA_DIR'] + tag + "/" # TR
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     
     if request.method == 'GET':
         chains = get_chains_and_range( outdir + "structure.pdb")
-        return render_template("mutate.html", tag = tag, chains=chains, error = "")
+        status = ""
+        if msg=="found":
+            status="Your PDB ID was found in our DB, no minimization will be performed."
+        elif msg == "notfound":
+            status = "Your PDB-ID was not found in our DB, minimization will be performed."
+            
+        return render_template("mutate.html", tag = tag, chains=chains, status=status, error = "")
 
     ###  get form values
     mutations = request.form['mutations'].strip().replace(' ','').split(',')
@@ -1245,3 +1259,22 @@ def send_email(user, link):
     os.system( 'sendmail -t < /home/hildilab/app/mutation_explorer_delta/mail/mail.txt' )
     #log.close()
 """
+
+def is_in_db( pdb):
+    return len(glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')) > 0
+
+def cp_from_db( pdb, outfile):
+    listig =  glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')
+    listig.extend( glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb'))
+    if len(listig) == 1:
+        print( listig[0], outfile)
+        shutil.copyfile(listig[0],outfile)
+    else:
+        mini = 1e9
+        best = ''
+        for l in listig:
+            energy = get_energy( l)
+            if energy < mini:
+                best = l.strip()
+                mini = energy
+        shutil.copyfile(best,outfile)
