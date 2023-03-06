@@ -10,10 +10,10 @@ import shutil
 app = Flask(__name__)
 
 
-app.config['USER_DATA_DIR'] = "/disk/user_data/mutation_explorer_gamma/"
-app.config['EXAMPLE_DIR'] = "/disk/data/mutation_explorer_gamma/examples/"
-app.config['ROSETTA_PATH']  = "/home/hildilab/dev/ext/rosetta/bin/"
-app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_delta/scripts/"
+app.config['USER_DATA_DIR'] = "/scratch/mutationexplorer/data/"
+app.config['EXAMPLE_DIR'] = "/scratch/mutationexplorer/examples/"
+app.config['ROSETTA_PATH']  = "/scratch/mutationexplorer/rosetta/bin/"
+app.config['SCRIPTS_PATH']  = "/scratch/mutationexplorer/server/scripts/"
 
 
 @app.route('/')
@@ -30,7 +30,7 @@ def secure_str( string):
 
 def download_file(url, file_path):
         req = requests.get(url)
-        with open(file_path, 'w') as f:
+        with open(file_path, 'wb') as f:
             f.write(req.content)
 
 
@@ -95,18 +95,17 @@ def name_mutation(out, base_structure, tag):
 
 
 def bash_cmd(cmd, log):
-    log.write(cmd + '\n')
+    log.write(cmd + "\n")
     p = subprocess.check_output(cmd.split())
-    log.write(p + '\n')
+    log.write(str(p) + "\n")
 
 
 def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
-    #print("######## fixbb  #######")
-    #print('infile:', structure, "out_file_name: ", out_file_name)
+    print("######## fixbb  #######")
+    print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open( out + logfile, 'a')
-    
-    
+
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
 
@@ -117,12 +116,12 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     if longmin == True:
         cmd += " -ex1 -ex2  "
     bash_cmd(cmd, log)
-
+    print("rosetta done")	
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
-
+    print("MV Done")
     file_processing( tag, structure, out_file_name, logfile)
-
+    print("File processing")
     log.close()
 
     
@@ -1280,11 +1279,11 @@ def send_email(user, link):
 """
 
 def is_in_db( pdb):
-    return len(glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')) > 0
+    return len(glob.glob( '/scratch/mutationexplorer/rosemint/relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( '/scratch/mutationexplorer/rosemint/fixbb/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
-    listig =  glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')
-    listig.extend( glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb'))
+    listig =  glob.glob( '/scratch/mutationexplorer/rosemint/fixbb/' + pdb.upper() + '*.pdb')
+    listig.extend( glob.glob( '/scratch/mutationexplorer/rosemint/relax/' + pdb.upper() + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)
