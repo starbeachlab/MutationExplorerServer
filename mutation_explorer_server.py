@@ -7,7 +7,10 @@ from collections import defaultdict
 from werkzeug.utils import secure_filename
 import shutil
 
-app = Flask(__name__)
+cfg_file = 'app.cfg'
+
+app = Flask( __name__ )
+app.config.from_pyfile( cfg_file )
 
 
 
