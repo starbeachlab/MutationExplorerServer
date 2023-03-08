@@ -55,6 +55,7 @@
 	    <option value="2" id="ediff" disabled>Energy difference to parent</option>
 	    <option value="3">Absolute hydrophobicity</option>
 	    <option value="4" class="diff">Difference in hydrophobicity</option>
+	    <option value="5" class="diff">Sequence conservation</option>
 	  </select>
 	</div>
 	
@@ -128,7 +129,7 @@
   </div>
 
   <div class="col s9" style="height: 100%;">
-    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://mutationexplorer.vda-group.de/molstar/{{tag}}/">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_delta/molstar/{{tag}}/">
         <b>IFrame is unavailable here</b>
     </iframe>
   </div>
@@ -267,6 +268,7 @@
       else if( id == "2"){ the_ending = "_diffE.pdb";}
       else if( id == "3"){ the_ending = "_HyPh.pdb"; }
       else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
+      else if( id == "5"){ the_ending = "_cons.pdb";}
       //alert(selectedValue);
       //document.getElementById('discol').innerHTML = the_name + the_ending;
       loadPdb(the_name, the_ending);
