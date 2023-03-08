@@ -14,6 +14,7 @@ app.config['USER_DATA_DIR'] = "/scratch/mutationexplorer/data/"
 app.config['EXAMPLE_DIR'] = "/scratch/mutationexplorer/examples/"
 app.config['ROSETTA_PATH']  = "/scratch/mutationexplorer/rosetta/bin/"
 app.config['SCRIPTS_PATH']  = "/scratch/mutationexplorer/server/scripts/"
+app.config['RASP_PATH']  = "/scratch/mutationexplorer/rasp-batch/"
 
 
 @app.route('/')
@@ -158,6 +159,11 @@ def file_processing( tag, structure, out_file_name, logfile):
 
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
+
+
+    cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name + " " + out
+    print(cmd)
+    bash_cmd(cmd, log)
 
     
     if not os.path.exists(out + "fin/"):
@@ -363,7 +369,22 @@ def add_mutations(tag, mutant, inputs):
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
     #add_energy(  outdir + mutant, outdir +  mutfile ) # part of fixbb now !!
+   #TODO Define Chain    
     
+
+
+    #out = app.config['USER_DATA_DIR'] + tag + "/"
+    #log = open( out + "log.txt", 'a')
+    #out_file_name = mutant
+    #if out_file_name[-4:] == '.pdb':
+    #    out_file_name = out_file_name[:-4]
+
+    #cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name
+    #bash_cmd(cmd, log)
+    #print("bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name)
+    #os.system("bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name)
+
+
 
     send_email(outdir + "mail.txt")
 
