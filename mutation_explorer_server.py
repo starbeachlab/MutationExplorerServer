@@ -158,11 +158,14 @@ def file_processing( tag, structure, out_file_name, logfile):
 
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
+    
+    chains = get_chains(out + "structure.pdb")
+    chain_list = list(chains)
 
-
-    cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name + " " + out
-    print(cmd)
-    bash_cmd(cmd, log)
+    for chain in chain_list:
+       cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+       print(cmd)
+       bash_cmd(cmd, log)
 
     
     if not os.path.exists(out + "fin/"):
@@ -261,7 +264,6 @@ def submit():
 
         bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
 
-    
     # create log file
     print("submit\n")
     if os.path.isfile( file_path):
@@ -292,7 +294,6 @@ def submit():
 
 
 def add_mutations(tag, mutant, inputs):
-
     outdir =   app.config['USER_DATA_DIR'] + tag + "/"
     
     mutations = inputs["mutations"]
@@ -394,7 +395,6 @@ def mutate(tag,msg=""):
 
     outdir =   app.config['USER_DATA_DIR'] + tag + "/" # TR
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    
     if request.method == 'GET':
         chains_range = get_chains_and_range( outdir + "structure.pdb") # TODO fix 
         chains = "".join([w[0] for w in chains_range.split(",")])[0:-1]
@@ -414,7 +414,6 @@ def mutate(tag,msg=""):
         print(__name__, 'reset')
         mutations = []
     """
-
     #for m in mutations:
     #    w.write( m + '\n')
     #w.write( '?\n')
@@ -1315,6 +1314,7 @@ def send_email(user, link):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
+    print(rose + 'relax/' + pdb.upper() )
     return len(glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
