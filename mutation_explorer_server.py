@@ -1314,11 +1314,13 @@ def send_email(user, link):
 """
 
 def is_in_db( pdb):
-    return len(glob.glob( '/scratch/mutationexplorer/rosemint/relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( '/scratch/mutationexplorer/rosemint/fixbb/' + pdb.upper() + '*.pdb')) > 0
+    rose = app.config['ROSEMINT_PATH']
+    return len(glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
-    listig =  glob.glob( '/scratch/mutationexplorer/rosemint/fixbb/' + pdb.upper() + '*.pdb')
-    listig.extend( glob.glob( '/scratch/mutationexplorer/rosemint/relax/' + pdb.upper() + '*.pdb'))
+    rose = app.config['ROSEMINT_PATH']
+    listig =  glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')
+    listig.extend( glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)
