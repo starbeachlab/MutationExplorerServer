@@ -10,6 +10,7 @@ import shutil
 app = Flask(__name__)
 
 
+
 app.config['USER_DATA_DIR'] = "/scratch/mutationexplorer/data/"
 app.config['EXAMPLE_DIR'] = "/scratch/mutationexplorer/examples/"
 app.config['ROSETTA_PATH']  = "/scratch/mutationexplorer/rosetta/bin/"
@@ -397,14 +398,15 @@ def mutate(tag,msg=""):
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     
     if request.method == 'GET':
-        chains = get_chains_and_range( outdir + "structure.pdb")
+        chains_range = get_chains_and_range( outdir + "structure.pdb") # TODO fix 
+        chains = "".join([w[0] for w in chains_range.split(",")])[0:-1]
         status = ""
         if msg=="found":
             status="Your PDB ID was found in our DB, no minimization will be performed."
         elif msg == "notfound":
             status = "Your PDB-ID was not found in our DB, minimization will be performed."
             
-        return render_template("mutate.html", tag = tag, chains=chains, status=status, error = "")
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
 
     ###  get form values
     mutations = request.form['mutations'].strip().replace(' ','').split(',')
@@ -850,6 +852,20 @@ def download(tag, filename):
 def fbt():
     fixbb("/disk/user_data/mutation_explorer_gamma/863040/", "structure_1.pdb", ['A:1A'], "", "log")
     return render_template("faq.html")
+
+"""
+@app.route('/rasp/<tag>/<model>')
+@app.route('/rasp/<tag>/<model>/<chain>')
+def rasp( tag, model, chain = ""):
+    outname =  app.config['USER_DATA_DIR'] + tag + 'rasp_' + chain + '.csv'
+    if model[:-4] == '.pdb':
+        model = model[:-4]
+    cmd = app.config['RASP_PATH'] + 'rasp.py ' + app.config['USER_DATA_DIR'] + tag + '/' + model + '.pdb ' + chain + ' ' + outname
+    bash_cmd( cmd, log)
+    return jsonfy( ) # oder file schreiben?
+    #while not file_exists( outname ):   needed?
+    #    sleep(5s)
+"""        
 
 
 if __name__ == "__main__":
