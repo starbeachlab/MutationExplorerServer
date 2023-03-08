@@ -14,11 +14,6 @@ app.config.from_pyfile( cfg_file )
 
 
 
-app.config['USER_DATA_DIR'] = "/scratch/mutationexplorer/data/"
-app.config['EXAMPLE_DIR'] = "/scratch/mutationexplorer/examples/"
-app.config['ROSETTA_PATH']  = "/scratch/mutationexplorer/rosetta/bin/"
-app.config['SCRIPTS_PATH']  = "/scratch/mutationexplorer/server/scripts/"
-app.config['RASP_PATH']  = "/scratch/mutationexplorer/rasp-batch/"
 
 
 @app.route('/')
