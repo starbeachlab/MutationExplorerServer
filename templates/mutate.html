@@ -178,7 +178,7 @@
 	<div class="row">
 	  <div id="mutation" class="input-field col s12">
 	    <input type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" >
-	    <label for="mutations">Enter comma separated list of mutations</label>
+	    <label for="mutations">Enter a comma separated list of mutations to be performed together</label>
 	  </div>
 	</div>
 	<br>
@@ -286,8 +286,23 @@
       <div class="collapsible-header grey lighten-3">
 	<h5 class="center-align"> Target sequence</h5>
       </div>
+
       <div class="collapsible-body">
- 	
+	<h4> <button data-target="modal3" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
+	<!-- Modal Structure -->
+	<div id="modal3" class="modal">
+	  <div class="modal-content">
+	    <h4>Define mutations by target sequence</h4>
+	    <p>You can mutate the model that you uploaded in previous step using a target sequence in FASTA format.<br>
+	      FLO
+	      </p>
+	  </div>
+	  <div class="modal-footer">
+	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+	  </div>
+	</div>
+    
+      
 	<br>
 
 
