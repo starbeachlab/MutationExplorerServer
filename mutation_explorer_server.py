@@ -802,7 +802,7 @@ def explore(tag, filename = ""):
 
 
 # Testing molstar / mdsrv
-@app.route('/molstar/<tag>/')
+@app.route('/molstar/<tag>')
 def molstar(tag):
     return render_template("molstar.html")
     

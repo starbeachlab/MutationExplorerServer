@@ -47,10 +47,11 @@
       <div>
 	
 	{{structures|safe}}
-	
+
 	<div class="input-field">
+	<span> Color by..: </span>
 	  <select id="selecter" onchange="changeColoring();">
-	    <option value="" disabled selected>Color by</option>
+	    <!-- <option value="" disabled selected>Color by</option> -->
 	    <option value="1">Absolute energy</option>
 	    <option value="2" id="ediff" disabled>Energy difference to parent</option>
 	    <option value="3">Absolute hydrophobicity</option>
@@ -129,7 +130,7 @@
   </div>
 
   <div class="col s9" style="height: 100%;">
-    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="/molstar/{{tag}}/">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="{{url_for('molstar',tag='{{tag}}')}}">
         <b>IFrame is unavailable here</b>
     </iframe>
   </div>
