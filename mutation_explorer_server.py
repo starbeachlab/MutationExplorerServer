@@ -6,6 +6,7 @@ import glob
 from collections import defaultdict
 from werkzeug.utils import secure_filename
 import shutil
+import datetime
 
 cfg_file = 'app.cfg'
 
@@ -110,6 +111,12 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
         out_file_name = out_file_name[:-4]
 
     #ext = out_file_name
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    status = "Start+fixbb+for+" + out_file_name
+    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+    bash_cmd(cmd, log)
+
+
 
     # call rosetta
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
@@ -117,6 +124,14 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
         cmd += " -ex1 -ex2  "
     bash_cmd(cmd, log)
     print("rosetta done")	
+
+
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    status = "fixbb+for+" + out_file_name + "+done"
+    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+    bash_cmd(cmd, log)
+
+
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
     print("MV Done")
@@ -163,9 +178,23 @@ def file_processing( tag, structure, out_file_name, logfile):
     chain_list = list(chains)
 
     for chain in chain_list:
+
+       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+       status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
+       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+       bash_cmd(cmd, log)
+
+
        cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
        print(cmd)
        bash_cmd(cmd, log)
+
+
+       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+       status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
+       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+       bash_cmd(cmd, log)
+
 
     
     if not os.path.exists(out + "fin/"):
@@ -282,6 +311,15 @@ def submit():
 
     resfile =  "mut_0_resfile.txt"   
     mutations_to_resfile( [] , outdir + resfile )    
+
+     #create status file
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    print("status")
+    print(status_path)
+    with open(status_path, "w") as f:
+        f.write(get_current_time()+"+Start+Calculation\n")
+        
+
 
     # relax structure
     if msg != "found":
@@ -702,6 +740,19 @@ def interface():
 def get_status(tag, filename):
     status = ""
     msg = ""
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+
+    check_status = os.path.isfile(status_path)
+    if check_status:
+        status_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log"), "r")
+        msg = status_file.read()
+        print(msg)
+        msg = msg.replace("+", " ")
+        msg = msg.replace("\n", "<br>")
+
+
+
+
     dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/fin/" + filename)
     done = os.path.isfile(dirname)
     if done:
@@ -1333,3 +1384,10 @@ def cp_from_db( pdb, outfile):
                 best = l.strip()
                 mini = energy
         shutil.copyfile(best,outfile)
+
+  
+def get_current_time():
+   dt = datetime.datetime.now()
+   x = dt.strftime("%Y-%m-%d+%H:%M:%S")
+
+   return x

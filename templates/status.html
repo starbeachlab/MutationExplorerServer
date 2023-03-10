@@ -16,7 +16,7 @@
     You can access the results from this link: <br>
   <a href="/explore/{{tag}}/{{filename}}">Result Page</a>
 </p>
-
+<p id="status-msg"></p>
 <p id="error-msg"></p>
 
 
@@ -31,6 +31,10 @@
         update_progress()
     })
 
+    function statusMessage(m) {
+        $("#status-msg").html(m);  
+    }
+
 
     function errorMessage(m) {
         $("#wait-text").css("display", "none");
@@ -42,6 +46,9 @@
     function update_progress() {
         console.log("check:  {{tag}} {{filename}} " );
         $.getJSON("{{url_for('get_status', tag = tag, filename = filename)}}", function(data) {
+            if(data['done'] != true) {
+                statusMessage("Status: <br>" + data['message'])
+            }
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
                     window.location.href = "{{url_for('explore', tag = tag, filename = filename)}}"
@@ -51,7 +58,7 @@
             } else {
                 setTimeout(function() {
                     update_progress()
-                }, 1000)
+                }, 5000)
             }
         })
     }
