@@ -105,7 +105,7 @@ def bash_cmd(cmd, log):
     log.write(str(p) + "\n")
 
 
-def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
+def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store=""):
     print("######## fixbb  #######")
     print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
@@ -135,6 +135,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
     bash_cmd(cmd, log)
 
+    if(path_to_store != ""):
+        cmd = "tsp cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+        bash_cmd(cmd, log)
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
@@ -234,6 +237,7 @@ def submit():
     # get form values
     upload = request.files['pdbfile']
     pdb = secure_filename( request.form['pdbid'].strip() )
+    print(pdb)
     af = secure_filename( request.form['alphafoldid'].strip() )
     chain_filter = request.form['chain_filter'].strip().upper()
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
@@ -263,9 +267,14 @@ def submit():
             msg="notfound"
             download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
-        af = get_alphafold_id(af)
-        print( 'alphafold:', af)
-        download_file("https://alphafold.ebi.ac.uk/files/" + af, file_path)
+        af_id = get_alphafold_id(af)
+        print( 'alphafold:', af_id)
+        if is_in_db( af):
+            msg="found"
+            cp_from_db(af,file_path)
+        else:
+            msg="notfound"
+            download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
     else:
         # no structure -> error
         return render_template("submit.html", error = "Please provide a structure")
@@ -332,7 +341,18 @@ def submit():
 
     # relax structure
     if msg != "found":
-        start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
+
+        path = ""
+        if(chain_filter == "" and hetatom_filter is  None and longmin == True):
+            if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+            if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+        print(path)
+        start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin, path ], "minimisation")
     else:
         shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
         file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
@@ -453,9 +473,9 @@ def mutate(tag,msg=""):
         print( 'chains: ', chains)
         status = ""
         if msg=="found":
-            status="Your PDB ID was found in our DB, no minimization will be performed."
+            status="Your PDB was found in our DB, no minimization will be performed."
         elif msg == "notfound":
-            status = "Your PDB-ID was not found in our DB, minimization will be performed."
+            status = "Your PDB was not found in our DB, minimization will be performed."
             
         return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
 
@@ -1384,13 +1404,14 @@ def send_email(user, link):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
-    print(rose + 'relax/' + pdb.upper() )
-    return len(glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0
+    print(rose + 'fixbb/' + pdb.upper() )
+    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
     rose = app.config['ROSEMINT_PATH']
     listig =  glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')
-    listig.extend( glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb'))
+    listig.extend( glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb'))
+    listig.extend( glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)
