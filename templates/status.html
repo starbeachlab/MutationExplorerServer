@@ -50,7 +50,7 @@
         console.log("check:  {{tag}} {{filename}} " );
         $.getJSON("{{url_for('get_status', tag = tag, filename = filename)}}", function(data) {
             if(data['done'] != true) {
-                statusMessage("Status: <br>" + data['message'])
+                statusMessage("Status of job {{tag}}: <br>" + data['message'])
             }
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
