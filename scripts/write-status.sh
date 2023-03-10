@@ -2,4 +2,16 @@
 
 current_date=$(date +"%Y-%m-%d %T") 
 echo $current_date
-echo $current_date $1 >> $2
+
+if [ -z "$3" ];
+	then 
+		echo $current_date $1 >> $2;
+	else
+		FILE=$4
+		if test -f "$FILE"; 
+		then 
+			echo $current_date $1 >> $2;
+		else 
+			echo "$current_date rasp calculation failed" >> $2;
+		fi
+	fi

@@ -194,9 +194,14 @@ def file_processing( tag, structure, out_file_name, logfile):
        bash_cmd(cmd, log)
 
 
+
+    
+
+
        status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
        status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
+       print(cmd)
        bash_cmd(cmd, log)
 
 
@@ -318,8 +323,8 @@ def submit():
 
      #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-    print("status")
-    print(status_path)
+    # print("status")
+    # print(status_path)
     with open(status_path, "w") as f:
         f.write(get_current_time()+"+Start+Calculation\n")
         
