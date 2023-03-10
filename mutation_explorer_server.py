@@ -76,8 +76,12 @@ def build_mutation_tree(out, tag, root):
     links = []
     for f in files:
         parent = open(info + f).read().split("\n")[0]
-        links.append([parent.split(".")[0], f.split(".")[0]])
+        fstr = f.split(".")[0]
+        # avoid failed mutations to be listed in tree:
+        if os.path.isfile( out + tag + '/' + fstr + '.pdb' ):
+            links.append([parent.split(".")[0], fstr])
     #print( len(links), 'links')
+    #print( links)
     
     # default root: "-"
     return build_tree(root, links)
@@ -360,7 +364,7 @@ def add_mutations(tag, mutant, inputs):
     print( 'wait for parent to exist\n')
     ### wait for parent to exist:
     if wait( outdir + parent, 1, 900) == False:
-        #return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
+        #return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")    ### @Nikola: warum ist das auskommentiert? Rene
         return
 
     
@@ -435,7 +439,12 @@ def mutate(tag,msg=""):
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     if request.method == 'GET':
         chains_range = get_chains_and_range( outdir + "structure.pdb") # TODO fix 
-        chains = "".join([w[0] for w in chains_range.split(",")])[0:-1]
+        chains = ''
+        for w in chains_range.split(",")[0:-1]:
+            w = w.strip()
+            if len(w) > 0:
+                chains += w[0]
+        print( 'chains: ', chains)
         status = ""
         if msg=="found":
             status="Your PDB ID was found in our DB, no minimization will be performed."
@@ -496,7 +505,10 @@ def mutate(tag,msg=""):
     inputs["uniprots"] = [uniprot1, uniprot2, uniprot3]
     inputs["chainUs"] = [chainU1, chainU2, chainU3]
 
-    start_thread(add_mutations, [tag, mutant, inputs], "add_muts")
+    msg = "placeholder"
+    
+    start_thread(add_mutations, [tag, mutant, inputs], "add_muts") ### @Nikola: warum ist das ein Trhead? Hier muessen wir msg mit Fehlermeldungen fuellen. Rene 
+    
     #add_mutations(tag, mutant, inputs)
     
     #w.write( "chain: " +  uniprot_chain1+ '\n')
@@ -605,7 +617,7 @@ def mutate(tag,msg=""):
     print( 'started with nr mutations: ' + str( len(mutations) ) + '\n')
     """
 
-    return redirect(url_for('status', tag = tag, filename = mutant))
+    return redirect(url_for('status', tag = tag, filename = mutant, msg=msg))
 
 
 @app.route('/vcf', methods=['GET', 'POST'])
@@ -769,8 +781,9 @@ def get_status(tag, filename):
 
 
 @app.route('/status/<tag>/<filename>')
-def status(tag, filename):
-    return render_template("status.html", tag = tag, filename = filename)
+@app.route('/status/<tag>/<filename>/<msg>')
+def status(tag, filename, msg=""):
+    return render_template("status.html", tag = tag, filename = filename, msg=msg)
 
 @app.route('/info/<tag>/<filename>')
 def info(tag, filename):
