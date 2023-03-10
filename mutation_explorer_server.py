@@ -83,7 +83,7 @@ def build_mutation_tree(out, tag, root):
     #print( len(links), 'links')
     #print( links)
     
-    # default root: "-"
+    # default root: "none"
     return build_tree(root, links)
 
 
@@ -388,21 +388,22 @@ def add_mutations(tag, mutant, inputs):
             fasta_file =  outdir + fasta.filename
             fasta.save(fasta_file)
             head, target = seq_from_fasta( fasta_file) 
-            add_mutations_from_sequence( mutations, target, chainF, "fa" + (i % 3), outdir+parent)
+            add_mutations_from_sequence( mutations, target, chainF, "fa" + str(i % 3), outdir+parent)
     for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
         i += 1
         if seq_input != "" and chainS != "":
             secure_str(chainS)
             chainS = chainS[0]
             secure_str(seq_input)
-            add_mutations_from_sequence( mutations, seq_input, chainS, "seq" + (i % 3), outdir+parent)
+            print( "mutations from sequence:", chainS, seq_input)
+            add_mutations_from_sequence( mutations, seq_input, chainS, "seq" + str(i % 3), outdir+parent)
     for uniprot, chainU in zip(inputs["uniprots"], inputs["chainUs"]):
         i += 1
         if uniprot != "" and chainU != '':
             uni_file = outdir + uniprot
             download_uniprot( uniprot, uni_file)
             target = seq_from_fasta( uni_file)
-            add_mutations_from_sequence( mutations, target, chainU, "uni" + (i % 3), outdir + parent)
+            add_mutations_from_sequence( mutations, target, chainU, "uni" + str(i % 3), outdir + parent)
 
     print(__name__, 'total number of mutations:', len(mutations))
     if len(mutations) != 0:
@@ -510,7 +511,7 @@ def mutate(tag,msg=""):
     inputs["uniprots"] = [uniprot1, uniprot2, uniprot3]
     inputs["chainUs"] = [chainU1, chainU2, chainU3]
 
-    msg = "placeholder"
+    msg = "-"
     
     start_thread(add_mutations, [tag, mutant, inputs], "add_muts") ### @Nikola: warum ist das ein Trhead? Hier muessen wir msg mit Fehlermeldungen fuellen. Rene 
     
@@ -835,7 +836,7 @@ def load_explore_page(out, tag, filename):
         for l in r:
             mutations += ',' + l.strip()
     outdir = out + tag + "/"
-    if parent == "-":
+    if parent == "none":
         chains = get_chains(outdir + filename)
     else:
         chains = get_chains( outdir + parent)
