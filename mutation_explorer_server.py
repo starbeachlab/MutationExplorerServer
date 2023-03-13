@@ -146,6 +146,40 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     print("File processing")
     log.close()
 
+def calc_rasp(tag, structure, out_file_name, logfile, wt=False)
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open( out + logfile, 'a')
+    chains = get_chains(out + "structure.pdb")
+    chain_list = list(chains)
+
+    for chain in chain_list:
+
+       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+       status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
+       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+       bash_cmd(cmd, log)
+
+
+       cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+       print(cmd)
+       bash_cmd(cmd, log)
+
+
+
+    
+
+
+       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+       status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
+       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
+       print(cmd)
+       bash_cmd(cmd, log)
+
+
+       log.close()
+
+
+
     
 def file_processing( tag, structure, out_file_name, logfile):
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
@@ -181,33 +215,6 @@ def file_processing( tag, structure, out_file_name, logfile):
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
     
-    chains = get_chains(out + "structure.pdb")
-    chain_list = list(chains)
-
-    for chain in chain_list:
-
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-       bash_cmd(cmd, log)
-
-
-       cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
-       print(cmd)
-       bash_cmd(cmd, log)
-
-
-
-    
-
-
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
-       print(cmd)
-       bash_cmd(cmd, log)
-
-
     
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
@@ -674,7 +681,13 @@ def vcf():
     
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
-    download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+    if is_in_db( af):
+        msg="found"
+        cp_from_db(af,file_path)
+    else:
+        msg="notfound"
+        download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+        
     if not is_pdb( outdir + 'structure.pdb'):
         return render_template("vcf.html", error = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded")
 
