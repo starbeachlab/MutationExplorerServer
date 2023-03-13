@@ -462,6 +462,13 @@ def add_mutations(tag, mutant, inputs):
     else:
         print("no mutations")
         #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+        status = "no+mutations+defined+" + outdir + parent
+        cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+        print(cmd)
+        print(outdir +  "log.txt")
+        log = open( outdir + "log.txt", 'a')
+        bash_cmd(cmd,  log)
         return
     
     #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") # fixbb sends all cmds to threads 
@@ -847,6 +854,9 @@ def get_status(tag, filename):
         print(msg)
         msg = msg.replace("+", " ")
         msg = msg.replace("\n", "<br>")
+        if("no mutations defined" in msg):
+            print("exit status") 
+            return jsonify({'done': True, 'status': "skip", 'message': "No mutation was defined"})
 
 
 
