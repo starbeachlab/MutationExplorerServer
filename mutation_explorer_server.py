@@ -658,6 +658,7 @@ def vcf():
         if not os.path.exists(outdir):
             break
     os.mkdir(outdir)
+    msg = ""
 
     vcf = request.files['vcf']
     vcf_file = vcf.filename
@@ -674,7 +675,15 @@ def vcf():
     
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
-    download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+    file_path = outdir + "structure.pdb"    
+    if is_in_db( alphafold.strip().upper()):
+        msg="found"
+        cp_from_db(alphafold.strip().upper(),file_path)
+    else:
+        msg="notfound"
+        download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+
+    print(msg)
     if not is_pdb( outdir + 'structure.pdb'):
         return render_template("vcf.html", error = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded")
 
@@ -687,9 +696,21 @@ def vcf():
 
             
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
-    print( 'fixbb started for initial upload\n')
+    #start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
+    #print( 'fixbb started for initial upload\n')
+    # relax structure
+    if msg != "found":
 
+        path = ""
+        rose = app.config['ROSEMINT_PATH']
+        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
+
+        print("Store " + path)
+        start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",True, path ], "minimisation")
+    else:
+        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
+    print( 'fixbb started for initial upload\n')
 
     if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
@@ -1404,7 +1425,6 @@ def send_email(user, link):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
-    print(rose + 'fixbb/' + pdb.upper() )
     return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
