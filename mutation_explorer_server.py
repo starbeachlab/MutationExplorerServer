@@ -141,12 +141,17 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
+
+
+    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
     file_processing( tag, structure, out_file_name, logfile)
     print("File processing")
     log.close()
 
-def calc_rasp(tag, structure, out_file_name, logfile, wt=False)
+
+
+def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open( out + logfile, 'a')
     chains = get_chains(out + "structure.pdb")
@@ -154,29 +159,39 @@ def calc_rasp(tag, structure, out_file_name, logfile, wt=False)
 
     for chain in chain_list:
 
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-       bash_cmd(cmd, log)
+        if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
+            print("exists")
+            listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
+
+            if len(listig) == 1:
+                print( listig[0], out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+                shutil.copyfile(listig[0],out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+        else:
+            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+            status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
+            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+            bash_cmd(cmd, log)
 
 
-       cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
-       print(cmd)
-       bash_cmd(cmd, log)
+            cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+            print(cmd)
+            bash_cmd(cmd, log)
+       
 
-
-
+            if(path_to_store != ""):
+                cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
+                print(cmd)
+                bash_cmd(cmd, log)
     
 
 
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
-       print(cmd)
-       bash_cmd(cmd, log)
+            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+            status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
+            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
+            print(cmd)
+            bash_cmd(cmd, log)
 
 
-       log.close()
 
 
 
@@ -362,6 +377,15 @@ def submit():
         start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin, path ], "minimisation")
     else:
         shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+        if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+        print("path rasp: " + path)
+        calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
         file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
     return redirect(url_for('mutate', tag = tag, msg=msg))
@@ -718,6 +742,12 @@ def vcf():
         start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",True, path ], "minimisation")
     else:
         shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        rose = app.config['ROSEMINT_PATH']
+        path = rose + "alphafold/" + af.upper() + ".pdb"
+
+        print("path rasp: " + path)
+        calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
         file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
 
