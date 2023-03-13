@@ -750,7 +750,7 @@ def vcf():
     else:
         shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
         rose = app.config['ROSEMINT_PATH']
-        path = rose + "alphafold/" + af.upper() + ".pdb"
+        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
         print("path rasp: " + path)
         calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
