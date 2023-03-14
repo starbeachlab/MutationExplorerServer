@@ -330,7 +330,7 @@ def submit():
                         if remove_hets:
                             continue
                     f_out.write(line)
-
+        print("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a"))            
         bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
 
     # create log file
@@ -359,13 +359,13 @@ def submit():
     with open(status_path, "w") as f:
         f.write(get_current_time()+"+Start+Calculation\n")
         
-
-
+    print(hetatom_filter)
+    path = ""
     # relax structure
     if msg != "found":
 
-        path = ""
-        if(chain_filter == "" and hetatom_filter is  None and longmin == True):
+     
+        if chain_filter == "" and hetatom_filter is  None and longmin == True:
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
@@ -376,11 +376,17 @@ def submit():
         print(path)
         start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin, path ], "minimisation")
     else:
-        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
-        if(pdb != ""):
+        print("hier")
+        if chain_filter != "" or hetatom_filter is not  None or longmin != True:
+            print("Fixbb since filtering")
+            start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
+
+        else:
+            shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+            if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
-        if(af != ""):    
+            if(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
 
@@ -999,6 +1005,10 @@ def download(tag, filename):
             cmd = ['zip','results' + tag + '.zip','list.txt']
             for f in os.listdir('.'):
                 if ".pdb" in f:
+                    cmd.append(f)
+                if ".clw" in f:
+                    cmd.append(f)
+                if ".csv" in f:
                     cmd.append(f)
             p = subprocess.check_output(cmd)
 
