@@ -214,7 +214,10 @@
       {
         console.log("Does not exist")
       }
-      clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+      else 
+	{
+      		clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+	}
     }
 
     // wait until loadViewer is defined
@@ -308,7 +311,7 @@
       var http = new XMLHttpRequest();
       http.open('HEAD', url, false);
       http.send();
-      return http.status!=404;
+      return http.status==404;
     }
 
 
