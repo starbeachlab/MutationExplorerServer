@@ -53,7 +53,7 @@
   4) MutationExplorer <br>
   General remarks:<br>
   5) Energy minimization and database <br>
-  6) Mutations <br>
+  6) Specific mutations <br>
 </p>
 
 
@@ -129,7 +129,7 @@ There are three ways of providing mutational data:
   Click on<span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit and launch explorer" style="margin:5px;">submit and launch explorer</button> </span> to proceed to caluclation. When this is finished, you will be re-directed to the <span style="font-variant:small-caps">MutationExplorer</span> window.
 </p>
 
-<h4>3) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
+<h4> 4) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
 <p>
 <ul>
 In the explorer view, you will be presented with information about your set of mutations, relative per-residue energies and visualization of the protein.<br><br>
@@ -167,6 +167,36 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 </ul>
 </p>
 <br>
+
+<h4>5) Energy minimization</h4>
+<p>
+  The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
+  We continuously pre-minimize structures from the PDB using the commandline described below.
+  If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
+  Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
+</p>
+<h5> AlphaFold and your own models</h4>
+<p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be minimized, but the minimization has to be performed with the same energy functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
+
+<h5> Do it yourself!</h4>
+<p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+  However, we recommend you to perform the following minimization. It is optimizing also the backbone in a limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be leading to problems for e.g. membrane proteins. </p>
+<div class="codebox">
+  <code>
+    PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+  </code>
+</div>
+
+<p>
+  This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
+
+<h4> 6) Specific mutations </h4>
+<p> qed </p>
+
+
+
+
+
 <p> For further information, see the FAQ.</p>
 
 <br>
