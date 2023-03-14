@@ -373,7 +373,6 @@ def submit():
     # relax structure
     if msg != "found":
 
-     
         if chain_filter == "" and hetatom_filter is  None and longmin == True:
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
@@ -385,11 +384,10 @@ def submit():
         print(path)
         start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin, path ], "minimisation")
     else:
-        print("hier")
         if chain_filter != "" or hetatom_filter is not  None or longmin != True:
             print("Fixbb since filtering")
             start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
-
+            msg =  "notfound"
         else:
             shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
             if(pdb != ""):
@@ -399,8 +397,9 @@ def submit():
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
 
-        print("path rasp: " + path)
-        calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
+            print("path rasp: " + path)
+            calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
+        
         file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
     return redirect(url_for('mutate', tag = tag, msg=msg))
