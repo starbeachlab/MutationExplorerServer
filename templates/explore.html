@@ -210,7 +210,14 @@
 
     for (i = 0; i < allchains.length; i++) {
       console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
-      clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+      if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
+      {
+        console.log("Does not exist")
+      }
+      else 
+	{
+      		clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+	}
     }
 
     // wait until loadViewer is defined
@@ -299,7 +306,16 @@
        });
     }
 
-    
+    function UrlExists(url)
+    {
+      var http = new XMLHttpRequest();
+      http.open('HEAD', url, false);
+      http.send();
+      return http.status==404;
+    }
+
+
+
  
   /*
   function getFileName(){

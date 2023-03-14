@@ -568,9 +568,9 @@ def mutate(tag,msg=""):
         # check if pdb in DB
         status = ""
         if msg=="found":
-            status="Your PDB ID was found in our DB, no minimization will be performed."
+            status="Your PDB was found in our DB, no minimization will be performed."
         elif msg == "notfound":
-            status = "Your PDB-ID was not found in our DB, minimization will be performed."
+            status = "Your PDB was not found in our DB, minimization will be performed."
             
         return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
 
@@ -830,7 +830,7 @@ def info(tag, filename):
     name_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log"), "r")
     name = name_file.read()
     print(name)
-    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy)
+    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name)
 
 
 def build_list(d):
@@ -868,6 +868,8 @@ def load_explore_page(out, tag, filename):
         chains = get_chains( outdir + parent)
     #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
+
+
     return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
 
 
@@ -1421,13 +1423,13 @@ def send_email(fil):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
-    print(rose + 'relax/' + pdb.upper() )
-    return len(glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0
+    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db( pdb, outfile):
     rose = app.config['ROSEMINT_PATH']
     listig =  glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')
-    listig.extend( glob.glob( rose + 'relax/' + pdb.upper() + '*.pdb'))
+    listig.extend( glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb'))
+    listig.extend( glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)

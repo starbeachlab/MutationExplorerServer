@@ -3,7 +3,7 @@
 {% block content %}
 
 <center>
-<h1>Status {{tag}}</h1>
+<h1>Status of job {{tag}}</h1>
 </center>
 
 <div style="color:blue;"> Message board: {{msg}} </div>
@@ -20,8 +20,9 @@
   <a href="/explore/{{tag}}/{{filename}}">Result Page</a>
 </p>
 <p id="status-msg"></p>
+<p id="status-gif"></p>
+<img id="gif" src="data:image/gif;base64,R0lGODlhEQARAPIFAP///wAAAMDAwEBAQICAgAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFCgAFACwAAAAAEQARAAADOFi63D0wwuBWuJhWRYAXgrYRARCEYtWVZ1qx4da0ckPENfe5TvfhIw8AxGP4hsCKZCLLOHPQ6CIBACH5BAUKAAIALAcABAABAAcAAAIDhH5RACH5BAUKAAAALAcABAADAAkAAAIHBGSpyxAiCgAh+QQFCgACACwFAAQAAQAJAAACBAQiaVEAIfkEBQoAAgAsBgAFAAQACAAAAgaEjqnLFwUAIfkEBQoAAAAsBgAFAAMABwAAAgYEZKkLYQUAIfkECTIAAgAsAwABAAkADgAAAgyUj6nLjeCilGHaUwAAIfkECQoABQAsAAAAABAAEAAAAzhYuhv8cDhIh6SPADuxBtvlgYDAjaUgBCxDvKnaLR/ItgtHBium87iKZNXDFDhF41GkVDCbhdkjAQAh+QQJCgAFACwBAAMADgAJAAADKji13BsjkNkmiRHosIgGWPAB0hiSpCCYUBAIr6uqIQw/c+hyzL47wEIgAQAh+QQFCgAFACwAAAAAEAAQAAADNli6sf5qNAiHpM8GMbEWYJdJABBSGhCoHKYQqhrMokNvYOvCZjhTPJMGExzuAEZXIam8KBmQBAA7" alt="description of gif" /> 
 <p id="error-msg"></p>
-
 
 {% endblock %}
 
@@ -36,11 +37,14 @@
 
     function statusMessage(m) {
         $("#status-msg").html(m);  
+
     }
 
 
     function errorMessage(m) {
         $("#wait-text").css("display", "none");
+        const img = document.getElementById('gif')
+        gif.remove();
         $("#error-msg").text(m);
         console.log(m)
     }
@@ -50,7 +54,7 @@
         console.log("check:  {{tag}} {{filename}} " );
         $.getJSON("{{url_for('get_status', tag = tag, filename = filename)}}", function(data) {
             if(data['done'] != true) {
-                statusMessage("Status: <br>" + data['message'])
+                statusMessage("Status of job {{tag}}: <br>" + data['message'])
             }
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
@@ -61,10 +65,11 @@
             } else {
                 setTimeout(function() {
                     update_progress()
-                }, 5000)
-            }
+                }, 5000
+)            }
         })
     }
+
 
 </script>
 
