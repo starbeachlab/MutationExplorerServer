@@ -256,6 +256,8 @@ def submit():
             break
     os.mkdir(outdir)
 
+    original_name = ""
+
     # get form values
     upload = request.files['pdbfile']
     pdb = secure_filename( request.form['pdbid'].strip() )
@@ -278,8 +280,10 @@ def submit():
     msg = "x"
     file_path = outdir + "structure.pdb"    
     if upload.filename != "":
+        original_name = upload.filename
         upload.save(file_path)
     elif pdb != "":
+        original_name = pdb
         if pdb[-4:] == ".pdb":
             pdb = pdb[:-4]
         if is_in_db( pdb):
@@ -290,6 +294,7 @@ def submit():
             download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
         af_id = get_alphafold_id(af)
+        original_name = af_id
         print( 'alphafold:', af_id)
         if is_in_db( af):
             msg="found"
@@ -354,10 +359,14 @@ def submit():
 
      #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    name_path =  os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
     # print("status")
     # print(status_path)
     with open(status_path, "w") as f:
         f.write(get_current_time()+"+Start+Calculation\n")
+
+    with open(name_path, "w") as f:
+        f.write(original_name)
         
     print(hetatom_filter)
     path = ""
@@ -574,6 +583,18 @@ def mutate(tag,msg=""):
     inputs["chainSs"] = [chainS1, chainS2, chainS3]
     inputs["uniprots"] = [uniprot1, uniprot2, uniprot3]
     inputs["chainUs"] = [chainU1, chainU2, chainU3]
+
+    print("mutations: " + str(len(mutations)))
+    print("clustal: " + clustal1.filename)
+    print("fasta: " + fasta1.filename)
+    print("uniprot: " + uniprot1)
+
+
+    if request.form['mutations'].strip() =="" and   clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
+        print( 'no mutations defined')
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation") # nutzlos, da javascript das gar nicht durchlaesst ohne eingabe 
+    else:
+        print( 'mutations defined')
 
     msg = "-"
     
@@ -900,7 +921,11 @@ def info(tag, filename):
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
                 mutations += ',' + lines[i].strip()
-    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy)
+
+    name_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log"), "r")
+    name = name_file.read()
+    print(name)
+    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name)
 
 
 def build_list(d):
@@ -938,6 +963,8 @@ def load_explore_page(out, tag, filename):
         chains = get_chains( outdir + parent)
     #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
+
+
     return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
 
 
