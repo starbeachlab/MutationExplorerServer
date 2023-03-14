@@ -105,7 +105,7 @@ def bash_cmd(cmd, log):
     log.write(str(p) + "\n")
 
 
-def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
+def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store=""):
     print("######## fixbb  #######")
     print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
@@ -135,15 +135,67 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
     cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
     bash_cmd(cmd, log)
 
+    if(path_to_store != ""):
+        cmd = "tsp cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+        bash_cmd(cmd, log)
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
+
+
+    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
     file_processing( tag, structure, out_file_name, logfile)
     print("File processing")
     log.close()
 
+
+
+def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open( out + logfile, 'a')
+    chains = get_chains(out + "structure.pdb")
+    chain_list = list(chains)
+
+    for chain in chain_list:
+
+        if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
+            print("exists")
+            listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
+
+            if len(listig) == 1:
+                print( listig[0], out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+                shutil.copyfile(listig[0],out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+        else:
+            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+            status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
+            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+            bash_cmd(cmd, log)
+
+
+            cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+            print(cmd)
+            bash_cmd(cmd, log)
+       
+
+            if(path_to_store != ""):
+                cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
+                print(cmd)
+                bash_cmd(cmd, log)
     
+
+
+            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+            status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
+            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
+            print(cmd)
+            bash_cmd(cmd, log)
+
+
+    
+
+
+
 def file_processing( tag, structure, out_file_name, logfile):
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
@@ -178,28 +230,6 @@ def file_processing( tag, structure, out_file_name, logfile):
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
     
-    chains = get_chains(out + "structure.pdb")
-    chain_list = list(chains)
-
-    for chain in chain_list:
-
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "Start+rasp+calculation+for+" + out_file_name + "+with+chain+" + chain
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-       bash_cmd(cmd, log)
-
-
-       cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
-       print(cmd)
-       bash_cmd(cmd, log)
-
-
-       status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-       status = "rasp+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-       cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-       bash_cmd(cmd, log)
-
-
     
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
@@ -227,26 +257,36 @@ def create_user_dir():
 
 
 
-def save_pdb_file(file_path, upload, pdb_id, af_id):
+def save_pdb_file(file_path, upload, pdb, af):
+    original_name = ""
     error = False
     error_message = ""
     msg = "x"
 
     if upload.filename != "":
+        original_name = upload.filename
         upload.save(file_path)
-    elif pdb_id != "":
-        if pdb_id[-4:] == ".pdb":
-            pdb_id = pdb_id[:-4]
-        if is_in_db( pdb_id):
+    elif pdb != "":
+        original_name = pdb
+        if pdb[-4:] == ".pdb":
+            pdb = pdb[:-4]
+        if is_in_db( pdb):
             msg="found"
-            cp_from_db(pdb_id,file_path)
+            cp_from_db(pdb,file_path)
         else:
             msg="notfound"
-            download_file("https://files.rcsb.org/download/" + pdb_id + ".pdb", file_path)
-    elif af_id != "":
-        af_id = get_alphafold_id(af_id)
+            download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+    elif af != "":
+        af_id = get_alphafold_id(af)
+        original_name = af_id
         print( 'alphafold:', af_id)
-        download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+        if is_in_db( af): # @Daniel: sollte das nicht auch af_id sein?
+            msg="found"
+            cp_from_db(af,file_path)
+        else:
+            msg="notfound"
+            download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+            
     else:
         # no structure -> error
         error = True
@@ -269,7 +309,7 @@ def save_pdb_file(file_path, upload, pdb_id, af_id):
             w.write(l)
         os.rename( file_path[:-4] + '.tmp', file_path )
 
-    return error, error_message, msg
+    return original_name, error, error_message, msg
 
 
 def filter_structure(outdir, file_path, chain_filter, remove_hets):
@@ -287,11 +327,14 @@ def filter_structure(outdir, file_path, chain_filter, remove_hets):
                             continue
                     f_out.write(line)
 
+        print("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) 
         bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
+        return True
+    return False
 
 
 
-def relax_initial_structure(outdir, tag, msg, longmin, as_thread):
+def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af):
     resfile =  "mut_0_resfile.txt"   
     structure_file = "structure.pdb"
     log_file = "log.txt"
@@ -299,14 +342,38 @@ def relax_initial_structure(outdir, tag, msg, longmin, as_thread):
     mutations_to_resfile( [] , outdir + resfile )    
 
     if msg != "found":
-        # thread
-        if as_thread:
-            start_thread(fixbb, [tag, structure_file, resfile, "mut_0", log_file, longmin], "minimisation")
-        else:
-            fixbb(tag, structure_file, resfile, "mut_0", log_file, longmin = longmin)
+
+        if (not filtered) and longmin == True:
+            if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+            if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+        print(path)
+        start_thread(fixbb, [tag, structure_file, resfile, "mut_0", log_file, longmin, path ], "minimisation")
     else:
-        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
-        file_processing( tag, "structure.pdb", "mut_0", log_file)
+
+        if (not filtered) and longmin == True:
+            shutil.copyfile( outdir + structure_file, outdir + "mut_0.pdb")
+            if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+            if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+            print("path rasp: " + path)
+            calc_rasp(tag, structure_file, "mut_0", log_file, path ) # TODO
+
+            file_processing( tag, structure_file, "mut_0",  log_file)
+
+        else:
+            print("Fixbb since filtering")
+            start_thread(fixbb, [tag, structure_file, resfile, "mut_0", log_file, longmin], "minimisation")
+            msg =  "notfound"
+
 
 
 
@@ -342,12 +409,12 @@ def submit():
 
     # save file
     file_path = outdir + "structure.pdb"    
-    unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
+    original_name, unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
     if unsuccessful:
         return render_template("submit.html", error = error_message)
 
     # filter (remove) chains, heteroatoms
-    filter_structure(outdir, file_path, chain_filter, remove_hets)
+    filtered = filter_structure(outdir, file_path, chain_filter, remove_hets)
 
     print("submit\n")
     if os.path.isfile( file_path):
@@ -360,21 +427,23 @@ def submit():
 
     #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-    print("status")
-    print(status_path)
+    name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
+    # print("status")
+    # print(status_path)
     with open(status_path, "w") as f:
         f.write(get_current_time()+"+Start+Calculation\n")
+
+    with open(name_path, "w") as f:
+        f.write(original_name)
         
     # relax structure
-    relax_initial_structure(outdir, tag, msg, longmin, True)
+    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
     print('fixbb started for initial upload\n')
 
     return redirect(url_for('mutate', tag = tag, msg=msg))
 
 
 def add_mutations(tag, mutant, inputs):
-    # TODO: Fehlermeldungen wiederherstellen
-
     outdir =   app.config['USER_DATA_DIR'] + tag + "/"
     
     mutations = inputs["mutations"]
@@ -408,7 +477,6 @@ def add_mutations(tag, mutant, inputs):
 
     
     # get all mutations
-    #  functions that take list of items?
     i = 0
     for clustal in inputs["clustals"]:
         if clustal.filename != "":
@@ -446,6 +514,13 @@ def add_mutations(tag, mutant, inputs):
     else:
         print("no mutations")
         #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+        status = "no+mutations+defined+" + outdir + parent
+        cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+        print(cmd)
+        print(outdir +  "log.txt")
+        log = open( outdir + "log.txt", 'a')
+        bash_cmd(cmd,  log)
         return
     
     #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") # fixbb sends all cmds to threads 
@@ -589,7 +664,17 @@ def vcf():
     # get mutations
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
-    download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+
+    # retrieve structure
+    msg = ""
+    file_path = outdir + "structure.pdb"
+    if is_in_db( alphafold.strip().upper()):
+        msg="found"
+        cp_from_db(alphafold.strip().upper(),file_path)
+    else:
+        msg="notfound"
+        download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
+    print(msg)
     if not is_pdb( outdir + 'structure.pdb'):
         error_message = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded"
         return render_template("vcf.html", error = error_message)
@@ -602,9 +687,26 @@ def vcf():
         w.write('NATAA\nstart\n')
 
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
+    if msg != "found":
+
+        path = ""
+        rose = app.config['ROSEMINT_PATH']
+        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
+
+        print("Store " + path)
+        start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",True, path ], "minimisation")
+    else:
+        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        rose = app.config['ROSEMINT_PATH']
+        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
+
+        print("path rasp: " + path)
+        calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
-    if wait( outdir + 'mut_0.pdb', 1, 920) == False: 
+
+    if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
 
     # mutate
@@ -684,6 +786,12 @@ def get_status(tag, filename):
         print(msg)
         msg = msg.replace("+", " ")
         msg = msg.replace("\n", "<br>")
+        if("no mutations defined" in msg):
+            print("exit status") 
+            return jsonify({'done': True, 'status': "skip", 'message': "No mutation was defined"})
+
+
+
 
     dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/fin/" + filename)
     done = os.path.isfile(dirname)
@@ -718,6 +826,10 @@ def info(tag, filename):
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
                 mutations += ',' + lines[i].strip()
+
+    name_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log"), "r")
+    name = name_file.read()
+    print(name)
     return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy)
 
 
@@ -826,6 +938,10 @@ def download(tag, filename):
             cmd = ['zip','results' + tag + '.zip']
             for f in os.listdir('.'):
                 if ".pdb" in f:
+                    cmd.append(f)
+                if ".clw" in f:
+                    cmd.append(f)
+                if ".csv" in f:
                     cmd.append(f)
             p = subprocess.check_output(cmd)
 
