@@ -909,10 +909,13 @@ def status(tag, filename, msg=""):
 
 @app.route('/info/<tag>/<filename>')
 def info(tag, filename):
-    outdir = app.config['USER_DATA_DIR'] + tag + "/info/"
+    if tag.isdigit():
+        path = app.config['USER_DATA_DIR'] + tag + "/info/"
+    else:
+        path = app.config['EXAMPLE_DIR'] + tag + "/info/"
     print( 'info', tag, filename)
     mutations = ""
-    with open( outdir + filename + ".txt") as r:
+    with open( path + filename + ".txt") as r:
         lines = r.readlines()
         parent = lines[0].strip()
         energy = lines[-1].strip()
@@ -920,8 +923,11 @@ def info(tag, filename):
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
                 mutations += ',' + lines[i].strip()
-
-    name_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log"), "r")
+    if tag.isdigit():
+        path = app.config['USER_DATA_DIR'] + tag + "/name.log"
+    else:
+        path = app.config['EXAMPLE_DIR'] + tag + "/name.log"
+    name_file = open(path, "r")
     name = name_file.read()
     print(name)
     return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name)
