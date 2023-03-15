@@ -107,6 +107,7 @@ def bash_cmd(cmd, log):
 
 def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store=""):
     print("######## fixbb  #######")
+    print(tag)
     print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open( out + logfile, 'a')
@@ -722,10 +723,14 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
     # TODO: log
 
     # relax provided structure
+    print("####### INT: relax structure")
     longmin = True 
     relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
 
-    # get mutations 
+
+    ### get mutations 
+
+    print("####### INT: get mutations")
     mutations = []
 
     parent = "mut_0.pdb"
@@ -733,24 +738,30 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
     align = mutant[:-4] + ".clw"
     mutfile = "info/" + mutant[:-4] + ".txt"
 
+    # wait for parent file
+    if wait(outdir + parent, 1, 900) == False:
+        return
+
     add_mutations_from_alignment(mutations, clustal, outdir + parent)
 
     if len(mutations) == 0:
         return
 
-    # wait for parent file
-    if wait(outdir + parent, 1, 900) == False:
-        return
 
+    ### calculation
 
     # helpers
+    print("####### INT: generate helper files")
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
 
     # start mutation calculation
+    print("####### INT: start fixbb")
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
     # send email when done
     send_email(outdir + "mail.txt")
+
+    print("####### INT: done")
 
 
 
@@ -762,30 +773,36 @@ def interface():
 
     ### get form values
 
+    print("################# delta interface")
+
     # first file - "conv"
     upload = request.files['file_conv']
     pdb = secure_filename( request.form['pdb_conv'].strip() )
     af = "" # secure_filename( request.form['af_conv'].strip() )
 
     # second file - "super"
-    upload = request.files['file_super']
-    pdb = secure_filename( request.form['pdb_super'].strip() )
-    af = "" # secure_filename( request.form['af_super'].strip() )
+    upload_super = request.files['file_super']
+    pdb_super = secure_filename( request.form['pdb_super'].strip() )
+    af_super = "" # secure_filename( request.form['af_super'].strip() )
 
     # alignment TODO: generalize
     alignment_link = request.form.getlist('alignment_link')[0]
     alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
 
-    clustal = outdir + "alignment.aln"
 
-    req = requests.get(alignment_link) 
-    with open(clustal, "w") as f:
-        f.write(req.content)
+
+    print("######## got form values")
 
 
     ### processing
 
     outdir, tag = create_user_dir()
+
+    # save alignment file
+    clustal = outdir + "alignment.aln"
+    req = requests.get(alignment_link) 
+    with open(clustal, "w") as f:
+        f.write(req.content)
 
     # save file
     file_path = outdir + "structure.pdb"    
@@ -815,7 +832,7 @@ def interface():
 
     # start calculation 
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal])
+    start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal], "interface calc")
 
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
 
