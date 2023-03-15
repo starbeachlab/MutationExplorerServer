@@ -666,13 +666,13 @@ def mutate(tag,msg=""):
     if i == 0:
         print("no mutations")
         #
-        status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-        status = "no+mutations+defined+" + os.path.join( app.config['USER_DATA_DIR'], tag) 
-        cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-        print(cmd)
-        print(os.path.join( app.config['USER_DATA_DIR'], tag)  +  "log.txt")
-        log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
-        bash_cmd(cmd,  log)
+        #status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+        #status = "no+mutations+defined+" + os.path.join( app.config['USER_DATA_DIR'], tag) 
+        #cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+        #print(cmd)
+        #print(os.path.join( app.config['USER_DATA_DIR'], tag)  +  "log.txt")
+        #log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
+        #bash_cmd(cmd,  log)
         return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
 
 
