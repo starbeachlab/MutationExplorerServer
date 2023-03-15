@@ -724,7 +724,7 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
 
     # relax provided structure
     print("####### INT: relax structure")
-    longmin = True 
+    longmin = False
     relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
 
 
