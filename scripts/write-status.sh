@@ -12,6 +12,6 @@ if [ -z "$3" ];
 		then 
 			echo $current_date $1 >> $2;
 		else 
-			echo "$current_date rasp calculation failed" >> $2;
+			echo "$current_date RaSP calculation failed (most likely the chain consisted only of hetatms)" >> $2;
 		fi
 	fi
