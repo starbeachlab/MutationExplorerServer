@@ -143,7 +143,6 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, log)
 
-
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
     file_processing( tag, structure, out_file_name, logfile)
@@ -154,43 +153,45 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
 def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open( out + logfile, 'a')
-    chains = get_chains(out + "structure.pdb")
-    chain_list = list(chains)
 
-    for chain in chain_list:
+    if(len(glob.glob(out+"rasp.status")) > 0):
+        log = open( out + logfile, 'a')
+        chains = get_chains(out + "structure.pdb")
+        chain_list = list(chains)
 
-        if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
-            print("exists")
-            listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
+        for chain in chain_list:
 
-            if len(listig) == 1:
-                print( listig[0], out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
-                shutil.copyfile(listig[0],out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
-        else:
-            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-            status = "Start+RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain
-            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-            bash_cmd(cmd, log)
+            if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
+                print("exists")
+                listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
+
+                if len(listig) == 1:
+                    print( listig[0], out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+                    shutil.copyfile(listig[0],out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
+            else:
+                status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+                status = "Start+RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain
+                cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+                bash_cmd(cmd, log)
 
 
-            cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
-            print(cmd)
-            bash_cmd(cmd, log)
-       
-
-            if(path_to_store != ""):
-                cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
+                cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
                 print(cmd)
                 bash_cmd(cmd, log)
-    
+           
+
+                if(path_to_store != ""):
+                    cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
+                    print(cmd)
+                    bash_cmd(cmd, log)
+        
 
 
-            status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-            status = "RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-            cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
-            print(cmd)
-            bash_cmd(cmd, log)
+                status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+                status = "RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
+                cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
+                print(cmd)
+                bash_cmd(cmd, log)
 
 
     
@@ -401,9 +402,22 @@ def submit():
     longmin = (min_type == 'long')
 
 
+
     ### processing
 
     outdir, tag = create_user_dir()
+
+    rasp_calculation = False
+    rasp_checkbox = request.form.get('rasp-checkbox') # on none
+
+    if(rasp_checkbox == "on"):
+        rasp_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/rasp.status")
+        with open(rasp_path, "w") as f:
+            f.write(rasp_checkbox)
+    
+    print(rasp_calculation)
+
+
 
     # prewrite email (is sent seperately)
     if email:

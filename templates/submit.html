@@ -133,8 +133,34 @@
       <span>quick (1-3 min)</span>
     </label>
   </p>
-</div>
 
+</div>
+<div id="radio-field" class="input-field col offset-s3 s6">
+  <span id="radio-title" class="grey-text text-darken-1">RaSP Model <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalrasp" title="Further information" style="float:right;">i</a></span>
+  
+  <!-- Modal Structure -->
+      <div id="modalrasp" class="modal">
+	<div class="modal-content">
+	  <h4>RaSP model</h4>
+	  <p>
+	   RaSP is a deep-learning-based tool that rapidly estimates
+protein stability changes. With RaSP, Mutation Explorer presents the user with a quick initial estimation of a mutation's (de)stabilizing effect, without their having to wait for the longer full minimization process.  The RaSP tool consists of two linearly linked networks.  A self-supervised 3D convolutional neural network that has learned representations of protein structures is followed by a fully connected neural network that maps these internal representations to Rosetta protein stability changes. RaSP is optimised for accuracy in the range [-1,7] kcal/mol.	   
+	   </p>
+	    <p>
+	    This command will create a RaSP model for each chain of the structure. This can take up to 10 minutes per chain.</p>
+  	</div>
+	<div class="modal-footer">
+	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+	</div>
+      </div>
+  
+     <p>
+    <label>
+      <input type="checkbox" name="rasp-checkbox"  checked />
+      <span>Calculate RaSP model</span>
+    </label>
+  </p>
+</div>
 
 <div class="col offset-s3 s6 center-align">
     <span id="error-msg">{{error}}</span>
