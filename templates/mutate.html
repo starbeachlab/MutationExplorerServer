@@ -173,9 +173,12 @@
 	<br>
 	<div class="row">
 	  <div id="mutation" class="input-field col s12">
-	    <input type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" >
+	    <input id="mutations-input" type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" >
 	    <label for="mutations">Enter a comma separated list of mutations to be performed together</label>
+	  	<div id="mutations-syntax-error" style="color: red;"></div>
 	  </div>
+
+
 	</div>
 	<br>
       </div>
@@ -640,6 +643,27 @@
 
       	$('select').formSelect();
 	}
+
+
+
+	function mutationSyntaxCorrect() {
+		muts = $("#mutations-input").val().replace(/ /g, "");
+		if(!muts) {
+			return true;
+		}
+		return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
+	}
+
+
+	$("#submitForm").on('submit', function(e) {
+		if(!mutationSyntaxCorrect()) {
+			e.preventDefault();
+			console.log("incorrect mutation syntax");
+			$("#mutations-input").addClass("invalid");
+			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information")
+		} 
+	});
+
 
 
 
