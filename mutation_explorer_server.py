@@ -301,15 +301,16 @@ def save_pdb_file(file_path, upload, pdb, af):
         #return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
 
     # extract first model in PDB (NMR structures)  ### REPLACE THIS WITH CLEANUP SCRIPT! 
-    with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
-        model_count = 0
-        for l in r:
-            if l[:5] == "MODEL":
-                model_count += 1
-            if l[:6] == 'ENDMDL' or model_count > 1:
-                break
-            w.write(l)
-        os.rename( file_path[:-4] + '.tmp', file_path )
+    if error == False:
+        with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
+            model_count = 0
+            for l in r:
+                if l[:5] == "MODEL":
+                    model_count += 1
+                if l[:6] == 'ENDMDL' or model_count > 1:
+                    break
+                w.write(l)
+            os.rename( file_path[:-4] + '.tmp', file_path )
 
     return original_name, error, error_message, msg
 
@@ -637,6 +638,43 @@ def mutate(tag,msg=""):
         request.form['chainU2'],
         request.form['chainU3'],
     ]
+
+    # get all mutations
+    i = 0
+   # print(len(request.form['mutations'].strip()))
+    if len(request.form['mutations'].strip()) != 0:
+        i = i+1
+
+    for clustal in inputs["clustals"]:
+        if clustal.filename != "":
+           # print("clustal")
+            i = i+1
+
+    for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+        if fasta.filename != "" and chainF != "":
+            #print("fasta")
+            i += 1
+    for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
+        if seq_input != "" and chainS != "":
+           # print("seq")
+            i += 1
+    for uniprot, chainU in zip(inputs["uniprots"], inputs["chainUs"]):
+        if uniprot != "" and chainU != '':
+           # print("uniprot")
+            i += 1
+
+   # print("i " + str(i))
+    if i == 0:
+        print("no mutations")
+        #
+        #status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+        #status = "no+mutations+defined+" + os.path.join( app.config['USER_DATA_DIR'], tag) 
+        #cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+        #print(cmd)
+        #print(os.path.join( app.config['USER_DATA_DIR'], tag)  +  "log.txt")
+        #log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
+        #bash_cmd(cmd,  log)
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
 
 
     ### start calculations
