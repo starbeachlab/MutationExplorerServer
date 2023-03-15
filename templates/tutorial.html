@@ -44,9 +44,17 @@
 
 <h3>Tutorial for <span style="font-variant:small-caps">MutationExplorer</span></h3>
 <p> There are two main modes of usage, related to the tabs in the top menu.<br>
-  First, one can "upload VCF" sequencing data as explained in 1).<br>
-  Second, you can "upload structure and mutations" as explained in 2) and 3).<br>
-  Both lead to the explore window, described in 3). </p>
+  First, one can upload sequencing data: <br>
+  1) "Upload VCF" <br>
+  Second, you can "upload structure and mutations" as explained in:<br>
+  2) Upload model <br>
+  3) Define mutations <br>
+  Both lead to the explore window: <br>
+  4) MutationExplorer <br>
+  General remarks:<br>
+  5) Energy minimization and database <br>
+  6) Specific mutations <br>
+</p>
 
 
   <h4>1) Upload VCF</h4>
@@ -66,7 +74,7 @@
 
 
   <p>
-<h4>2) Upload PDB</h4>
+<h4>2) Upload model</h4>
 
   In the main web view, click on "upload structure and mutations" Structures can be uploaded in three different ways:
   <ul id="input-list">
@@ -93,7 +101,7 @@ The <span class="center-align toggle-card"> <button data-target="modal3" class="
 <p>
 There are three ways of providing mutational data:
 <ul id="input-list">
-  <b>2.1) Manual mutation definition</b><br><br>
+  <b>3.1) Manual mutation definition</b><br><br>
   <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="available PDB chains" style="margin:5px;">available PDB chains</button> </span>provides an overview over the available PDB chains in the uploaded PDB,<br><br>
   <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">info</button> </span>explains the mutation syntax,
   <br><br>
@@ -108,11 +116,11 @@ There are three ways of providing mutational data:
   </ul><br>
   Note that the all mutations will be done in the same model, multiple individual mutations are best done via the explorer interface.<br><br>
 
-  <b>2.2) Sequence Alignment</b><br><br>
+  <b>3.2) Sequence Alignment</b><br><br>
 
   You can mutate the model that you uploaded in previous step using a sequence alignment in ClustalW format. One of the sequences in the alignment has to match <b>exactly one sequence</b> in the PDB that you uploaded in previous step. Since one alignment is associated with one chain, you can upload up to three alignments. If you need to mutate more than three chains, you can upload target sequences for the other chains or define mutations manually.<br><br>
 
-  <b>2.3) Target Sequence</b><br><br>
+  <b>3.3) Target Sequence</b><br><br>
 
   Provide the sequence for each chain of the uploaded PDB that it will be mutated to. The target chain sequences as a chain of one-letter sequences can be provided as FASTA files (top), pasted directly (center) or directly fetched from UniProtKB (bottom)
   <br>
@@ -121,7 +129,7 @@ There are three ways of providing mutational data:
   Click on<span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit and launch explorer" style="margin:5px;">submit and launch explorer</button> </span> to proceed to caluclation. When this is finished, you will be re-directed to the <span style="font-variant:small-caps">MutationExplorer</span> window.
 </p>
 
-<h4>3) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
+<h4> 4) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
 <p>
 <ul>
 In the explorer view, you will be presented with information about your set of mutations, relative per-residue energies and visualization of the protein.<br><br>
@@ -144,13 +152,13 @@ In the explorer view, you will be presented with information about your set of m
 Clicking on any highlighted residue will zoom in, showing the selected residue and its surroundings in a ball-and-stick view. Different carbon colors indicate protein chains, otherwise atoms are colors by type. Dashed lines indicate residue-residue interactions like hydrogen bonds.<br><br>
 
 
-  <b>3.1) Adding mutations</b><br>
+  <b>4.1) Adding mutations</b><br>
   <ul id="input-list">
     <li style="margin: 10px;">In the tree view, click on the protein to serve as the root for your next mutation, e.g.  <span style="font-family: FreeMono; color:darkblue;"><b>mut_0_1</b></span>, which is the first mutation entered in the webpage</li>
     <li style="margin: 10px;">In the <b>Mutate</b> field, enter the mutations to be added to the protein. Click on the "info" box for more informations</li>
     <li style="margin: 10px;">Click on <span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit" style="margin:5px;">submit</button> </span> and wait for your new protein to be added. The waiting message shows the name of the new mutation. In the tree, the new mutated protein will appear indented under the selected root</li>
   </ul>
-  <b>3.2) Adjusting visualization</b><br>
+  <b>4.2) Adjusting visualization</b><br>
   <ul id="input-list"><br>
   You can adjust the metric that serves as the basis for coloration in the <i>"Color by:"</i> Dropdown menu. By default, the colormap will be from -15 to 15 in a blue-white-red gradient
   <li style="margin: 10px;">Click on the <span style="font-family:Arial"><b>Change Visualization</b></span> tab in the bottom right of the main window to adjust the color scale and the mutation marker</li>
@@ -159,6 +167,36 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 </ul>
 </p>
 <br>
+
+<h4>5) Energy minimization</h4>
+<p>
+  The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
+  We continuously pre-minimize structures from the PDB using the commandline described below.
+  If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
+  Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
+</p>
+<h5> AlphaFold and your own models</h4>
+<p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be minimized, but the minimization has to be performed with the same energy functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
+
+<h5> Do it yourself!</h4>
+<p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+  However, we recommend you to perform the following minimization. It is optimizing also the backbone in a limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be leading to problems for e.g. membrane proteins. </p>
+<div class="codebox">
+  <code>
+    PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+  </code>
+</div>
+
+<p>
+  This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
+
+<h4> 6) Specific mutations </h4>
+<p> qed </p>
+
+
+
+
+
 <p> For further information, see the FAQ.</p>
 
 <br>

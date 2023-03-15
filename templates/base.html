@@ -31,7 +31,6 @@
           </a>
           <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons grey-text text-darken-3">menu</i></a>
           <ul id="nav-mobile" class="right hide-on-med-and-down">
-              <li><a href="{{ url_for('index') }}" class="white-text text-darken-3">home</a></li>
               <li><a href="{{ url_for('submit') }}" class="white-text text-darken-3">upload structure and mutations</a></li>
               <li><a href="{{ url_for('vcf') }}" class="white-text text-darken-3">upload vcf</a></li>
               <li><a href="{{ url_for('examples') }}" class="white-text text-darken-3">examples</a></li>
@@ -43,8 +42,6 @@
 </div>
 
 <ul class="sidenav" id="mobile-nav">
-  
-  <li><a href="{{ url_for('index') }}" class="dark-text text-darken-3">home</a></li>
   <li><a href="{{ url_for('submit') }}" class="dark-text text-darken-3">upload structure and mutations</a></li>
   <li><a href="{{ url_for('vcf') }}" class="dark-text text-darken-3">upload vcf</a></li>
   <li><a href="{{ url_for('examples') }}" class="dark-text text-darken-3">examples</a></li>
