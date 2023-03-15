@@ -718,6 +718,43 @@ def vcf():
 
 
 
+def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
+    # TODO: log
+
+    # relax provided structure
+    longmin = True 
+    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
+
+    # get mutations 
+    mutations = []
+
+    parent = "mut_0.pdb"
+    resfile = mutant[:-4] + "_resfile.txt"
+    align = mutant[:-4] + ".clw"
+    mutfile = "info/" + mutant[:-4] + ".txt"
+
+    clustal_file = os.path.join(outdir , clustal.filename)
+    clustal.save(clustal_file)
+    add_mutations_from_alignment(mutations, clustal_file, outdir + parent)
+
+    if len(mutations) == 0:
+        return
+    # wait for parent file
+    if wait(outdir + parent, 1, 900) == False:
+        return
+
+
+    # helpers
+    helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+
+    # start mutation calculation
+    fixbb(tag, parent, resfile, mutant, "log.txt")
+
+    # send email when done
+    send_email(outdir + "mail.txt")
+
+
+
 @app.route('/interface', methods=["GET", "POST"])
 def interface():
     if request.method == 'GET':
@@ -765,46 +802,10 @@ def interface():
     with open(name_path, "w") as f:
         f.write(original_name)
 
-    # relax structure
-    longmin = True 
-    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
-
-
-
-
-
-    # add mutations TODO: write to function, start as thread
+    # start calculation 
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+    start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal])
 
-    mutations = []
-
-    parent = "mut_0.pdb"
-    resfile = mutant[:-4] + "_resfile.txt"
-    align = mutant[:-4] + ".clw"
-    mutfile = "info/" + mutant[:-4] + ".txt"
-
-    if wait(outdir + parent, 1, 900) == False:
-        return
-
-    clustal_file = os.path.join(outdir , clustal.filename)
-    clustal.save(clustal_file)
-    add_mutations_from_alignment(mutations, clustal_file, outdir + parent)
-
-    if len(mutations) == 0:
-        return
-
-    helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
-
-    # start calculation
-    fixbb(tag, parent, resfile, mutant, "log.txt")
-
-    # send email when done
-    send_email(outdir + "mail.txt")
-
-
-
-
-    # return status
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
 
 
