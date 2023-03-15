@@ -796,7 +796,7 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
 @app.route('/interface', methods=["GET", "POST"])
 def interface():
     if request.method == 'GET':
-        return "<h1>Interface</h1>"
+        return render_template("interface_selection.html")
 
 
     ### get form values
@@ -839,6 +839,17 @@ def interface():
         # TODO: return error_message
         return "there was an error\n" + error_message
 
+
+    #create status file
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    with open(status_path, "w") as f:
+        f.write(get_current_time()+"+Start+Calculation\n")
+
+    # save original filename
+    name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
+    with open(name_path, "w") as f:
+        f.write(original_name)
+
     # filter (remove) chains, heteroatoms
     chain_filter = ""
     remove_hets = False
@@ -849,20 +860,12 @@ def interface():
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("none\n")
 
-    #create status file
-    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-    name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
-    with open(status_path, "w") as f:
-        f.write(get_current_time()+"+Start+Calculation\n")
-
-    with open(name_path, "w") as f:
-        f.write(original_name)
-
     # start calculation 
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal], "interface calc")
 
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+    
 
 
     
