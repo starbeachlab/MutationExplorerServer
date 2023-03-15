@@ -733,12 +733,11 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
     align = mutant[:-4] + ".clw"
     mutfile = "info/" + mutant[:-4] + ".txt"
 
-    clustal_file = os.path.join(outdir , clustal.filename)
-    clustal.save(clustal_file)
-    add_mutations_from_alignment(mutations, clustal_file, outdir + parent)
+    add_mutations_from_alignment(mutations, clustal, outdir + parent)
 
     if len(mutations) == 0:
         return
+
     # wait for parent file
     if wait(outdir + parent, 1, 900) == False:
         return
@@ -763,13 +762,25 @@ def interface():
 
     ### get form values
 
-    upload = request.files['pdbfile']
-    pdb = secure_filename( request.form['pdbid'].strip() )
-    af = secure_filename( request.form['alphafoldid'].strip() )
+    # first file - "conv"
+    upload = request.files['file_conv']
+    pdb = secure_filename( request.form['pdb_conv'].strip() )
+    af = "" # secure_filename( request.form['af_conv'].strip() )
 
-    # second file
+    # second file - "super"
+    upload = request.files['file_super']
+    pdb = secure_filename( request.form['pdb_super'].strip() )
+    af = "" # secure_filename( request.form['af_super'].strip() )
 
-    clustal = request.files['clustal'] # update
+    # alignment TODO: generalize
+    alignment_link = request.form.getlist('alignment_link')[0]
+    alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
+
+    clustal = outdir + "alignment.aln"
+
+    req = requests.get(alignment_link) 
+    with open(clustal, "w") as f:
+        f.write(req.content)
 
 
     ### processing
