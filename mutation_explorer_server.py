@@ -831,15 +831,35 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
 
 
 
-@app.route('/interface', methods=["GET", "POST"])
-def interface():
+@app.route('/interface_post', methods=["GET", "POST"])
+def interface_post():
     if request.method == 'GET':
-        return render_template("interface_selection.html")
+        redirect(url_for('index'))
+
+
+    # alignment TODO: generalize
+    alignment_link = request.form.getlist('alignment_link')[0]
+    alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
+
+    outdir, tag = create_user_dir()
+
+    # save alignment file
+    clustal = outdir + "alignment.aln"
+    req = requests.get(alignment_link) 
+    with open(clustal, "w") as f:
+        f.write(req.content)
+
+
+    return redirect(url_for('interface', tag = tag))
+
+
+@app.route('/interface/<tag>', methods=["GET", "POST"])
+def interface(tag):
+    if request.method == 'GET':
+        return render_template("interface.html", seqs = "seq1,seq2,etc")
 
 
     ### get form values
-
-    print("################# delta interface")
 
     # first file - "conv"
     upload = request.files['file_conv']
@@ -851,26 +871,17 @@ def interface():
     pdb_super = secure_filename( request.form['pdb_super'].strip() )
     af_super = "" # secure_filename( request.form['af_super'].strip() )
 
-    # alignment TODO: generalize
-    alignment_link = request.form.getlist('alignment_link')[0]
-    alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
+    # chain, seq selection
 
 
-
-    print("######## got form values")
 
 
     ### processing
 
-    outdir, tag = create_user_dir()
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
-    # save alignment file
-    clustal = outdir + "alignment.aln"
-    req = requests.get(alignment_link) 
-    with open(clustal, "w") as f:
-        f.write(req.content)
 
-    # save file
+    # save file (1)
     file_path = outdir + "structure.pdb"    
     original_name, unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
     if unsuccessful:
