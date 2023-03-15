@@ -301,15 +301,16 @@ def save_pdb_file(file_path, upload, pdb, af):
         #return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
 
     # extract first model in PDB (NMR structures)  ### REPLACE THIS WITH CLEANUP SCRIPT! 
-    with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
-        model_count = 0
-        for l in r:
-            if l[:5] == "MODEL":
-                model_count += 1
-            if l[:6] == 'ENDMDL' or model_count > 1:
-                break
-            w.write(l)
-        os.rename( file_path[:-4] + '.tmp', file_path )
+    if error == False:
+        with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
+            model_count = 0
+            for l in r:
+                if l[:5] == "MODEL":
+                    model_count += 1
+                if l[:6] == 'ENDMDL' or model_count > 1:
+                    break
+                w.write(l)
+            os.rename( file_path[:-4] + '.tmp', file_path )
 
     return original_name, error, error_message, msg
 
