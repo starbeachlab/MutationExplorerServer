@@ -661,10 +661,24 @@ def vcf():
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
 
+    min_type = request.form['min-selector'] # = short | long
+    longmin = (min_type == 'long')
+
 
     ### processing
 
     outdir, tag = create_user_dir()
+
+
+    rasp_calculation = False
+    rasp_checkbox = request.form.get('rasp-checkbox') # on none
+
+    if(rasp_checkbox == "on"):
+        rasp_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/rasp.status")
+        with open(rasp_path, "w") as f:
+            f.write(rasp_checkbox)
+    
+    print(rasp_calculation)
 
     vcf.save( outdir + vcf_file)
 
@@ -709,7 +723,7 @@ def vcf():
         path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
         print("Store " + path)
-        start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",True, path ], "minimisation")
+        start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
     else:
         shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
         rose = app.config['ROSEMINT_PATH']
