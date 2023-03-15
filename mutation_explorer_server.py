@@ -341,6 +341,8 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af):
 
     mutations_to_resfile( [] , outdir + resfile )    
 
+    path = ""
+
     if msg != "found":
 
         if (not filtered) and longmin == True:
@@ -452,14 +454,12 @@ def add_mutations(tag, mutant, inputs):
         mutations = []
 
     #mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    print( 'mutate: ' + mutant + '\n')
+    print( 'mutate: ' + mutant + '\n') 
     print(mutant)
-
     parent =   "mut_0.pdb"
     resfile =  mutant[:-4] + "_resfile.txt"
     align =    mutant[:-4] + ".clw"  # align with parent
     mutfile =  "info/" + mutant[:-4] + ".txt"  # parent and mutations
-    
     """
     ###  return error message if no mutations given
     if len(mutations) == 0 and   clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
@@ -727,10 +727,12 @@ def interface():
     ### get form values
 
     upload = request.files['pdbfile']
-    pdb = request.form['pdbid'].strip()
-    af = request.form['alphafoldid'].strip()
+    pdb = secure_filename( request.form['pdbid'].strip() )
+    af = secure_filename( request.form['alphafoldid'].strip() )
 
-    # alignment
+    # second file
+
+    clustal = request.files['clustal'] # update
 
 
     ### processing
@@ -739,10 +741,15 @@ def interface():
 
     # save file
     file_path = outdir + "structure.pdb"    
-    unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
+    original_name, unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
     if unsuccessful:
-        # TODO
-        pass
+        # TODO: return error_message
+        return "there was an error\n" + error_message
+
+    # filter (remove) chains, heteroatoms
+    chain_filter = ""
+    remove_hets = False
+    filtered = filter_structure(outdir, file_path, chain_filter, remove_hets)
 
     # create info file for mut_0
     os.mkdir(outdir + "info/")
@@ -751,24 +758,54 @@ def interface():
 
     #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-    print("status")
-    print(status_path)
+    name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
     with open(status_path, "w") as f:
         f.write(get_current_time()+"+Start+Calculation\n")
 
+    with open(name_path, "w") as f:
+        f.write(original_name)
+
     # relax structure
     longmin = True 
-    relax_initial_structure(outdir, tag, msg, longmin, False)
+    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
 
-    # get mutations
-    #  add_mutation_from alignment
 
-    # mutate
+
+
+
+    # add mutations TODO: write to function, start as thread
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    #  get mutations from clustal?
+
+    mutations = []
+
+    parent = "mut_0.pdb"
+    resfile = mutant[:-4] + "_resfile.txt"
+    align = mutant[:-4] + ".clw"
+    mutfile = "info/" + mutant[:-4] + ".txt"
+
+    if wait(outdir + parent, 1, 900) == False:
+        return
+
+    clustal_file = os.path.join(outdir , clustal.filename)
+    clustal.save(clustal_file)
+    add_mutations_from_alignment(mutations, clustal_file, outdir + parent)
+
+    if len(mutations) == 0:
+        return
+
+    helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+
+    # start calculation
+    fixbb(tag, parent, resfile, mutant, "log.txt")
+
+    # send email when done
+    send_email(outdir + "mail.txt")
+
+
+
 
     # return status
-    #  return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+    return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
 
 
     
