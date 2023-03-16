@@ -785,12 +785,12 @@ def vcf():
 
 
 
-def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
+def interface_calculation(outdir, tag, msg, filtered, pdb, af, chain, mutant, clustal, seq, target_seq, longmin, rasp_calculation):
     # TODO: log
+    # TODO: rasp_calculation (option to not do rasp calculation)
 
     # relax provided structure
     print("####### INT: relax structure")
-    longmin = False
     relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
 
 
@@ -808,7 +808,7 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
     if wait(outdir + parent, 1, 900) == False:
         return
 
-    add_mutations_from_alignment(mutations, clustal, outdir + parent)
+    add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_seq, preselected_chain = chain) # TODO: should also take base seq
 
     if len(mutations) == 0:
         return
@@ -824,10 +824,12 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, mutant, clustal):
     print("####### INT: start fixbb")
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
-    # send email when done
-    send_email(outdir + "mail.txt")
-
     print("####### INT: done")
+
+
+
+def interface_calculation_target():
+    print("if calc w/ target")
 
 
 
@@ -885,6 +887,12 @@ def interface(tag):
 
     target_chain = secure_filename( request.form['target_chain'].strip() )
 
+    # options
+    min_type = request.form['min-selector'] # = short | long
+    longmin = (min_type == 'long')
+    rasp_checkbox = request.form.get('rasp-checkbox') # = on | none
+    rasp_calculation = (rasp_checkbox == 'on')
+
 
     print("####### seq select")
     print("base", base_seq)
@@ -896,6 +904,8 @@ def interface(tag):
     ### processing
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
+    clustal = outdir + "alignment.aln"
 
     # save base file 
     base_file_path = outdir + "structure.pdb"    
@@ -912,7 +922,6 @@ def interface(tag):
     print("target given", target_given)
 
 
-    """
     #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     with open(status_path, "w") as f:
@@ -921,12 +930,7 @@ def interface(tag):
     # save original filename
     name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
     with open(name_path, "w") as f:
-        f.write(original_name)
-
-    # filter (remove) chains, heteroatoms
-    chain_filter = ""
-    remove_hets = False
-    filtered = filter_structure(outdir, file_path, chain_filter, remove_hets)
+        f.write(base_original_name)
 
     # create info file for mut_0
     os.mkdir(outdir + "info/")
@@ -934,11 +938,15 @@ def interface(tag):
         f.write("none\n")
 
     # start calculation 
-    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal], "interface calc")
-    """
+    if not target_given:
+        filtered = False
+        mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+        start_thread(interface_calculation, [outdir, tag, base_msg, filtered, base_pdb, base_af, base_chain, mutant, clustal, base_seq, target_seq, longmin, rasp_calculation], "interface calc")
+    
+        return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+    
+    start_thread(interface_calculation_target, [], "interface calc with target")
 
-    #return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
     return "end"
     
 
