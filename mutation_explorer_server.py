@@ -856,22 +856,39 @@ def interface_post():
 @app.route('/interface/<tag>', methods=["GET", "POST"])
 def interface(tag):
     if request.method == 'GET':
-        return render_template("interface.html", seqs = "seq1,seq2,etc")
+
+        # get sequences from alignment
+        outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        ali = read_clustal(outdir + "alignment.aln")
+        seqs = ",".join(ali.keys())
+
+        return render_template("interface.html", seqs = seqs)
 
 
     ### get form values
 
-    # first file - "conv"
-    upload = request.files['file_conv']
-    pdb = secure_filename( request.form['pdb_conv'].strip() )
-    af = "" # secure_filename( request.form['af_conv'].strip() )
+    # seq selection
+    base_seq = request.form.get("base_seq")
+    target_seq = request.form.get("target_seq")
 
-    # second file - "super"
-    upload_super = request.files['file_super']
-    pdb_super = secure_filename( request.form['pdb_super'].strip() )
-    af_super = "" # secure_filename( request.form['af_super'].strip() )
+    # base file
+    base_upload = request.files['base_pdbfile']
+    base_pdb = secure_filename( request.form['base_pdbid'].strip() )
+    base_af = secure_filename( request.form['base_alphafoldid'].strip() )
 
-    # chain, seq selection
+    base_chain = secure_filename( request.form['base_chain'].strip() )
+
+    # target file
+    target_upload = request.files['target_pdbfile']
+    target_pdb = secure_filename( request.form['target_pdbid'].strip() )
+    target_af = secure_filename( request.form['target_alphafoldid'].strip() )
+
+    target_chain = secure_filename( request.form['target_chain'].strip() )
+
+
+    print("####### seq select")
+    print("base", base_seq)
+    print("target", target_seq)
 
 
 
@@ -880,15 +897,22 @@ def interface(tag):
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
-
-    # save file (1)
-    file_path = outdir + "structure.pdb"    
-    original_name, unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
+    # save base file 
+    base_file_path = outdir + "structure.pdb"    
+    base_original_name, unsuccessful, error_message, base_msg = save_pdb_file(base_file_path, base_upload, base_pdb, base_af)
     if unsuccessful:
         # TODO: return error_message
         return "there was an error\n" + error_message
 
+    # save target file 
+    target_file_path = outdir + "target.pdb"    
+    target_original_name, unsuccessful, error_message, target_msg = save_pdb_file(target_file_path, target_upload, target_pdb, target_af)
+    target_given = not unsuccessful
 
+    print("target given", target_given)
+
+
+    """
     #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     with open(status_path, "w") as f:
@@ -912,8 +936,10 @@ def interface(tag):
     # start calculation 
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     start_thread(interface_calculation, [outdir, tag, msg, filtered, pdb, af, mutant, clustal], "interface calc")
+    """
 
-    return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+    #return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+    return "end"
     
 
 
