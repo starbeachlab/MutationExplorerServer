@@ -827,6 +827,18 @@ def vcf():
     with open( outdir + "mut_0_resfile.txt", 'w') as w:
         w.write('NATAA\nstart\n')
 
+
+    #create status file
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
+    # print("status")
+    # print(status_path)
+    with open(status_path, "w") as f:
+        f.write(get_current_time()+"+Start+Calculation\n")
+
+    with open(name_path, "w") as f:
+        f.write(alphafold)
+
     # relax structure
     if msg != "found":
 
