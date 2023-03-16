@@ -1497,7 +1497,8 @@ def add_mutations_from_sequence( mutations, target, chain, idy, parent):
     print(cmd)
     p = subprocess.check_output( cmd.split())
     print(p)
-    mutations.extend( mutations_from_alignment( f3, parent) )
+    #mutations.extend( mutations_from_alignment( f3, parent) )
+    mutations.extend( mutations_from_alignment_interface( f3, parent) )
 
     
 def seq_from_fasta( filename):
@@ -1520,7 +1521,8 @@ def write_fasta( filename, seq, header=""):
         w.write(seq + '\n')
     
 def add_mutations_from_alignment( mutations, clustal_file, parent):
-    mutations.extend( mutations_from_alignment( clustal_file, parent ) )
+    #mutations.extend( mutations_from_alignment( clustal_file, parent ) )
+    mutations.extend( mutations_from_alignment_interface( clustal_file, parent ) )
 
 
         
@@ -1653,7 +1655,22 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
                 matches.append([clustal_id, chain])
 
     if len(matches) == 0:
+        print("##################")
+        print("##################")
+        print("##################")
+        print()
+        print()
         print("error muts from alignment: no matching base sequence found")
+        print()
+        print()
+        print(alignment)
+        print()
+        print()
+        print()
+        print(pdb_chains)
+        print()
+        print()
+        print()
         exit(1)
 
     # select (base clustal id, base chain) pair based on provided parameters
