@@ -422,7 +422,7 @@ def submit():
 
     # prewrite email (is sent seperately)
     if email:
-        results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "")
+        results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "") # TODO: link aendern
         write_email(outdir + "mail.txt", email, results_link)
 
     # save file
@@ -805,13 +805,10 @@ def interface_calculation(tag, mutant, inputs):
     longmin = inputs["longmin"]
 
     # relax provided structure
-    print("####### INT: relax structure")
     relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
 
 
     ### get mutations 
-
-    print("####### INT: get mutations")
 
     parent = "mut_0.pdb"
     resfile = mutant[:-4] + "_resfile.txt"
@@ -822,8 +819,8 @@ def interface_calculation(tag, mutant, inputs):
     if wait(outdir + parent, 1, 900) == False:
         return
 
-    #add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_clustal_id, preselected_chain = chain) # TODO: should also take base seq
-    mutations = mutations_from_alignment(clustal, outdir + parent)
+    #add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_clustal_id, preselected_chain = chain) 
+    mutations = mutations_from_alignment_interface(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
 
     if len(mutations) == 0:
         return
@@ -832,18 +829,19 @@ def interface_calculation(tag, mutant, inputs):
     ### calculation
 
     # helpers
-    print("####### INT: generate helper files")
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
 
     # start mutation calculation
-    print("####### INT: start fixbb")
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
-    print("####### INT: done")
 
 
 
-def interface_calculation_target():
+def interface_calculation_target(tag, inputs):
+
+    outdir = app.config['USER_DATA_DIR'] + tag + '/'
+
+
     print("if calc w/ target")
 
 
@@ -1500,9 +1498,6 @@ def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain=
                     ali_id = a
                     print( 'mutations(): matching sequences found:', a, c)
 
-    print("################## count")
-    print(count)
-
     if count != 1:
         print( 'ERROR: mutations() found ',count,'identical matches')
     if count == 0:
@@ -1520,11 +1515,6 @@ def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain=
                 break
     pdbseq = chains[chain_in_pdb][0]
     pdbres = chains[chain_in_pdb][1]
-
-    print("########### muts from alignment")
-    print("pdbseq", pdbseq)
-    print("aligned", aligned)
-
 
     ### find mutations
     count = 0
@@ -1551,15 +1541,15 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
     mutations = []
 
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
-    pdb_chains = {k: v[0] for k, v in pdb2seq(base_structure)} # dict; key: chain, value: seq
+    pdb_chains = {k: v[0] for (k, v) in pdb2seq(base_structure).items()} # dict; key: chain, value: seq
 
-    resids = {k: v[1] for k, v in pdb2seq(base_structure)} # dict; key: chain, value: resids of seq
+    resids = {k: v[1] for (k, v) in pdb2seq(base_structure).items()} # dict; key: chain, value: resids of seq
 
 
     # find all (clustal id, chain) pairs with matching sequences
     matches = []
-    for clustal_id, clustal_seq in alignment:
-        for chain, chain_seq in pdb_chains:
+    for (clustal_id, clustal_seq) in alignment.items():
+        for (chain, chain_seq) in pdb_chains.items():
             if chain_seq == clustal_seq:
                 matches.append([clustal_id, chain])
 
@@ -1609,7 +1599,6 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
     target_seq = alignment[selected_target_clustal_id]
 
     base_resids = resids[selected_match[1]]
-
 
     count = 0
     at_end = False
