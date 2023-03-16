@@ -205,6 +205,10 @@
       }
     }
     var pdbFile = getURL(name + coloring);
+    var pdbFiles = [];
+
+    pdbFiles.push(getURL(name + coloring))
+    
     console.log("#2 coloring", coloring)
     var clustalFiles = []
 
@@ -227,7 +231,7 @@
       clearInterval(interval);
 
       // update viewer
-      loadViewer(pdbFile, clustalFiles)
+      loadViewer(pdbFiles, clustalFiles)
     }, 100);
   }
   
