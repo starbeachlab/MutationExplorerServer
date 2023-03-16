@@ -398,7 +398,9 @@ def submit():
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
     remove_hets = (hetatom_filter is not None)
 
-    email = request.form['email'].strip()
+    email = False
+    #email = request.form['email'].strip()
+
     min_type = request.form['min-selector'] # = short | long
     longmin = (min_type == 'long')
 
