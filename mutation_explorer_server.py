@@ -337,6 +337,50 @@ def filter_structure(outdir, file_path, chain_filter, remove_hets):
 
 
 
+def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
+    # name = "mut_0"
+    # structure = "structure.pdb"
+    resfile =  name + "_resfile.txt"   
+    log_file = "log.txt"
+
+    mutations_to_resfile( [] , outdir + resfile )    
+
+    path = ""
+
+    if msg != "found":
+
+        if (not filtered) and longmin == True:
+            if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+            if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+        print(path)
+        start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path ], "minimisation")
+    else:
+
+        if (not filtered) and longmin == True:
+            shutil.copyfile( outdir + structure, outdir + name + ".pdb")
+            if(pdb != ""):
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "pdb/" + pdb.upper() + ".pdb"
+            if(af != ""):    
+                rose = app.config['ROSEMINT_PATH']
+                path = rose + "alphafold/" + af.upper() + ".pdb"
+
+            print("path rasp: " + path)
+            calc_rasp(tag, structure, name, log_file, path ) # TODO
+
+            file_processing( tag, structure, name,  log_file)
+
+        else:
+            print("Fixbb since filtering")
+            start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
+            msg =  "notfound"
+
+
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af):
     resfile =  "mut_0_resfile.txt"   
     structure_file = "structure.pdb"
@@ -496,18 +540,13 @@ def add_mutations(tag, mutant, inputs):
     
     # get all mutations
     i = 0
-    for clustal in inputs["clustals"]:
-        if clustal.filename != "":
-            clustal_file = os.path.join( outdir , clustal.filename )
-            clustal.save( clustal_file)
-            add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
-    for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+    for clustal_file in inputs["clustal_files"]:
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    for fasta_file, chainF in zip(inputs["fasta_files"], inputs["chainFs"]):
         i += 1
-        if fasta.filename != "" and chainF != "":
+        if fasta_file != "" and chainF != "":
             secure_str(chainF)
             chainF = chainF[0]
-            fasta_file =  outdir + fasta.filename
-            fasta.save(fasta_file)
             head, target = seq_from_fasta( fasta_file) 
             add_mutations_from_sequence( mutations, target, chainF, "fa" + str(i % 3), outdir+parent)
     for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
@@ -595,6 +634,8 @@ def mutate(tag,msg=""):
 
     ###  get form values
 
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
     inputs = {}
 
     inputs["mutations"] = request.form['mutations'].strip().replace(' ','').split(',')
@@ -612,9 +653,9 @@ def mutate(tag,msg=""):
     ]
 
     inputs["chainFs"] = [
-        request.form['chainF1'],
-        request.form['chainF2'],
-        request.form['chainF3'],
+        request.form.get('chainF1'),
+        request.form.get('chainF2'),
+        request.form.get('chainF3'),
     ]
 
     inputs["seq_inputs"] = [
@@ -624,9 +665,9 @@ def mutate(tag,msg=""):
     ]
 
     inputs["chainSs"] = [
-        request.form['chainS1'],
-        request.form['chainS2'],
-        request.form['chainS3'],
+        request.form.get('chainS1'),
+        request.form.get('chainS2'),
+        request.form.get('chainS3'),
     ]
 
     inputs["uniprots"] = [
@@ -636,10 +677,15 @@ def mutate(tag,msg=""):
     ]
 
     inputs["chainUs"] = [
-        request.form['chainU1'],
-        request.form['chainU2'],
-        request.form['chainU3'],
+        request.form.get('chainU1'),
+        request.form.get('chainU2'),
+        request.form.get('chainU3'),
     ]
+
+
+    print("fastas")
+    print(inputs["fastas"])
+
 
     # get all mutations
     i = 0
@@ -653,7 +699,11 @@ def mutate(tag,msg=""):
             i = i+1
 
     for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+        print("######## DURCHGANG")
+        print(fasta)
+        print(chainF)
         if fasta.filename != "" and chainF != "":
+            print("to be saved")
             #print("fasta")
             i += 1
     for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
@@ -677,6 +727,28 @@ def mutate(tag,msg=""):
         #log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
         #bash_cmd(cmd,  log)
         return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+
+    inputs["clustal_files"] = []
+    for clustal in inputs["clustals"]:
+        if clustal.filename != "":
+            clustal_file = os.path.join( outdir , clustal.filename )
+            clustal.save( clustal_file)
+            inputs["clustal_files"].append(clustal_file)
+
+    print("##########################################")
+    print("FASTA BLOCK")
+    inputs["fasta_files"] = []
+    for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+        i += 1
+        if fasta.filename != "" and chainF != "":
+            fasta_file =  outdir + fasta.filename
+            print("##################")
+            print("### save fasta ###")
+            print("##################")
+            fasta.save(fasta_file) 
+            inputs["fasta_files"].append(fasta_file)
+        else:
+            inputs["fasta_files"].append("")
 
 
     ### start calculations
@@ -843,6 +915,31 @@ def interface_calculation_target(tag, inputs):
 
     outdir = app.config['USER_DATA_DIR'] + tag + '/'
 
+    #clustal = inputs["clustal"]
+    #base_clustal_id = inputs["base_clustal_id"]
+    #target_clustal_id = inputs["target_clustal_id"]
+
+    base_pdb = inputs["base_pdb"]
+    base_af = inputs["base_af"]
+    base_chain = inputs["base_chain"]
+
+    base_filtered = inputs["base_filtered"]
+    base_msg = inputs["base_msg"]
+
+    target_pdb = inputs["target_pdb"]
+    target_af = inputs["target_af"]
+    target_chain = inputs["target_chain"]
+
+    target_filtered = inputs["target_filtered"]
+    target_msg = inputs["target_msg"]
+
+    longmin = inputs["longmin"]
+
+    # def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
+
+    relax_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
+
+    relax_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
 
     print("if calc w/ target")
 
@@ -930,7 +1027,7 @@ def interface(tag):
     inputs["base_filtered"] = False
 
     # save target file 
-    target_file_path = outdir + "target.pdb"    
+    target_file_path = outdir + "structure2.pdb"    
     target_original_name, unsuccessful, error_message, target_msg = save_pdb_file(target_file_path, inputs["target_upload"], inputs["target_pdb"], inputs["target_af"])
     target_given = not unsuccessful
 
