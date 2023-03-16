@@ -4,7 +4,13 @@
 # 10.01.21
 ##############################
 
+from Bio import PDB
+from Bio import AlignIO
+from Bio import SeqUtils
 import sys
+
+
+import basic_alignment as bali
 
 
 aligned = 0.2
@@ -12,9 +18,18 @@ grouped = 0.5
 factor = 200.0
 
 
-if len(sys.argv) < 4:
-    print('USAGE:',sys.argv[0],'in:ORIG.pdb in:MUTANT.pdb out:MUTANT_DIFF.pdb')
-    print('write conservation between original and mutated protein into bfactor of output pdb')
+
+if len( sys.argv) < 5:
+    print( 'script writes sequence conservation into temperature factor of output PDB (optional:ALIGN_SCORE)')
+    print( "USAGE:", sys.argv[0], 'PDB CHAIN ALIGNMENT.clw ROW')
+    print( "\tALIGNMENT is Clustal formatted multiple sequence alignment")
+    print( "\tROW specifies the sequence in the alignment that belongs to PDB")
+    print( '\tROW starts with 0')
+    print( '\tCHAIN is needed because alignments are single chain only')
+    print( '\tALIGN_SCORE is to score aligned positions that are not identical (smaller 1)')
+    print( '\tcall multiple times if you want to color more than one chain')
+    print()
+    help(SeqUtils.IUPACData)
     exit(1)
 
 

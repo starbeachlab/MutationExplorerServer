@@ -1547,6 +1547,88 @@ def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain=
 
 
 
+def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id="", target_clustal_id="", base_chain="" ):
+    mutations = []
+
+    alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
+    pdb_chains = {k: v[0] for k, v in pdb2seq(base_structure)} # dict; key: chain, value: seq
+
+    resids = {k: v[1] for k, v in pdb2seq(base_structure)} # dict; key: chain, value: resids of seq
+
+
+    # find all (clustal id, chain) pairs with matching sequences
+    matches = []
+    for clustal_id, clustal_seq in alignment:
+        for chain, chain_seq in pdb_chains:
+            if chain_seq == clustal_seq:
+                matches.append([clustal_id, chain])
+
+    if len(matches) == 0:
+        print("error muts from alignment: no matching base sequence found")
+        exit(1)
+
+    # select (base clustal id, base chain) pair based on provided parameters
+    selected_match = ["", ""] # [clustal id, chain] 
+    
+    if len(matches) == 1:
+        selected_match = matches[0]
+
+    else:
+        # multiple matches
+
+        # select clustal id
+        available_clustal_ids = [m[0] for m in matches]
+        if base_clustal_id != "" and base_clustal_id in available_clustal_ids:
+            # if possible, take provided base clustal id
+            selected_match[0] = base_clustal_id
+        else:
+            # otherwise, take random (first) clustal id
+            selected_match[0] = available_clustal_ids[0]
+
+        # select chain
+        available_chains = [m[1] for m in matches if m[0] == clustal_id]
+        if base_chain != "" and base_chain in available_chains:
+            # if possible, take provided base chain
+            selected_match[1] = base_chain
+        else:
+            # otherwise, take random (first) chain
+            selected_match[1] = available_chains[0]
+
+    # select target clustal id
+    selected_target_clustal_id = ""
+
+    available_clustal_ids = [cid for cid in alignment.keys() if alignment[cid] != alignment[selected_match[0]]]
+    if target_clustal_id != "" and target_clustal_id in available_clustal_ids:
+        selected_target_clustal_id = target_clustal_id
+    else:
+        selected_target_clustal_id = available_clustal_ids[0]
+
+
+    # get mutations
+    base_seq = alignment[selected_match[0]]
+    target_seq = alignment[selected_target_clustal_id]
+
+    base_resids = resids[selected_match[1]]
+
+
+    count = 0
+    at_end = False
+    for i in range( len( base_seq )):
+        while target_seq[count] == '-':
+            count += 1
+            if count == len(target_seq) - 1:
+                at_end = True
+                break
+        if at_end:
+            break
+        if target_seq[count] != base_seq[i]:
+            mutations.append( selected_match[1] + ':' + str(base_resids[i]) + target_seq[count] )
+        count += 1
+
+    print( __name__, 'found', len(mutations), 'mutations')
+
+    return mutations
+
 
                     
             
