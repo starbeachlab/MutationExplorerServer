@@ -785,9 +785,24 @@ def vcf():
 
 
 
-def interface_calculation(outdir, tag, msg, filtered, pdb, af, chain, mutant, clustal, seq, target_seq, longmin, rasp_calculation):
+def interface_calculation(tag, mutant, inputs):
     # TODO: log
     # TODO: rasp_calculation (option to not do rasp calculation)
+
+    outdir = app.config['USER_DATA_DIR'] + tag + '/'
+
+    clustal = inputs["clustal"]
+    base_clustal_id = inputs["base_clustal_id"]
+    target_clustal_id = inputs["target_clustal_id"]
+
+    pdb = inputs["base_pdb"]
+    af = inputs["base_af"]
+    chain = inputs["base_chain"]
+
+    filtered = inputs["base_filtered"]
+    msg = inputs["base_msg"]
+
+    longmin = inputs["longmin"]
 
     # relax provided structure
     print("####### INT: relax structure")
@@ -797,7 +812,6 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, chain, mutant, cl
     ### get mutations 
 
     print("####### INT: get mutations")
-    mutations = []
 
     parent = "mut_0.pdb"
     resfile = mutant[:-4] + "_resfile.txt"
@@ -808,7 +822,8 @@ def interface_calculation(outdir, tag, msg, filtered, pdb, af, chain, mutant, cl
     if wait(outdir + parent, 1, 900) == False:
         return
 
-    add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_seq, preselected_chain = chain) # TODO: should also take base seq
+    #add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_clustal_id, preselected_chain = chain) # TODO: should also take base seq
+    mutations = mutations_from_alignment(clustal, outdir + parent)
 
     if len(mutations) == 0:
         return
@@ -866,60 +881,62 @@ def interface(tag):
 
         return render_template("interface.html", seqs = seqs)
 
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
     ### get form values
 
-    # seq selection
-    base_seq = request.form.get("base_seq")
-    target_seq = request.form.get("target_seq")
+    inputs = {}
+
+    inputs["clustal"] = outdir + "alignment.aln"
+
+    # clustal id selection
+    inputs["base_clustal_id"] = request.form.get("base_seq")
+    inputs["target_clustal_id"] = request.form.get("target_seq")
 
     # base file
-    base_upload = request.files['base_pdbfile']
-    base_pdb = secure_filename( request.form['base_pdbid'].strip() )
-    base_af = secure_filename( request.form['base_alphafoldid'].strip() )
+    inputs["base_upload"] = request.files['base_pdbfile']
+    inputs["base_pdb"] = secure_filename( request.form['base_pdbid'].strip() )
+    inputs["base_af"] = secure_filename( request.form['base_alphafoldid'].strip() )
 
-    base_chain = secure_filename( request.form['base_chain'].strip() )
+    inputs["base_chain"] = secure_filename( request.form['base_chain'].strip() )
 
     # target file
-    target_upload = request.files['target_pdbfile']
-    target_pdb = secure_filename( request.form['target_pdbid'].strip() )
-    target_af = secure_filename( request.form['target_alphafoldid'].strip() )
+    inputs["target_upload"] = request.files['target_pdbfile']
+    inputs["target_pdb"] = secure_filename( request.form['target_pdbid'].strip() )
+    inputs["target_af"] = secure_filename( request.form['target_alphafoldid'].strip() )
 
-    target_chain = secure_filename( request.form['target_chain'].strip() )
+    inputs["target_chain"] = secure_filename( request.form['target_chain'].strip() )
 
     # options
     min_type = request.form['min-selector'] # = short | long
-    longmin = (min_type == 'long')
+    inputs["longmin"] = (min_type == 'long')
+
     rasp_checkbox = request.form.get('rasp-checkbox') # = on | none
-    rasp_calculation = (rasp_checkbox == 'on')
-
-
-    print("####### seq select")
-    print("base", base_seq)
-    print("target", target_seq)
-
-
+    inputs["rasp_calculation"] = (rasp_checkbox == 'on')
 
 
     ### processing
 
-    outdir = app.config['USER_DATA_DIR'] + tag + "/"
-
-    clustal = outdir + "alignment.aln"
 
     # save base file 
     base_file_path = outdir + "structure.pdb"    
-    base_original_name, unsuccessful, error_message, base_msg = save_pdb_file(base_file_path, base_upload, base_pdb, base_af)
+    base_original_name, unsuccessful, error_message, base_msg = save_pdb_file(base_file_path, inputs["base_upload"], inputs["base_pdb"], inputs["base_af"])
     if unsuccessful:
         # TODO: return error_message
         return "there was an error\n" + error_message
 
+    inputs["base_original_name"] = base_original_name
+    inputs["base_msg"] = base_msg
+    inputs["base_filtered"] = False
+
     # save target file 
     target_file_path = outdir + "target.pdb"    
-    target_original_name, unsuccessful, error_message, target_msg = save_pdb_file(target_file_path, target_upload, target_pdb, target_af)
+    target_original_name, unsuccessful, error_message, target_msg = save_pdb_file(target_file_path, inputs["target_upload"], inputs["target_pdb"], inputs["target_af"])
     target_given = not unsuccessful
 
-    print("target given", target_given)
+    inputs["target_original_name"] = target_original_name
+    inputs["target_msg"] = target_msg
+    inputs["target_filtered"] = False
 
 
     #create status file
@@ -939,9 +956,10 @@ def interface(tag):
 
     # start calculation 
     if not target_given:
-        filtered = False
+        base_filtered = False
         mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-        start_thread(interface_calculation, [outdir, tag, base_msg, filtered, base_pdb, base_af, base_chain, mutant, clustal, base_seq, target_seq, longmin, rasp_calculation], "interface calc")
+        # start_thread(interface_calculation, [outdir, tag, base_msg, filtered, base_pdb, base_af, base_chain, mutant, clustal, base_clustal_id, target_clustal_id, longmin, rasp_calculation], "interface calc")
+        start_thread(interface_calculation, [tag, mutant, inputs], "interface calc")
     
         return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
     
@@ -1441,10 +1459,10 @@ def pdb2seq( pdb):
             c = chain(l)
             res = resid(l)
             if prev_chain != c or prev_id != res:
-                print("######### check")
-                print(prev_chain)
-                print(prev_id)
-                print(chains)
+                #print("######### check")
+                #print(prev_chain)
+                #print(prev_id)
+                #print(chains)
                 chains[c][0] += single_letter( residue_name(l))
                 chains[c][1].append( res )
                 prev_chain = c
@@ -1482,6 +1500,9 @@ def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain=
                     ali_id = a
                     print( 'mutations(): matching sequences found:', a, c)
 
+    print("################## count")
+    print(count)
+
     if count != 1:
         print( 'ERROR: mutations() found ',count,'identical matches')
     if count == 0:
@@ -1499,6 +1520,10 @@ def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain=
                 break
     pdbseq = chains[chain_in_pdb][0]
     pdbres = chains[chain_in_pdb][1]
+
+    print("########### muts from alignment")
+    print("pdbseq", pdbseq)
+    print("aligned", aligned)
 
 
     ### find mutations
