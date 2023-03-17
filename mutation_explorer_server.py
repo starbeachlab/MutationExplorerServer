@@ -949,16 +949,11 @@ def interface_calculation_target(tag, inputs):
 
     longmin = inputs["longmin"]
 
-    # def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
-
-    print("##########")
-    print("IF calc target")
-    print("relax base structure")
 
     relax_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
-    print("##########")
-    print("relax target structure")
+    if(not wait(outdir + "mut_0.pdb", 1, 900)):
+        return
 
     relax_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
 
@@ -1088,7 +1083,7 @@ def interface(tag):
     
     start_thread(interface_calculation_target, [tag, inputs], "interface calc with target")
 
-    return "end"
+    return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="-"))
     
 
 
@@ -1584,7 +1579,6 @@ def pdb2seq( pdb):
             c = chain(l)
             res = resid(l)
             if prev_chain != c or prev_id != res:
-                #print("######### check")
                 #print(prev_chain)
                 #print(prev_id)
                 #print(chains)
