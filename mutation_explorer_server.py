@@ -540,8 +540,10 @@ def add_mutations(tag, mutant, inputs):
     
     # get all mutations
     i = 0
-    for clustal_file in inputs["clustal_files"]:
-        add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    for clustal_file, chainC in zip(inputs["clustal_files"], inputs["chainCs"]):
+        secure_str(chainC)
+        chainC = chainC[0]
+        add_mutations_from_alignment( mutations, clustal_file, outdir + parent, base_chain=chainC)
     for fasta_file, chainF in zip(inputs["fasta_files"], inputs["chainFs"]):
         i += 1
         if fasta_file != "" and chainF != "":
@@ -638,14 +640,23 @@ def mutate(tag,msg=""):
 
     inputs = {}
 
+    # manual mutations
     inputs["mutations"] = request.form['mutations'].strip().replace(' ','').split(',')
 
+    # alignment
     inputs["clustals"] = [
         request.files['clustal1'],
         request.files['clustal2'],
         request.files['clustal3'],
     ]
 
+    inputs["chainCs"] = [
+        request.form.get('chainC1'),
+        request.form.get('chainC2'),
+        request.form.get('chainC3'),
+    ]
+
+    # target sequence
     inputs["fastas"] = [
         request.files['fasta1'],
         request.files['fasta2'],
@@ -683,10 +694,6 @@ def mutate(tag,msg=""):
     ]
 
 
-    print("fastas")
-    print(inputs["fastas"])
-
-
     # get all mutations
     i = 0
    # print(len(request.form['mutations'].strip()))
@@ -699,11 +706,7 @@ def mutate(tag,msg=""):
             i = i+1
 
     for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
-        print("######## DURCHGANG")
-        print(fasta)
-        print(chainF)
         if fasta.filename != "" and chainF != "":
-            print("to be saved")
             #print("fasta")
             i += 1
     for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
@@ -728,23 +731,21 @@ def mutate(tag,msg=""):
         #bash_cmd(cmd,  log)
         return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
 
+    # files have to be saved in this function, out of reasons beyond my understanding
     inputs["clustal_files"] = []
     for clustal in inputs["clustals"]:
         if clustal.filename != "":
             clustal_file = os.path.join( outdir , clustal.filename )
             clustal.save( clustal_file)
             inputs["clustal_files"].append(clustal_file)
+        else:
+            inputs["clustal_files"].append("")
 
-    print("##########################################")
-    print("FASTA BLOCK")
     inputs["fasta_files"] = []
     for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
         i += 1
         if fasta.filename != "" and chainF != "":
             fasta_file =  outdir + fasta.filename
-            print("##################")
-            print("### save fasta ###")
-            print("##################")
             fasta.save(fasta_file) 
             inputs["fasta_files"].append(fasta_file)
         else:
@@ -1532,9 +1533,9 @@ def write_fasta( filename, seq, header=""):
         w.write('>' + header + '\n')
         w.write(seq + '\n')
     
-def add_mutations_from_alignment( mutations, clustal_file, parent):
+def add_mutations_from_alignment( mutations, clustal_file, parent, base_chain=""):
     #mutations.extend( mutations_from_alignment( clustal_file, parent ) )
-    mutations.extend( mutations_from_alignment_interface( clustal_file, parent ) )
+    mutations.extend( mutations_from_alignment_interface( clustal_file, parent, base_chain=base_chain) )
 
 
         
@@ -1694,23 +1695,38 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
     else:
         # multiple matches
 
-        # select clustal id
+        available_chains = [m[1] for m in matches]
         available_clustal_ids = [m[0] for m in matches]
-        if base_clustal_id != "" and base_clustal_id in available_clustal_ids:
-            # if possible, take provided base clustal id
-            selected_match[0] = base_clustal_id
-        else:
-            # otherwise, take random (first) clustal id
+
+        base_chain_given = (base_chain != "" and base_chain in available_chains)
+        base_cid_given = (base_clustal_id != "" and base_clustal_id in available_clustal_ids)
+
+        if base_chain_given and not base_cid_given:
+            # if only the base chain is given, select that chain; cid randomly
+            selected_match[1] = base_chain
+            available_clustal_ids = [m[0] for m in matches if m[1] == selected_match[1]] 
             selected_match[0] = available_clustal_ids[0]
 
-        # select chain
-        available_chains = [m[1] for m in matches if m[0] == clustal_id]
-        if base_chain != "" and base_chain in available_chains:
-            # if possible, take provided base chain
-            selected_match[1] = base_chain
+
         else:
-            # otherwise, take random (first) chain
-            selected_match[1] = available_chains[0]
+            # else select clustal id first
+
+            # select clustal id
+            if base_cid_given:
+                # if possible, take provided base clustal id
+                selected_match[0] = base_clustal_id
+            else:
+                # otherwise, take random (first) clustal id
+                selected_match[0] = available_clustal_ids[0]
+
+            # select chain
+            available_chains = [m[1] for m in matches if m[0] == clustal_id]
+            if base_chain != "" and base_chain in available_chains:
+                # if possible, take provided base chain
+                selected_match[1] = base_chain
+            else:
+                # otherwise, take random (first) chain
+                selected_match[1] = available_chains[0]
 
     # select target clustal id
     selected_target_clustal_id = ""
