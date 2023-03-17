@@ -1663,7 +1663,7 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
     matches = []
     for (clustal_id, clustal_seq) in alignment.items():
         for (chain, chain_seq) in pdb_chains.items():
-            if chain_seq == clustal_seq:
+            if chain_seq == clustal_seq.replace("-", ""):
                 matches.append([clustal_id, chain])
 
     if len(matches) == 0:
@@ -1723,7 +1723,8 @@ def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id=
 
 
     # get mutations
-    base_seq = alignment[selected_match[0]]
+    #base_seq = alignment[selected_match[0]]
+    base_seq = pdb_chains[selected_match[1]]
     target_seq = alignment[selected_target_clustal_id]
 
     base_resids = resids[selected_match[1]]
