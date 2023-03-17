@@ -541,9 +541,10 @@ def add_mutations(tag, mutant, inputs):
     # get all mutations
     i = 0
     for clustal_file, chainC in zip(inputs["clustal_files"], inputs["chainCs"]):
-        secure_str(chainC)
-        chainC = chainC[0]
-        add_mutations_from_alignment( mutations, clustal_file, outdir + parent, base_chain=chainC)
+        if clustal_file != "":
+            secure_str(chainC)
+            chainC = chainC[0]
+            add_mutations_from_alignment( mutations, clustal_file, outdir + parent, base_chain=chainC)
     for fasta_file, chainF in zip(inputs["fasta_files"], inputs["chainFs"]):
         i += 1
         if fasta_file != "" and chainF != "":
@@ -950,11 +951,19 @@ def interface_calculation_target(tag, inputs):
 
     # def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
 
+    print("##########")
+    print("IF calc target")
+    print("relax base structure")
+
     relax_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
+
+    print("##########")
+    print("relax target structure")
 
     relax_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
 
-    print("if calc w/ target")
+    print("##########")
+    print("if calc w/ target done")
 
 
 
@@ -1059,10 +1068,14 @@ def interface(tag):
     with open(name_path, "w") as f:
         f.write(base_original_name)
 
-    # create info file for mut_0
+    # create info file for mut_0, (mut_1)
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("none\n")
+
+    if target_given:
+        with open(outdir + "info/mut_1.txt", "w") as f:
+            f.write("none\n")
 
     # start calculation 
     if not target_given:
@@ -1073,7 +1086,7 @@ def interface(tag):
     
         return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
     
-    start_thread(interface_calculation_target, [], "interface calc with target")
+    start_thread(interface_calculation_target, [tag, inputs], "interface calc with target")
 
     return "end"
     
