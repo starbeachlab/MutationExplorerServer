@@ -195,6 +195,24 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
 
 
 
+def superimpose(tag, align_structure, align_chain, template_structure, template_chain, alignment, logfile):
+    si = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_superimpose.py alignment: '
+
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open(out + logfile, 'a')
+
+    tmp = align_structure[:-4] + '_tmp.pdb'
+    cmd = "tsp " + si + align_structure + ' ' + align_chain + ' ' + template_structure + ' ' + template_chain + ' ' + alignment + ' ' + tmp
+    bash_cmd(cmd, log)
+
+    # wait for superimposed structure
+    if not wait(tmp, 1, 900):
+        return
+
+    os.rename(tmp, align_structure)
+
+
+
 def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
     print("################")
     print("CALC CONSERVATION")
@@ -883,7 +901,7 @@ def vcf():
 
 
 
-def interface_calculation(tag, mutant, inputs):
+def interface_one_structure(tag, mutant, inputs):
     # TODO: log
     # TODO: rasp_calculation (option to not do rasp calculation)
 
@@ -934,7 +952,8 @@ def interface_calculation(tag, mutant, inputs):
 
 
 
-def interface_calculation_target(tag, inputs):
+def interface_two_structures(tag, inputs):
+    # TODO: errors
 
     outdir = app.config['USER_DATA_DIR'] + tag + '/'
 
@@ -961,48 +980,50 @@ def interface_calculation_target(tag, inputs):
 
     # minimize structures
     relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
-
     if(not wait(outdir + "mut_0.pdb", 1, 900)):
         return
 
     relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
-
     if(not wait(outdir + "mut_1.pdb", 1, 900)):
         return
 
+    base_strc = outdir + "mut_0.pdb"
+    target_strc = outdir + "mut_1.pdb"
 
-    # calculate conservation
-    pdb_match = find_pdb_in_alignment(clustal, outdir + "mut_0.pdb", chain=base_chain, clustal_id=base_clustal_id)
+
+    # get clustal ids, chains, sequence ids
+    pdb_match = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
     if pdb_match is None:
         return
     base_clustal_id, base_chain = pdb_match
-
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
         return
 
-    print("############")
-    print("calc conservation for mut_0")
-    calc_conservation(tag, outdir + "mut_0.pdb", clustal, base_chain, base_seq_id, "log.txt")
-
-    
-    pdb_match = find_pdb_in_alignment(clustal, outdir + "mut_1.pdb", chain=target_chain, clustal_id=target_clustal_id)
+    pdb_match = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match is None:
         return
     target_clustal_id, target_chain = pdb_match
-
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
         return
 
-    print("############")
-    print("calc conservation for mut_1")
-    calc_conservation(tag, outdir + "mut_1.pdb", clustal, target_chain, target_seq_id, "log.txt")
+    if base_seq_id == target_seq_id:
+        return
 
 
+    # superimpose
+    if base_seq_id < target_seq_id:
+        superimpose(tag, base_strc, base_chain, target_strc, target_chain, clustal)
+    else:
+        superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
-    print("##########")
-    print("if calc w/ target done")
+
+    # calculate conservation
+    calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
+
+    calc_conservation(tag, target_strc, clustal, target_chain, target_seq_id, "log.txt")
+
 
 
 
@@ -1041,6 +1062,7 @@ def interface(tag):
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
+
     ### get form values
 
     inputs = {}
@@ -1075,7 +1097,6 @@ def interface(tag):
 
     ### processing
 
-
     # save base file 
     base_file_path = outdir + "structure.pdb"    
     base_original_name, unsuccessful, error_message, base_msg = save_pdb_file(base_file_path, inputs["base_upload"], inputs["base_pdb"], inputs["base_af"])
@@ -1095,7 +1116,6 @@ def interface(tag):
     inputs["target_original_name"] = target_original_name
     inputs["target_msg"] = target_msg
     inputs["target_filtered"] = False
-
 
     #create status file
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
@@ -1118,14 +1138,13 @@ def interface(tag):
 
     # start calculation 
     if not target_given:
-        base_filtered = False
         mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-        # start_thread(interface_calculation, [outdir, tag, base_msg, filtered, base_pdb, base_af, base_chain, mutant, clustal, base_clustal_id, target_clustal_id, longmin, rasp_calculation], "interface calc")
-        start_thread(interface_calculation, [tag, mutant, inputs], "interface calc")
+        start_thread(interface_one_structure, [tag, mutant, inputs], "interface calc one structure")
     
         return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
     
-    start_thread(interface_calculation_target, [tag, inputs], "interface calc with target")
+
+    start_thread(interface_two_structures, [tag, inputs], "interface calc two structures")
 
     return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="-"))
     
