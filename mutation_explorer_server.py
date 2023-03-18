@@ -195,6 +195,61 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
 
 
     
+def calc_conservation(tag, structure, logfile):
+    print("########################################")
+    print("########### CALC CONSERVATION ##########")
+    print("########################################")
+    print(structure)
+    cons = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_conservation.py '
+
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open(out + logfile, 'a')
+
+    if(not wait(out + structure, 1, 900)):
+        return
+
+    chains = pdb2seq(out + structure)
+
+    alignment = ""
+    pdb_chain = ""
+    seq_id = ""
+
+    for c in chains:
+        chain_alignment = out + structure[:-4] + '_' + c + '.clw'
+
+        print("##################")
+        print("##################")
+        print("testing alignment: ", chain_alignment)
+
+        if not os.path.isfile(chain_alignment):
+            print("#####")
+            print("doesnt exist")
+            continue
+
+        pdb_match = find_pdb_in_alignment(chain_alignment, out + structure)
+        if pdb_match is None:
+            print("#####")
+            print("no match to pdb")
+            continue
+        cid, chain = pdb_match
+
+        sid = get_seq_id(chain_alignment, cid)
+        if sid is None:
+            print("#####")
+            print("seqid couldnt be found")
+            continue
+
+        alignment = chain_alignment
+        pdb_chain = c
+        seq_id = sid
+
+    if alignment == "":
+        # no viable alignment found
+        return
+
+
+    cmd = "tsp " + cons + out + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + out + structure[:-4] + '_cons.pdb' 
+    bash_cmd(cmd, log)
 
 
 
@@ -231,6 +286,8 @@ def file_processing( tag, structure, out_file_name, logfile):
 
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
+
+        calc_conservation(tag, out_file_name + '.pdb', logfile)
     
     
     if not os.path.exists(out + "fin/"):
@@ -813,7 +870,7 @@ def vcf():
         print("path rasp: " + path)
         calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
         file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
-        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
     print( 'fixbb started for initial upload\n')
 
     if wait( outdir + 'mut_0.pdb', 1, 920) == False:
@@ -922,7 +979,7 @@ def interface_post():
         redirect(url_for('index'))
 
 
-    # alignment TODO: generalize
+    # alignment   TODO: generalize
     alignment_link = request.form.getlist('alignment_link')[0]
     alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
 
@@ -1540,6 +1597,25 @@ def pdb2seq( pdb):
                 prev_id = res
     return chains
 
+
+
+def get_seq_id(clustal, cid):
+    # returns position of a sequence in an alignment
+    # very similar to read_clustal
+
+    i = 0
+    with open(clustal) as r:
+        r.readline()
+        for l in r:
+            if l.strip() == '' or l[:3] == '   ': continue
+            c = l.split()
+            if len(c) != 2: continue
+
+            if c[0] == cid:
+                return i
+            i += 1
+
+    return None
 
 
 def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):

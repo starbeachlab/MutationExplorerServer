@@ -19,9 +19,9 @@ factor = 200.0
 
 
 
-if len( sys.argv) < 5:
+if len( sys.argv) < 6:
     print( 'script writes sequence conservation into temperature factor of output PDB (optional:ALIGN_SCORE)')
-    print( "USAGE:", sys.argv[0], 'PDB CHAIN ALIGNMENT.clw ROW')
+    print( "USAGE:", sys.argv[0], 'PDB CHAIN ALIGNMENT.clw ROW OUTFILE')
     print( "\tALIGNMENT is Clustal formatted multiple sequence alignment")
     print( "\tROW specifies the sequence in the alignment that belongs to PDB")
     print( '\tROW starts with 0')
@@ -38,6 +38,14 @@ pdb_file = sys.argv[1]
 chain = sys.argv[2]
 ali_file = sys.argv[3]
 ali_id = int( sys.argv[4] )
+out_file = sys.argv[6]
+
+print()
+print()
+print("outfile", out_file)
+print()
+print()
+
 if len(sys.argv) > 5:
     aligned = float( sys.argv[5])
     print( 'score aligned positions with:', aligned)
@@ -89,22 +97,25 @@ for i in range( 0, len( alignment[ ali_id ] )):
 
     vals.append( float(count)/float(nr-1) )
 
-eidi = -1
-previd = -99999
-with open( pdb_file) as r:
-    for l in r:
-        l = l.strip()
-        if "ATOM" == l[0:4] and l[21] == chain:
-            new_Id = int(l[22:26])
-            if previd != new_Id:
-                previd = new_Id
-                eidi += 1
-            aa = SeqUtils.IUPACData.protein_letters_3to1[ l[ 17:20 ].title()]
-            if aa != seq[eidi]:
-                print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
-                exit(1)
-            print( l[:60] + "{:6.2f}".format( factor * vals[eidi] ) + l[66:] )
-        elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
-            print( l[:60] + "{:6.2f}".format( 0.0 ) + l[66:] )
-        else:
-            print( l)
+
+
+with open(out_file, "w") as w:
+    eidi = -1
+    previd = -99999
+    with open( pdb_file) as r:
+        for l in r:
+            l = l.strip()
+            if "ATOM" == l[0:4] and l[21] == chain:
+                new_Id = int(l[22:26])
+                if previd != new_Id:
+                    previd = new_Id
+                    eidi += 1
+                aa = SeqUtils.IUPACData.protein_letters_3to1[ l[ 17:20 ].title()]
+                if aa != seq[eidi]:
+                    print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
+                    exit(1)
+                w.write( l[:60] + "{:6.2f}".format( factor * vals[eidi] ) + l[66:] + "\n" )
+            elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
+                w.write( l[:60] + "{:6.2f}".format( 0.0 ) + l[66:] + "\n" )
+            else:
+                w.write( l + "\n")
