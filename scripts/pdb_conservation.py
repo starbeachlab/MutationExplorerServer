@@ -15,7 +15,7 @@ import basic_alignment as bali
 
 aligned = 0.2
 grouped = 0.5
-factor = 200.0
+factor = 3.0
 
 
 

@@ -194,49 +194,48 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 bash_cmd(cmd, log)
 
 
-    
-def calc_conservation(tag, structure, logfile):
-    print("########################################")
-    print("########### CALC CONSERVATION ##########")
-    print("########################################")
-    print(structure)
+
+def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
+    print("################")
+    print("CALC CONSERVATION")
+    print("################")
     cons = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_conservation.py '
 
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open(out + logfile, 'a')
 
-    if(not wait(out + structure, 1, 900)):
+    cmd = "tsp " + cons + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + structure[:-4] + '_cons.pdb' 
+    bash_cmd(cmd, log)
+
+    
+
+def mutant_calc_conservation(tag, structure, logfile):
+
+    # wait for mutant structure
+    if(not wait(structure, 1, 900)):
         return
 
-    chains = pdb2seq(out + structure)
+
+    # find mutated chain
+    chains = pdb2seq(structure)
 
     alignment = ""
     pdb_chain = ""
     seq_id = ""
 
     for c in chains:
-        chain_alignment = out + structure[:-4] + '_' + c + '.clw'
-
-        print("##################")
-        print("##################")
-        print("testing alignment: ", chain_alignment)
+        chain_alignment = structure[:-4] + '_' + c + '.clw'
 
         if not os.path.isfile(chain_alignment):
-            print("#####")
-            print("doesnt exist")
             continue
 
-        pdb_match = find_pdb_in_alignment(chain_alignment, out + structure)
+        pdb_match = find_pdb_in_alignment(chain_alignment, structure)
         if pdb_match is None:
-            print("#####")
-            print("no match to pdb")
             continue
         cid, chain = pdb_match
 
         sid = get_seq_id(chain_alignment, cid)
         if sid is None:
-            print("#####")
-            print("seqid couldnt be found")
             continue
 
         alignment = chain_alignment
@@ -247,9 +246,8 @@ def calc_conservation(tag, structure, logfile):
         # no viable alignment found
         return
 
+    calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile)
 
-    cmd = "tsp " + cons + out + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + out + structure[:-4] + '_cons.pdb' 
-    bash_cmd(cmd, log)
 
 
 
@@ -287,7 +285,7 @@ def file_processing( tag, structure, out_file_name, logfile):
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
 
-        calc_conservation(tag, out_file_name + '.pdb', logfile)
+        mutant_calc_conservation(tag, out + out_file_name + '.pdb', logfile)
     
     
     if not os.path.exists(out + "fin/"):
@@ -940,9 +938,9 @@ def interface_calculation_target(tag, inputs):
 
     outdir = app.config['USER_DATA_DIR'] + tag + '/'
 
-    #clustal = inputs["clustal"]
-    #base_clustal_id = inputs["base_clustal_id"]
-    #target_clustal_id = inputs["target_clustal_id"]
+    clustal = inputs["clustal"]
+    base_clustal_id = inputs["base_clustal_id"]
+    target_clustal_id = inputs["target_clustal_id"]
 
     base_pdb = inputs["base_pdb"]
     base_af = inputs["base_af"]
@@ -961,12 +959,47 @@ def interface_calculation_target(tag, inputs):
     longmin = inputs["longmin"]
 
 
+    # minimize structures
     relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
     if(not wait(outdir + "mut_0.pdb", 1, 900)):
         return
 
     relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
+
+    if(not wait(outdir + "mut_1.pdb", 1, 900)):
+        return
+
+
+    # calculate conservation
+    pdb_match = find_pdb_in_alignment(clustal, outdir + "mut_0.pdb", chain=base_chain, clustal_id=base_clustal_id)
+    if pdb_match is None:
+        return
+    base_clustal_id, base_chain = pdb_match
+
+    base_seq_id = get_seq_id(clustal, base_clustal_id)
+    if base_seq_id is None:
+        return
+
+    print("############")
+    print("calc conservation for mut_0")
+    calc_conservation(tag, outdir + "mut_0.pdb", clustal, base_chain, base_seq_id, "log.txt")
+
+    
+    pdb_match = find_pdb_in_alignment(clustal, outdir + "mut_1.pdb", chain=target_chain, clustal_id=target_clustal_id)
+    if pdb_match is None:
+        return
+    target_clustal_id, target_chain = pdb_match
+
+    target_seq_id = get_seq_id(clustal, target_clustal_id)
+    if target_seq_id is None:
+        return
+
+    print("############")
+    print("calc conservation for mut_1")
+    calc_conservation(tag, outdir + "mut_1.pdb", clustal, target_chain, target_seq_id, "log.txt")
+
+
 
     print("##########")
     print("if calc w/ target done")
@@ -1624,6 +1657,12 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
 
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
     pdb_chains = {k: v[0] for (k, v) in pdb2seq(structure).items()} # dict; key: chain, value: seq
+
+    print("###############")
+    print("find_pdb_in_alignment")
+
+    print(alignment)
+    print(pdb_chains)
 
     # find all (clustal id, chain) pairs with matching sequences
     matches = []
