@@ -628,12 +628,20 @@
 	function chainSelect() {
 
 		var chains = "{{chains}}".split("")
-		var selectHtml = "<select name='XYZ'><option value='' selected>Select a Chain</option>"
-		for (i = 0; i < chains.length; i++) {
-			c = chains[i]
-			selectHtml += "<option value='" + c + "'>" + c + "</option>"
+		var selectHtml
+
+		if(chains.length == 1) {
+			// if only one chain is available, preselect it 
+			c = chains[0]
+			selectHtml = "<select name='XYZ' style='display: none'><option value='" + c + "' selected>" + c + "</option></select>"
+		} else {
+			selectHtml = "<select name='XYZ'><option value='' selected disabled>Select a Chain</option>"
+			for (i = 0; i < chains.length; i++) {
+				c = chains[i]
+				selectHtml += "<option value='" + c + "'>" + c + "</option>"
+			}
+			selectHtml += "</select>"
 		}
-		selectHtml += "</select>"
 
 		var fields = $(".chain-select-field")
 		for (i = 0; i < fields.length; i++) {

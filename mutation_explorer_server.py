@@ -14,7 +14,24 @@ app = Flask( __name__ )
 app.config.from_pyfile( cfg_file )
 
 
+# fatal error messages
+NO_MUTATIONS = "No valid mutations were defined"
+RELAXATION_FAILED = "Relaxation of initial structure failed"
+MUTATION_FAILED = "Mutation failed"
+STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
 
+
+
+
+def fatal_error(tag, msg):
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
+    #if not os.path.exsits(outdir + "fatal.log"):
+
+    with open(outdir + "fatal.log", "a") as f:
+        f.write(msg)
+
+    exit(1)
+    
 
 
 @app.route('/')
@@ -366,7 +383,6 @@ def save_pdb_file(file_path, upload, pdb, af):
         # no structure -> error
         error = True
         error_message = "Please provide a structure" 
-        #return render_template("submit.html", error = "Please provide a structure")
 
     if not is_pdb( file_path):
         error = True
@@ -931,14 +947,15 @@ def interface_one_structure(tag, mutant, inputs):
     align = mutant[:-4] + ".clw"
     mutfile = "info/" + mutant[:-4] + ".txt"
 
-    # wait for parent file
+    # wait for mut_0.pdb
     if wait(outdir + parent, 1, 900) == False:
-        return
+        fatal_error(tag, RELAXATION_FAILED)
+
 
     mutations = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
 
     if len(mutations) == 0:
-        return
+        fatal_error(tag, NO_MUTATIONS)
 
 
     ### calculation
@@ -949,6 +966,9 @@ def interface_one_structure(tag, mutant, inputs):
     # start mutation calculation
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
+    # check mutation success
+    if wait(mutant, 1, 900) == False:
+        fatal_error(tag, MUTATION_FAILED)
 
 
 
@@ -980,12 +1000,14 @@ def interface_two_structures(tag, inputs):
 
     # minimize structures
     relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
+
     if(not wait(outdir + "mut_0.pdb", 1, 900)):
-        return
+        fatal_error(tag, RELAXATION_FAILED)
 
     relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
+
     if(not wait(outdir + "mut_1.pdb", 1, 900)):
-        return
+        fatal_error(tag, RELAXATION_FAILED)
 
     base_strc = outdir + "mut_0.pdb"
     target_strc = outdir + "mut_1.pdb"
@@ -994,22 +1016,24 @@ def interface_two_structures(tag, inputs):
     # get clustal ids, chains, sequence ids
     pdb_match = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
     if pdb_match is None:
-        return
+        fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
+
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
         return
 
     pdb_match = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match is None:
-        return
+        fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
+
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
         return
 
     if base_seq_id == target_seq_id:
-        return
+        fatal_error(tag, NO_MUTATIONS)
 
 
     # superimpose
@@ -1058,7 +1082,7 @@ def interface(tag):
         ali = read_clustal(outdir + "alignment.aln")
         seqs = ",".join(ali.keys())
 
-        return render_template("interface.html", seqs = seqs)
+        return render_template("interface.html", seqs = seqs, error = "")
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
@@ -1101,8 +1125,10 @@ def interface(tag):
     base_file_path = outdir + "structure.pdb"    
     base_original_name, unsuccessful, error_message, base_msg = save_pdb_file(base_file_path, inputs["base_upload"], inputs["base_pdb"], inputs["base_af"])
     if unsuccessful:
-        # TODO: return error_message
-        return "there was an error\n" + error_message
+        ali = read_clustal(outdir + "alignment.aln")
+        seqs = ",".join(ali.keys())
+
+        return render_template("interface.html", seqs = seqs, error = error_message)
 
     inputs["base_original_name"] = base_original_name
     inputs["base_msg"] = base_msg
@@ -1157,10 +1183,11 @@ def get_status(tag, filename):
     status = ""
     msg = ""
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    fatal_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/fatal.log")
 
     check_status = os.path.isfile(status_path)
     if check_status:
-        status_file = open(os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log"), "r")
+        status_file = open(status_path)
         msg = status_file.read()
         print(msg)
         msg = msg.replace("+", " ")
@@ -1169,6 +1196,10 @@ def get_status(tag, filename):
             print("exit status") 
             return jsonify({'done': True, 'status': "skip", 'message': "No mutation was defined"})
 
+
+    if os.path.isfile(fatal_path):
+        msg = open(fatal_path, "r").read()
+        return jsonify({'done': True, 'status': 'skip', 'message': msg})
 
 
 

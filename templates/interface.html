@@ -25,6 +25,13 @@
     <!-- Seq select -->
 	  <div class="input-field seq-select-field" sel="base_seq"></div>
 
+    <br>
+    <br>
+
+    <center>
+    <h5>Base structure</h5>
+    </center>
+
     <!-- Upload -->
     <div style="width: 100%; display: flex; justify-content: center">
     <div class="file-field input-field" style="width: 100%">
@@ -37,13 +44,13 @@
 
     <!-- PDB -->
     <div class="input-field">
-        <input id="chain" type="text" name="base_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
+        <input id="pdb-id" type="text" name="base_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
         <label for="chain">Load structure from PDB</label>
     </div>
 
     <!-- AF -->
     <div class="input-field">
-        <input id="chain" type="text" name="base_alphafoldid" class="validate" placeholder="Uniprot ID">
+        <input id="af-id" type="text" name="base_alphafoldid" class="validate" placeholder="Uniprot ID">
         <label for="chain">Load prediction from AlphaFold DB</label>
     </div>
 
@@ -65,6 +72,13 @@
 
     <!-- Seq select -->
 	  <div class="input-field seq-select-field" sel="target_seq"></div>
+
+    <br>
+    <br>
+
+    <center>
+    <h5>Target structure (optional)</h5>
+    </center>
 
     <!-- Upload -->
     <div style="width: 100%; display: flex; justify-content: center">
@@ -175,6 +189,7 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
 </div>
 
 <div class="col offset-s3 s6 center-align">
+  <div id="error-msg" style="color: red;">{{error}}</div>
 <input id="submit-btn" type="submit" value="submit" class="btn">
 <br>
 <br>
@@ -209,7 +224,7 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
 	function chainSelect() {
 
 		var seqs = "{{seqs}}".split(",")
-		var selectHtml = "<select name='XYZ'><option value='' selected>Select Sequence</option>"
+		var selectHtml = "<select name='XYZ' onChange='seqSelected(this)'><option value='' selected disabled>Select Sequence</option>"
 		for (i = 0; i < seqs.length; i++) {
 			s = seqs[i]
 			selectHtml += "<option value='" + s + "'>" + s + "</option>"
@@ -228,6 +243,47 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
 	}
 
     chainSelect()
+
+
+
+
+
+
+  var baseSeqSelected = false;
+  var targetSeqSelected = false;
+
+
+  function seqSelected(sel) {
+    console.log("sequence selected");
+    selectName = sel.parentElement.parentElement.attributes.sel.value;
+    if(selectName == "base_seq") {
+      baseSeqSelected = true;
+    } else {
+      targetSeqSelected = true;
+    }
+  }
+
+
+  function structureProvided() {
+    if($("#af-id").val() != "") {
+      return true;
+    } 
+    if($("#pdb-id").val().length == 4) {
+      return true;
+    } 
+    if($('#pdb-upl').get(0).files.length != 0) {
+      return true;
+    }
+    return false;
+  }
+
+
+	$("#submitForm").on('submit', function(e) {
+		if(!baseSeqSelected || !targetSeqSelected || !structureProvided()) {
+			e.preventDefault();
+			$("#error-msg").html("Please select a base and a target sequence and provide a base structure")
+		} 
+	});
 
 
     /*

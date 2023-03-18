@@ -14,11 +14,13 @@
 </style>
 {% endblock %}
 
+
 <center>
-<h1 style="font-variant:small-caps">MutationExplorer</h1>
+<h1>Tutorial for <span  style="font-variant:small-caps">MutationExplorer</span> </h1>
 <div><img src="static/img/workflow.png" width="100%;"></div>
 </center>
 
+<!--
 
 <p>
   The server lets users mutate proteins in
@@ -28,7 +30,6 @@
   Alternatively, the user can upload human SNPs in the VCF format.
   <br>
   You can click on the       <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">i</button> </span> buttons at each field in the forms to get further information.
-  <!-- Modal Structure -->
   <div id="modal3" class="modal">
     <div class="modal-content">
       This button has no function in the tutorial.
@@ -40,42 +41,67 @@
     </div>
   </div>
 </p>
+-->
   <br><br>
 
-<h3>Tutorial for <span style="font-variant:small-caps">MutationExplorer</span></h3>
-<p> There are two main modes of usage, related to the tabs in the top menu.<br>
+<h3>Overview</h3>
+<p> There are three ways of using <span  style="font-variant:small-caps">MutationExplorer</span>.<br>
+  First, you can create sequence alignments using the AlignMe server and forward the results to <span  style="font-variant:small-caps">MutationExplorer</span>:<br>
+  1) <a href="tutorial#alignme">AlignMe</a> <br><br>
+  Then there are
+  two main modes of usage that are related to the tabs in the top menu.<br><br>
   First, one can upload sequencing data: <br>
-  1) "Upload VCF" <br>
+  2) <a href="tutorial#vcf">"Upload VCF"</a> <br><br>
+  
   Second, you can "upload structure and mutations" as explained in:<br>
-  2) Upload model <br>
-  3) Define mutations <br>
+  3) <a href="tutorial#upload">Upload model</a> <br>
+  4) <a href="tutorial#mutate">Define mutations</a> <br>
   Both lead to the explore window: <br>
-  4) MutationExplorer <br>
+  5) <a href="tutorial#explore">MutationExplorer</a> <br>
   General remarks:<br>
-  5) Energy minimization and database <br>
-  6) Specific mutations <br>
+  6) <a href="#mini">Energy minimization and database</a> <br>
+  7) <a href="tutorial#specific">Specific mutations</a> <br>
 </p>
 
+<div id="alignme" name="alignme" style="top-margin:2cm;"></div>
+<br>
+<br>
+<h4>1) AlignMe </h4>
 
-  <h4>1) Upload VCF</h4>
+<a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">AlignMe</a> is a software package and webserver for detecting similarities between proteins, which are too low to be detected on the sequence level using standard methods.
+Follow these steps:
+<ul id="input-list">
+  <li> paste two sequences in Fasta format into the windows under 1.</li>
+  <li> if the sequences are rather simple select the 'fast' alignment under 2.</li>
+  <li> if there is little similarity on a sequence level, use one of the three other modes.</li>
+  <li> submit</li>
+  <li> on the result page, click the button to <span  style="font-variant:small-caps">MutationExplorer</span> </li>
+  <li> now a form opens where you can upload one or two structures on which the alignments are mapped. </li>
+</ul>
+
+
+<div id="vcf" name="vcf"></div>
+<br><br>
+<h4> 2) Upload VCF</h4>
 <p> This form allows to upload human SNPs in VCF format. <br>
   The upload and handling is simple, select a file and submit. </p>
   
 
 
-  <ul id="input-list" style="font-size: 14px;border: 1px solid darkgrey ">
-    <b>Expected time requirements</b><br>
-    
-    <li> Initial basic minimization: 1 min </li>
-    <li> Mutation and basic minimization: 2 min  </li>
-    <li> VCF processing:  5 min  </li>
-    Actual times depend on the size of the system and may vary significantly.
-  </ul>
+<ul id="input-list" style="font-size: 14px;border: 1px solid darkgrey ">
+  <b>Expected time requirements</b><br>
+  
+  <li> Initial basic minimization: 1 min </li>
+  <li> Mutation and basic minimization: 2 min  </li>
+  <li> VCF processing:  5 min  </li>
+  Actual times depend on the size of the system and may vary significantly.
+</ul>
 
 
-  <p>
-<h4>2) Upload model</h4>
-
+<div id="upload" name="upload"></div>
+<br><br>
+<h4>  3) Upload model</h4>
+<p>
   In the main web view, click on "upload structure and mutations" Structures can be uploaded in three different ways:
   <ul id="input-list">
     <li>directly from the PDB via PDB ID</li>
@@ -97,11 +123,14 @@ When you are done, click on <span class="center-align toggle-card"> <button data
 The <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="load example" style="margin:5px;">load example</button> </span>on page bottom leads to an example <span style="font-variant:small-caps">MutationExplorer</span> session.
   </p>
   
-<h4>3) Define mutations</h4>
+<div id="mutate" name="mutate"></div>
+<br><br>
+<h4> 4) Define mutations</h4>
+
 <p>
 There are three ways of providing mutational data:
 <ul id="input-list">
-  <b>3.1) Manual mutation definition</b><br><br>
+  <b>4.1) Manual mutation definition</b><br><br>
   <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="available PDB chains" style="margin:5px;">available PDB chains</button> </span>provides an overview over the available PDB chains in the uploaded PDB,<br><br>
   <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">info</button> </span>explains the mutation syntax,
   <br><br>
@@ -116,11 +145,11 @@ There are three ways of providing mutational data:
   </ul><br>
   Note that the all mutations will be done in the same model, multiple individual mutations are best done via the explorer interface.<br><br>
 
-  <b>3.2) Sequence Alignment</b><br><br>
+  <b>4.2) Sequence Alignment</b><br><br>
 
   You can mutate the model that you uploaded in previous step using a sequence alignment in ClustalW format. One of the sequences in the alignment has to match <b>exactly one sequence</b> in the PDB that you uploaded in previous step. Since one alignment is associated with one chain, you can upload up to three alignments. If you need to mutate more than three chains, you can upload target sequences for the other chains or define mutations manually.<br><br>
 
-  <b>3.3) Target Sequence</b><br><br>
+  <b>4.3) Target Sequence</b><br><br>
 
   Provide the sequence for each chain of the uploaded PDB that it will be mutated to. The target chain sequences as a chain of one-letter sequences can be provided as FASTA files (top), pasted directly (center) or directly fetched from UniProtKB (bottom)
   <br>
@@ -129,7 +158,11 @@ There are three ways of providing mutational data:
   Click on<span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit and launch explorer" style="margin:5px;">submit and launch explorer</button> </span> to proceed to caluclation. When this is finished, you will be re-directed to the <span style="font-variant:small-caps">MutationExplorer</span> window.
 </p>
 
-<h4> 4) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
+
+
+<div id="explore" name="explore"></div>
+<br><br>
+<h4> 5) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
 <p>
 <ul>
 In the explorer view, you will be presented with information about your set of mutations, relative per-residue energies and visualization of the protein.<br><br>
@@ -152,13 +185,13 @@ In the explorer view, you will be presented with information about your set of m
 Clicking on any highlighted residue will zoom in, showing the selected residue and its surroundings in a ball-and-stick view. Different carbon colors indicate protein chains, otherwise atoms are colors by type. Dashed lines indicate residue-residue interactions like hydrogen bonds.<br><br>
 
 
-  <b>4.1) Adding mutations</b><br>
+  <b>5.1) Adding mutations</b><br>
   <ul id="input-list">
     <li style="margin: 10px;">In the tree view, click on the protein to serve as the root for your next mutation, e.g.  <span style="font-family: FreeMono; color:darkblue;"><b>mut_0_1</b></span>, which is the first mutation entered in the webpage</li>
     <li style="margin: 10px;">In the <b>Mutate</b> field, enter the mutations to be added to the protein. Click on the "info" box for more informations</li>
     <li style="margin: 10px;">Click on <span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit" style="margin:5px;">submit</button> </span> and wait for your new protein to be added. The waiting message shows the name of the new mutation. In the tree, the new mutated protein will appear indented under the selected root</li>
   </ul>
-  <b>4.2) Adjusting visualization</b><br>
+  <b>5.2) Adjusting visualization</b><br>
   <ul id="input-list"><br>
   You can adjust the metric that serves as the basis for coloration in the <i>"Color by:"</i> Dropdown menu. By default, the colormap will be from -15 to 15 in a blue-white-red gradient
   <li style="margin: 10px;">Click on the <span style="font-family:Arial"><b>Change Visualization</b></span> tab in the bottom right of the main window to adjust the color scale and the mutation marker</li>
@@ -166,9 +199,12 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
   <li style="margin: 10px;">The mutation marker color and size can be adjusted via the slider and color window. The marker can be turned off by clicking on <span style="font-family:Arial"><b>✓ On</b></span> in the Show Field, setting it to <span style="font-family:Arial"><b>X Off</b></span></li>
 </ul>
 </p>
-<br>
 
-<h4>5) Energy minimization</h4>
+
+
+<div id="mini" name="mini"></div>
+<br><br>
+<h4> 6) Energy minimization</h4>
 <p>
   The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
   We continuously pre-minimize structures from the PDB using the commandline described below.
@@ -190,8 +226,12 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 <p>
   This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
 
-<h4> 6) Specific mutations </h4>
-<p> qed </p>
+
+
+<div id="specific" name="specific"></div>
+<br><br>
+<h4> 7) Specific mutations </h4>
+<p> To be completed. </p>
 
 
 

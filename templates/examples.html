@@ -20,108 +20,97 @@
 
 {% block content %}
 
+
+
 <center>
-<br>
-<h3>Examples</h3>
+<h3> Examples from publication </h3>
+</center>
 <br>
 
-<h4>Structure and Mutation Demos</h4>
+<div class="row">
+  <div class="col s4">
+    <h5>VCF demo</h5>
+  </div>
+  
+  <div class="col s4">
+    <h5>aGPCR demo</h5>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col s4">
+    <a href="{{url_for('load_example', tag='vcf_demo')}}" class="btn">load demo</a>
+    <br>
+    <br>
+    <p>Input:</p>
+    <a href="{{url_for('download', tag = 'vcf_demo', filename = 'demo.vcf')}}" download class="btn-small grey ligthen-1">demo.vcf</a>
+    <br>
+  </div>
+  <div class="col s4">
+    <a href="{{url_for('load_example', tag='agpcr_demo')}}" class="btn">load demo</a>
+    <br>
+    <br>
+    <p>Input:</p>
+    <b>FLO</b>
+    <br>
+  </div>
+</div>
+
+<br>
+<br>
+
+<center>
+<h3>Additional "upload structure and mutations" demos</h3>
 </center>
 
+<br>
 
 <div class="row">
 
 <div class="col s4">
-<center>
-<h5>Manual Mutations</h5>
-
-<a href="{{url_for('load_example', tag='4dlq')}}" class="btn">load 4dlq</a>
-
-<br>
-<br>
-
-<p id="list-head">Inputs:</p>
-
-<ul id="input-list">
-    <li>PDB ID: 4dlq</li>
+  <h5>Manual mutations</h5>
+  <a href="{{url_for('load_example', tag='4dlq')}}" class="btn">load 4dlq</a>
+  <br>
+  <br>
+  <p id="list-head">Inputs:</p>
+  <ul id="input-list">
+    <li>Upload PDB ID: 4dlq</li>
     <li>Mutations: A:804S, A:815S, A:806A, A:803Y</li>
-</ul>
-
-</center>
+  </ul>
 </div>
 
 
 <div class="col s4">
-<center>
-<h5>Sequence alignment</h5>
-
-<a href="{{url_for('load_example', tag='1lib_2')}}" class="btn">load 1lib</a>
-
-<br>
-<br>
-
-<p id="list-head">Inputs:</p>
-
-<ul id="input-list">
-    <li>PDB ID: 1lib</li>
+  <h5>Sequence alignment</h5>
+  <a href="{{url_for('load_example', tag='1lib_2')}}" class="btn">load 1lib</a>
+  <br>
+  <br>
+  <p id="list-head">Inputs:</p>
+  <ul id="input-list">
+    <li>Upload PDB ID: 1lib</li>
     <li>Sequence alignment:</li>
-
-</ul>
-<a href="{{url_for('download', tag = '1lib_2', filename = 'seq_alignment.clw')}}" download class="btn-small grey lighten-1">alignment.clw</a>
-
-</center>
+  </ul>
+  <a href="{{url_for('download', tag = '1lib_2', filename = 'seq_alignment.clw')}}" download class="btn-small grey lighten-1">alignment.clw</a>
 </div>
 
 
 <div class="col s4">
-<center>
-<h5>Target sequence</h5>
-<a href="{{url_for('load_example', tag='1lib_3')}}" class="btn">load 1lib</a>
-
-<br>
-<br>
-
-<p id="list-head">Inputs:</p>
-
-<ul id="input-list">
-    <li>PDB ID: 1lib</li>
+  <h5>Target sequence</h5>
+  <a href="{{url_for('load_example', tag='1lib_3')}}" class="btn">load 1lib</a>
+  <br>
+  <br>
+  <p id="list-head">Inputs:</p>
+  <ul id="input-list">
+    <li>Upload PDB ID: 1lib</li>
     <li>Target sequence:</li>
-
-</ul>
-
-<a href="{{url_for('download', tag = '1lib_3', filename = '1lib_target_sequence.fa')}}" download class="btn-small grey lighten-1">1lib_seq.fa</a>
-
-</div>
-</center>
-</div>
-
-
-<br>
-<br>
-
-
-<center>
-<h4>VCF Demo</h4>
-</center>
-
-<div class="row">
-<div class="col offset-s4 s4">
-<center>
-
-
-<a href="{{url_for('load_example', tag='vcf_demo')}}" class="btn">load demo</a>
-
-<br>
-<br>
-
-<p>Input:</p>
-
-<a href="{{url_for('download', tag = 'vcf_demo', filename = 'demo.vcf')}}" download class="btn-small grey ligthen-1">demo.vcf</a>
-<br>
-
-</center>
+  </ul>
+  <a href="{{url_for('download', tag = '1lib_3', filename = '1lib_target_sequence.fa')}}" download class="btn-small grey lighten-1">1lib_seq.fa</a>
 </div>
 </div>
+
+
+<br>
+<br>
 
 
 {% endblock %}

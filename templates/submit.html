@@ -29,12 +29,12 @@
 
 
 <div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
+    <input id="pdb-id" type="text" name="pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
     <label for="chain">Load structure from PDB</label>
 </div>
 
 <div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="alphafoldid" class="validate" placeholder="Uniprot ID">
+    <input id="af-id" type="text" name="alphafoldid" class="validate" placeholder="Uniprot ID">
     <label for="chain">Load prediction from AlphaFold DB</label>
 </div>
 
@@ -198,6 +198,28 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
     }
 
     initUploads()
+
+
+    function structureProvided() {
+      if($("#af-id").val() != "") {
+        return true;
+      } 
+      if($("#pdb-id").val().length == 4) {
+        return true;
+      } 
+      if($('#pdb-upl').get(0).files.length != 0) {
+        return true;
+      }
+      return false;
+    }
+
+
+    $("#submitForm").on('submit', function(e) {
+      if(!structureProvided()) {
+        e.preventDefault();
+        $("#error-msg").html("Please provide a structure")
+      } 
+    });
 
     /*
     $("#pdb-upl").parent().parent().append('<center><div class="filename"></div></center>');
