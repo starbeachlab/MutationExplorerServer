@@ -337,7 +337,7 @@ def filter_structure(outdir, file_path, chain_filter, remove_hets):
 
 
 
-def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
+def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
     # name = "mut_0"
     # structure = "structure.pdb"
     resfile =  name + "_resfile.txt"   
@@ -379,51 +379,6 @@ def relax_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structur
             print("Fixbb since filtering")
             start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
             msg =  "notfound"
-
-
-def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af):
-    resfile =  "mut_0_resfile.txt"   
-    structure_file = "structure.pdb"
-    log_file = "log.txt"
-
-    mutations_to_resfile( [] , outdir + resfile )    
-
-    path = ""
-
-    if msg != "found":
-
-        if (not filtered) and longmin == True:
-            if(pdb != ""):
-                rose = app.config['ROSEMINT_PATH']
-                path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
-                rose = app.config['ROSEMINT_PATH']
-                path = rose + "alphafold/" + af.upper() + ".pdb"
-
-        print(path)
-        start_thread(fixbb, [tag, structure_file, resfile, "mut_0", log_file, longmin, path ], "minimisation")
-    else:
-
-        if (not filtered) and longmin == True:
-            shutil.copyfile( outdir + structure_file, outdir + "mut_0.pdb")
-            if(pdb != ""):
-                rose = app.config['ROSEMINT_PATH']
-                path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
-                rose = app.config['ROSEMINT_PATH']
-                path = rose + "alphafold/" + af.upper() + ".pdb"
-
-            print("path rasp: " + path)
-            calc_rasp(tag, structure_file, "mut_0", log_file, path ) # TODO
-
-            file_processing( tag, structure_file, "mut_0",  log_file)
-
-        else:
-            print("Fixbb since filtering")
-            start_thread(fixbb, [tag, structure_file, resfile, "mut_0", log_file, longmin], "minimisation")
-            msg =  "notfound"
-
-
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -501,7 +456,7 @@ def submit():
         f.write(original_name)
         
     # relax structure
-    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
+    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
     print('fixbb started for initial upload\n')
 
     return redirect(url_for('mutate', tag = tag, msg=msg))
@@ -893,7 +848,7 @@ def interface_calculation(tag, mutant, inputs):
     longmin = inputs["longmin"]
 
     # relax provided structure
-    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af)
+    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
 
 
     ### get mutations 
@@ -907,8 +862,7 @@ def interface_calculation(tag, mutant, inputs):
     if wait(outdir + parent, 1, 900) == False:
         return
 
-    #add_mutations_from_alignment(mutations, clustal, outdir + parent, target_seq = target_clustal_id, preselected_chain = chain) 
-    mutations = mutations_from_alignment_interface(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
+    mutations = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
 
     if len(mutations) == 0:
         return
@@ -950,12 +904,12 @@ def interface_calculation_target(tag, inputs):
     longmin = inputs["longmin"]
 
 
-    relax_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
+    relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
     if(not wait(outdir + "mut_0.pdb", 1, 900)):
         return
 
-    relax_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
+    relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
 
     print("##########")
     print("if calc w/ target done")
@@ -1518,8 +1472,7 @@ def add_mutations_from_sequence( mutations, target, chain, idy, parent):
     print(cmd)
     p = subprocess.check_output( cmd.split())
     print(p)
-    #mutations.extend( mutations_from_alignment( f3, parent) )
-    mutations.extend( mutations_from_alignment_interface( f3, parent) )
+    mutations.extend( mutations_from_alignment( f3, parent) )
 
     
 def seq_from_fasta( filename):
@@ -1542,8 +1495,7 @@ def write_fasta( filename, seq, header=""):
         w.write(seq + '\n')
     
 def add_mutations_from_alignment( mutations, clustal_file, parent, base_chain=""):
-    #mutations.extend( mutations_from_alignment( clustal_file, parent ) )
-    mutations.extend( mutations_from_alignment_interface( clustal_file, parent, base_chain=base_chain) )
+    mutations.extend( mutations_from_alignment( clustal_file, parent, base_chain=base_chain) )
 
 
         
@@ -1590,75 +1542,7 @@ def pdb2seq( pdb):
 
 
     
-def mutations_from_alignment( clustal, parent, target_seq="", preselected_chain="" ):
-    mutations = []
-
-
-    ### read alignment, pdb sequence
-    ali = read_clustal( clustal)
-    #seqs = sequences( ali)
-    chains = pdb2seq( parent)
-    chain_in_pdb = preselected_chain
-    ali_id = ''
-    count = 0
-
-    # find pdb sequence in alignment
-    if chain_in_pdb:
-        for a,b in ali.items():
-            if chains[chain_in_pdb][0] == b:
-                count += 1
-                ali_id = a
-                print( 'mutations(): matching sequences found:', a, chain_in_pdb)
-    else:
-        # if no chain was provided, last chain w/ matching sequence is chosen
-        for c,v in chains.items():
-            for a,b in ali.items():
-                if v[0] == b:
-                    count += 1
-                    chain_in_pdb = c 
-                    ali_id = a
-                    print( 'mutations(): matching sequences found:', a, c)
-
-    if count != 1:
-        print( 'ERROR: mutations() found ',count,'identical matches')
-    if count == 0:
-        print('bye')
-        exit(1)
-
-
-    ### select target sequence
-    aligned = target_seq
-    if not aligned:
-        # if no target sequence was provided, first non-identical sequence is chosen instead
-        for a,b in ali.items():
-            if a != ali_id:
-                aligned = b
-                break
-    pdbseq = chains[chain_in_pdb][0]
-    pdbres = chains[chain_in_pdb][1]
-
-    ### find mutations
-    count = 0
-    at_end = False
-    for i in range( len( pdbseq )):
-        while aligned[count] == '-':
-            count += 1
-            if count == len(aligned) - 1:
-                at_end = True
-                break
-        if at_end:
-            break
-        if aligned[count] != pdbseq[i]:
-            mutations.append( chain_in_pdb + ':' + str(pdbres[i]) + aligned[count] )
-        count += 1
-
-    print( __name__, 'found', len(mutations), 'mutations')
-
-    return mutations
-
-
-
-def mutations_from_alignment_interface(clustal, base_structure, base_clustal_id="", target_clustal_id="", base_chain="" ):
+def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target_clustal_id="", base_chain="" ):
     mutations = []
 
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
