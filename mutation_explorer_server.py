@@ -1304,6 +1304,7 @@ def build_list(d):
 
 
 def load_explore_page(out, tag, filename):
+    # TODO: rename out (out should contain tag)
     mut_tree = build_mutation_tree(out, tag, "none")
     print('explore::tree', mut_tree)
     structures = "<ul>" + build_list(mut_tree) + "</ul>"
@@ -1326,8 +1327,11 @@ def load_explore_page(out, tag, filename):
     #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
 
-
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
+    two_structures = os.path.isfile(out + tag + "/mut_1.pdb")
+    print("###############")
+    print("###############")
+    print(out + "mut_1.pdb")
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures)
 
 
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])

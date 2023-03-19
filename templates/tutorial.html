@@ -14,12 +14,12 @@
 </style>
 {% endblock %}
 
-<div id="top" name="top"></div>
 
 <center>
 <h1>Tutorial for <span  style="font-variant:small-caps">MutationExplorer</span> </h1>
 <div><img src="static/img/workflow.png" width="100%;"></div>
 </center>
+<div id="top" name="top"></div>
 
 <!--
 
@@ -67,14 +67,14 @@
   All ways of defining mutations lead to the explore window: <br>
   7) <a href="tutorial#explore">MutationExplorer result window</a>  <br><br>
 
-  Specific applications <b>(have to be written)</b>:<br>
+  Specific applications: <br>
   8) <a href="#hom">Homology modeling of multiple states of a protein</a><br>
   9) <a href="#back">Backmutating PDB structures to wildtype sequence for MD simulations</a><br>
-  10) ...<br><br>
+  X) ...any ideas?<br><br>
   
   General remarks:<br>
   <!--6) <a href="#mini">Energy minimization and database</a> <br>-->
-  8) <a href="tutorial#specific">Limitations</a> <br>
+  10) <a href="tutorial#specific">Limitations</a> <br>
 </p>
 
 <p> For further information, see the <a href="faq">FAQs</a>.</p>
@@ -109,8 +109,10 @@
   <b>1.1) Database of pre-minimized structures from the Protein Databank (PDB)</b><br><br>
   Since the minimization is essential for correctly highlighting the energetic impact of mutations, but  takes no small amount of time to perform, we calculated a database of pre-minimized structures from the PDB. Currently our database  contains 45,000 models. You will be notified if your PDB ID was found in our database or has to be calculated.<br>
 
-<br>
-<a href="#top" style="text-align:right;">back top</a>
+  <br>
+  <div style="text-align:right;">
+    <a href="#top">back top</a>
+  </div>
 <br><br>
 
 
@@ -135,7 +137,10 @@ estimation of a mutation’s (de)stabilizing effect, without
   This will open a frame with 20 energy estimates.
   Be aware that this an approximation.
 </p>
-<a href="#top" style="text-align:right;">back top</a>
+<br>
+<div style="text-align:right;">
+  <a href="#top" style="text-align:right;">back top</a>
+</div>
 <br><br>
 
 
@@ -162,7 +167,9 @@ This can be used to superimpose two structures based on an alignment (if you upl
 You can visualize the sequence conservation or the energetic properties of the proteins. <br>
 <a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html</a>
 <br>
-<a href="#top">back top</a>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 <br><br>
 
 
@@ -181,7 +188,10 @@ You can visualize the sequence conservation or the energetic properties of the p
   <li> VCF processing:  5 min  </li>
   Actual times depend on the size of the system and may vary significantly.
 </ul>
-<a href="#top">back top</a>
+<br>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 <br><br>
 
 
@@ -209,8 +219,11 @@ Select the type of minimization to be performed on the provided PDB file. If the
 Enter your E-Mail address to get notified when your minimization is finished.<br><br>
 When you are done, click on <span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="Next: input mutations" style="margin:5px;">Next: input mutations</button> </span><br>
 The <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="load example" style="margin:5px;">load example</button> </span>on page bottom leads to an example <span style="font-variant:small-caps">MutationExplorer</span> session.
-  </p>
-<a href="#top">back top</a>
+</p>
+<br>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 <br><br>
   
 
@@ -249,7 +262,10 @@ There are three ways of providing mutational data:
 </ul>
   Click on<span class="center-align toggle-card"> <button data-target="modal3" class="waves-effect waves-light btn modal-trigger" title="submit and launch explorer" style="margin:5px;">submit and launch explorer</button> </span> to proceed to caluclation. When this is finished, you will be re-directed to the <span style="font-variant:small-caps">MutationExplorer</span> window.
 </p>
-<a href="#top">back top</a>
+<br>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 <br><br>
 
 
@@ -293,7 +309,10 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
   <li style="margin: 10px;">The mutation marker color and size can be adjusted via the slider and color window. The marker can be turned off by clicking on <span style="font-family:Arial"><b>✓ On</b></span> in the Show Field, setting it to <span style="font-family:Arial"><b>X Off</b></span></li>
 </ul>
 </p>
-<a href="#top">back top</a>
+<br>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 <br><br>
 
 
@@ -304,6 +323,60 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 <br><br>
 <h4> 8) Homology modeling of multiple states of a protein </h4>
 <p>
+  What AlphaFold is not able to do is to model different states of a protein.
+  This can be achieved using <span style="font-variant:small-caps">MutationExplorer</span>.
+  For many classes and families of proteins, multiple states are available in the PDB.
+  Different states can be modeled By selecting different PDBs as base structure and follow these steps:
+</p>
+<ul id="input-list">
+  <li> under &ldquo;upload structure and mutations&rdquo; enter the PDB ID of the base structure or upload a model from your machine </li>
+  <li> ideally select the long minimization (for homology modeling the RaSP option can be disabled) and click the 'next' button </li>
+  <li> for uploading the sequence to which you want to modify the base structure to there are multiple choices: </li>
+  <ul  style="margin: 2em; margin-top: 0.5em">
+    <li> paste or upload it under &ldquo;target sequence&rdquo; (when the target is rather similar to your base structure / template) </li>
+    <li> if your target sequence has an Uniprot ID you can enter that </li>
+    <li> you will have to indicate to which chain in the base structure the sequence shall be applied (available chains are listed) </li>
+    <li> if it is a very remote relationship, follow the <a href="#alignme">AlignMe procedure</a></li>
+    <li> for other cases either also use <a href="#alignme">AlignMe</a>, or upload an alignment from another source via &ldquo;sequence alignment&rdquo;</li>
+  </ul>
+</ul>
+<p>
+  The part that cannot be done by <span style="font-variant:small-caps">MutationExplorer</span> is the minimization of the model.
+  The user can choose between different possibilities, e.g. using Rosetta as explained <a href="#mini">here</a>, or by performing MD simulations and many others.
+  Whatever approach the user choosed, it requires sufficient sampling and thus has to be done locally.
+</p>
+<br>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
+
+
+
+
+<div id="back" name="back"></div>
+<br><br>
+<h4> 9) Backmutating PDB structures to wildtype sequence for MD simulations </h4>
+<p>
+  Structures deposited in the PDB are very often modified in order to solve them experimentally. 
+  Using <span style="font-variant:small-caps">MutationExplorer</span>, it is a simple two-step process to mutate them back to their native sequence.
+  Thus it is common step for simulating proteins to back-mutate PDB.
+</p>
+<p>
+  However, it should be noted that at its current state <span style="font-variant:small-caps">MutationExplorer</span> is not able to complete the structure by modeling missing parts in the PDB.
+</p>
+
+</p>
+<ul id="input-list">
+  <li> </li>
+  <ul  style="margin: 2em; margin-top: 0.5em">
+    <li> </li>
+  </ul>
+</ul>
+<p>
+</p>
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 
 
 
@@ -313,7 +386,7 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 
 <div id="specific" name="specific"></div>
 <br><br>
-<h4> 8) Limitations </h4>
+<h4> 10) Limitations </h4>
 <p>
 Currently, <span style="font-variant:small-caps">MutationExplorer</span> has no potentials targeted for membrane proteins available. Especially for residues facing the membrane, a special score-function and preparation is desired. Other residues, especially those outside of the membrane can be investigated with <span style="font-variant:small-caps">MutationExplorer</span> without limitations.<br><br>
 Moreover, some mutations are generally challenging for Rosetta, foremost
@@ -336,8 +409,10 @@ should definitely minimize these on their local computer
 before upload. For this purpose, we recommend using the
 according <a href="#mini">command lines</a>. </p>
 
+<div style="text-align:right;">
+  <a href="#top">back top</a>
+</div>
 
-<a href="#top">back top</a>
 
 <br><br>
 
