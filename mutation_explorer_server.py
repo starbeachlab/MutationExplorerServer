@@ -429,6 +429,7 @@ def filter_structure(outdir, file_path, chain_filter, remove_hets):
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
     # name = "mut_0"
     # structure = "structure.pdb"
+    
     resfile =  name + "_resfile.txt"   
     log_file = "log.txt"
 
@@ -468,6 +469,15 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             print("Fixbb since filtering")
             start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
             msg =  "notfound"
+
+            
+
+def score_structure( infile, outdir, outfile):
+    cmd = app.config['ROSETTA_PATH'] + 'score_jd2.static.linuxgccrelease -in:file:s ' + outdir + infile + ' -nstruct 1 -out:pdb -out:prefix ' + outdir
+    os.system( cmd )
+    cmd = "mv " + infile[:-4] + '_0001.pdb ' + outfile
+    os.system( cmd )
+            
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -552,7 +562,7 @@ def submit():
 
 
 def add_mutations(tag, mutant, inputs):
-    outdir =   app.config['USER_DATA_DIR'] + tag + "/"
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
     
     mutations = inputs["mutations"]
     if len(mutations) == 1 and mutations[0] == '':
@@ -576,10 +586,9 @@ def add_mutations(tag, mutant, inputs):
     """
     
     print( 'wait for parent to exist\n')
-    ### wait for parent to exist:
+    ### wait for mut_0.pdb to exist
     if wait( outdir + parent, 1, 900) == False:
-        #return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")    ### @Nikola: warum ist das auskommentiert? Rene
-        return
+        fatal_error(tag, RELAXATION_FAILED)
 
     
     # get all mutations
@@ -616,37 +625,13 @@ def add_mutations(tag, mutant, inputs):
     if len(mutations) != 0:
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
-        print("no mutations")
-        #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
-        status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-        status = "no+mutations+defined+" + outdir + parent
-        cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-        print(cmd)
-        print(outdir +  "log.txt")
-        log = open( outdir + "log.txt", 'a')
-        bash_cmd(cmd,  log)
-        return
+        fatal_error(tag, NO_MUTATIONS)
     
-    #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") # fixbb sends all cmds to threads 
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
-    #add_energy(  outdir + mutant, outdir +  mutfile ) # part of fixbb now !!
-   #TODO Define Chain    
-    
-
-
-    #out = app.config['USER_DATA_DIR'] + tag + "/"
-    #log = open( out + "log.txt", 'a')
-    #out_file_name = mutant
-    #if out_file_name[-4:] == '.pdb':
-    #    out_file_name = out_file_name[:-4]
-
-    #cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name
-    #bash_cmd(cmd, log)
-    #print("bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name)
-    #os.system("bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " +  "A " + out_file_name)
-
-
+    # wait for mutation 
+    if wait(mutant, 1, 900) == False:
+        fatal_error(tag, MUTATION_FAILED)
 
     send_email(outdir + "mail.txt")
 
@@ -934,10 +919,12 @@ def interface_one_structure(tag, mutant, inputs):
     filtered = inputs["base_filtered"]
     msg = inputs["base_msg"]
 
-    longmin = inputs["longmin"]
-
-    # relax provided structure
-    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+    if inputs['longmin'] == 'none':
+        score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
+    else:
+        # relax provided structure
+        longmin = ( inputs["longmin"] == 'long' )
+        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
 
 
     ### get mutations 
@@ -995,19 +982,22 @@ def interface_two_structures(tag, inputs):
     target_filtered = inputs["target_filtered"]
     target_msg = inputs["target_msg"]
 
-    longmin = inputs["longmin"]
+    if inputs['longmin'] == 'none':
+	score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
+	score_structure( 'structure2.pdb', outdir, 'mut_1.pdb')
+    else:
+        # relax provided structure                                                                                                                                                                 
+        longmin = ( inputs["longmin"] == 'long' )
+        # minimize structures
+        relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
+        if(not wait(outdir + "mut_0.pdb", 1, 900)):
+            fatal_error(tag, RELAXATION_FAILED)
 
-    # minimize structures
-    relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
-
-    if(not wait(outdir + "mut_0.pdb", 1, 900)):
-        fatal_error(tag, RELAXATION_FAILED)
-
-    relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
-
-    if(not wait(outdir + "mut_1.pdb", 1, 900)):
-        fatal_error(tag, RELAXATION_FAILED)
+        relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
+    
+        if(not wait(outdir + "mut_1.pdb", 1, 900)):
+            fatal_error(tag, RELAXATION_FAILED)
 
     base_strc = outdir + "mut_0.pdb"
     target_strc = outdir + "mut_1.pdb"
@@ -1112,8 +1102,7 @@ def interface(tag):
     inputs["target_chain"] = secure_filename( request.form['target_chain'].strip() )
 
     # options
-    min_type = request.form['min-selector'] # = short | long
-    inputs["longmin"] = (min_type == 'long')
+    inputs["longmin"] = request.form['min-selector'] # = short | long | none
 
     rasp_checkbox = request.form.get('rasp-checkbox') # = on | none
     inputs["rasp_calculation"] = (rasp_checkbox == 'on')
@@ -1154,7 +1143,8 @@ def interface(tag):
         f.write(base_original_name)
 
     # create info file for mut_0, (mut_1)
-    os.mkdir(outdir + "info/")
+    if not os.path.isdir( outdir + 'info/'):
+        os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("none\n")
 

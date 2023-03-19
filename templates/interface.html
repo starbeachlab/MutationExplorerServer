@@ -121,7 +121,9 @@
 	<div class="modal-content">
 	  <h4>Minimization</h4>
 	  <p>
-	    The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
+	    The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br><br>
+	    If you select <b> none </b>, coloring the structures by energy or energy difference is possible but does not provide reliable information. <br><br>
+
 	    We continuously pre-minimize structures from the PDB using the commandline described below.
 	    If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
 	    Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
@@ -149,7 +151,13 @@
   
   <p>
     <label>
-      <input type="radio" name="min-selector" value="long" checked required />
+      <input type="radio" name="min-selector" value="none" checked required />
+      <span>none (visualize sequence conservation and hydrophobicity)</span>
+    </label>
+  </p>
+  <p>
+    <label>
+      <input type="radio" name="min-selector" value="long" />
       <span>long (5-60 min, recommended)</span>
     </label>
   </p>
@@ -182,7 +190,7 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
   
      <p>
     <label>
-      <input type="checkbox" name="rasp-checkbox"  checked />
+      <input type="checkbox" name="rasp-checkbox"  />
       <span>Calculate RaSP model (~10 min per chain)</span>
     </label>
   </p>

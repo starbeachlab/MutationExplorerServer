@@ -44,51 +44,64 @@
 -->
   <br><br>
 
-<h3>Overview</h3>
-<p> There are three ways of using <span  style="font-variant:small-caps">MutationExplorer</span>.<br>
+  <h3>Overview</h3>
+  
+<p> General options when running  <span  style="font-variant:small-caps">MutationExplorer</span>: <br>
+  0) <a href="#mini">Energy minimization and database</a><br>
+  0) <a href="#rasp">RaSP fast prediction of mutation energies</a> <br><br>
+
+
+  
+  There are three ways of using <span  style="font-variant:small-caps">MutationExplorer</span>.<br><br>
   First, you can create sequence alignments using the AlignMe server and forward the results to <span  style="font-variant:small-caps">MutationExplorer</span>:<br>
   1) <a href="tutorial#alignme">AlignMe</a> <br><br>
   Then there are
   two main modes of usage that are related to the tabs in the top menu.<br><br>
   First, one can upload sequencing data: <br>
-  2) <a href="tutorial#vcf">"Upload VCF"</a> <br><br>
+  2) <a href="tutorial#vcf">Upload VCF</a> <br><br>
   
-  Second, you can "upload structure and mutations" as explained in:<br>
+  Second, you can "upload structure and mutations":<br>
   3) <a href="tutorial#upload">Upload model</a> <br>
-  4) <a href="tutorial#mutate">Define mutations</a> <br>
-  Both lead to the explore window: <br>
-  5) <a href="tutorial#explore">MutationExplorer</a> <br>
+  4) <a href="tutorial#mutate">Define mutations</a> <br><br>
+  All ways of defining mutations lead to the explore window: <br>
+  5) <a href="tutorial#explore">MutationExplorer result window</a>  <br><br>
   General remarks:<br>
-  6) <a href="#mini">Energy minimization and database</a> <br>
+  <!--6) <a href="#mini">Energy minimization and database</a> <br>-->
   7) <a href="tutorial#specific">Specific mutations</a> <br>
 </p>
+
+
+
 
 <div id="alignme" name="alignme" style="top-margin:2cm;"></div>
 <br>
 <br>
 <h4>1) AlignMe </h4>
 
-<a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">AlignMe</a> is a software package and webserver for detecting similarities between proteins, which are too low to be detected on the sequence level using standard methods.
+<a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">AlignMe</a> is a software package and webserver for detecting similarities between proteins, which are too subtle to be detected on the sequence level using standard methods.
 Follow these steps:
 <ul id="input-list">
-  <li> paste two sequences in Fasta format into the windows under 1.</li>
-  <li> if the sequences are rather simple select the 'fast' alignment under 2.</li>
+  <li> paste two sequences in Fasta format into the windows </li>
+  <li> if the sequences are rather similar select the 'fast' alignment</li>
   <li> if there is little similarity on a sequence level, use one of the three other modes.</li>
   <li> submit</li>
   <li> on the result page, click the button to <span  style="font-variant:small-caps">MutationExplorer</span> </li>
   <li> now a form opens where you can upload one or two structures on which the alignments are mapped. </li>
 </ul>
+This can be used to superimpose two structures based on an alignment (if you upload two structures).
+<span  style="font-variant:small-caps">MutationExplorer</span> will mutate the models according to the alignment.
+You can visualize the sequence conservation or the energetic properties of the proteins. <br>
+<a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html</a>
+
+
 
 
 <div id="vcf" name="vcf"></div>
 <br><br>
 <h4> 2) Upload VCF</h4>
 <p> This form allows to upload human SNPs in VCF format. <br>
-  The upload and handling is simple, select a file and submit. </p>
-  
 
-
-<ul id="input-list" style="font-size: 14px;border: 1px solid darkgrey ">
+<ul id="input-list" style="font-size: 14px;">
   <b>Expected time requirements</b><br>
   
   <li> Initial basic minimization: 1 min </li>
@@ -96,6 +109,7 @@ Follow these steps:
   <li> VCF processing:  5 min  </li>
   Actual times depend on the size of the system and may vary significantly.
 </ul>
+
 
 
 <div id="upload" name="upload"></div>
@@ -123,6 +137,8 @@ When you are done, click on <span class="center-align toggle-card"> <button data
 The <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="load example" style="margin:5px;">load example</button> </span>on page bottom leads to an example <span style="font-variant:small-caps">MutationExplorer</span> session.
   </p>
   
+
+
 <div id="mutate" name="mutate"></div>
 <br><br>
 <h4> 4) Define mutations</h4>
@@ -160,9 +176,10 @@ There are three ways of providing mutational data:
 
 
 
+
 <div id="explore" name="explore"></div>
 <br><br>
-<h4> 5) <span style="font-variant:small-caps">MutationExplorer</span> Window</h4>
+<h4> 5) <span style="font-variant:small-caps">MutationExplorer</span> result window</h4>
 <p>
 <ul>
 In the explorer view, you will be presented with information about your set of mutations, relative per-residue energies and visualization of the protein.<br><br>
@@ -184,7 +201,6 @@ In the explorer view, you will be presented with information about your set of m
 </ol><br>
 Clicking on any highlighted residue will zoom in, showing the selected residue and its surroundings in a ball-and-stick view. Different carbon colors indicate protein chains, otherwise atoms are colors by type. Dashed lines indicate residue-residue interactions like hydrogen bonds.<br><br>
 
-
   <b>5.1) Adding mutations</b><br>
   <ul id="input-list">
     <li style="margin: 10px;">In the tree view, click on the protein to serve as the root for your next mutation, e.g.  <span style="font-family: FreeMono; color:darkblue;"><b>mut_0_1</b></span>, which is the first mutation entered in the webpage</li>
@@ -199,6 +215,7 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
   <li style="margin: 10px;">The mutation marker color and size can be adjusted via the slider and color window. The marker can be turned off by clicking on <span style="font-family:Arial"><b>✓ On</b></span> in the Show Field, setting it to <span style="font-family:Arial"><b>X Off</b></span></li>
 </ul>
 </p>
+
 
 
 
@@ -225,6 +242,7 @@ Clicking on any highlighted residue will zoom in, showing the selected residue a
 
 <p>
   This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
+
 
 
 
