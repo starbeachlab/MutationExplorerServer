@@ -23,15 +23,40 @@ STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence 
 
 
 
+
+def bash_cmd(cmd, tag):
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+
+    logfile = "log.txt"
+    log = open( out + logfile, 'a')
+
+    log.write(cmd + "\n")
+    p = subprocess.check_output(cmd.split())
+    log.write(str(p) + "\n")
+
+    log.close()
+
+
 def fatal_error(tag, msg):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
-    #if not os.path.exsits(outdir + "fatal.log"):
 
     with open(outdir + "fatal.log", "a") as f:
         f.write(msg)
 
     exit(1)
-    
+
+
+def status_update(tag, status, check_rasp=""):
+    # TODO: replace "manual" status calls with function
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
+    status_path = outdir + "status.log"
+
+    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+    if check_rasp != "":
+        cmd = cmd + " check_rasp " + check_rasp
+
+    bash_cmd(cmd, tag) 
+
 
 
 @app.route('/')
@@ -116,18 +141,14 @@ def name_mutation(out, base_structure, tag):
     return strc + "_" + str(max(nums) + 1)  + ".pdb"
 
 
-def bash_cmd(cmd, log):
-    log.write(cmd + "\n")
-    p = subprocess.check_output(cmd.split())
-    log.write(str(p) + "\n")
-
-
 def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store=""):
+    # TODO: remove logfile
+
+
     print("######## fixbb  #######")
     print(tag)
     print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open( out + logfile, 'a')
 
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
@@ -136,7 +157,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     status = "Start+fixbb+for+" + out_file_name
     cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
 
 
@@ -144,27 +165,26 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
     if longmin == True:
         cmd += " -ex1 -ex2  "
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
     print("rosetta done")	
 
 
     status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     status = "fixbb+for+" + out_file_name + "+done"
     cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     if(path_to_store != ""):
         cmd = "tsp cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        bash_cmd(cmd, log)
+        bash_cmd(cmd, tag)
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
     file_processing( tag, structure, out_file_name, logfile)
     print("File processing")
-    log.close()
 
 
 
@@ -172,7 +192,6 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
 
     if(len(glob.glob(out+"rasp.status")) > 0):
-        log = open( out + logfile, 'a')
         chains = get_chains(out + "structure.pdb")
         chain_list = list(chains)
 
@@ -189,18 +208,18 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
                 status = "Start+RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain
                 cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-                bash_cmd(cmd, log)
+                bash_cmd(cmd, tag)
 
 
                 cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
                 print(cmd)
-                bash_cmd(cmd, log)
+                bash_cmd(cmd, tag)
            
 
                 if(path_to_store != ""):
                     cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
                     print(cmd)
-                    bash_cmd(cmd, log)
+                    bash_cmd(cmd, tag)
         
 
 
@@ -208,19 +227,16 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 status = "RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
                 cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
                 print(cmd)
-                bash_cmd(cmd, log)
+                bash_cmd(cmd, tag)
 
 
 
 def superimpose(tag, align_structure, align_chain, template_structure, template_chain, alignment, logfile):
     si = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_superimpose.py alignment: '
 
-    out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open(out + logfile, 'a')
-
     tmp = align_structure[:-4] + '_tmp.pdb'
     cmd = "tsp " + si + align_structure + ' ' + align_chain + ' ' + template_structure + ' ' + template_chain + ' ' + alignment + ' ' + tmp
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     # wait for superimposed structure
     if not wait(tmp, 1, 900):
@@ -231,16 +247,10 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
 
 
 def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
-    print("################")
-    print("CALC CONSERVATION")
-    print("################")
     cons = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_conservation.py '
 
-    out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open(out + logfile, 'a')
-
     cmd = "tsp " + cons + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + structure[:-4] + '_cons.pdb' 
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     
 
@@ -267,17 +277,6 @@ def mutant_calc_conservation(tag, structure, logfile):
         # check if chain is mutated; otherwise continue to next chain
         cid = structure[:-4].split("/")[-1]
         muts = mutations_from_alignment(chain_alignment, structure, base_clustal_id=cid, base_chain=c)
-        print("##############")
-        print("CHAIN", c)
-        print(chain_alignment)
-        print(structure)
-        print(cid)
-        print(c)
-
-        print()
-        print("MUTATIONS")
-        for m in muts:
-            print(m)
 
         if len(muts) == 0:
             print("no mutations on chain")
@@ -312,13 +311,6 @@ def mutant_calc_conservation(tag, structure, logfile):
 
 
 def file_processing( tag, structure, out_file_name, logfile):
-    print("#################")
-    print("#################")
-    print(" file processing")
-    print(tag)
-    print(out_file_name)
-    print("#################")
-    print("#################")
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
@@ -327,30 +319,29 @@ def file_processing( tag, structure, out_file_name, logfile):
     mutti = app.config['SCRIPTS_PATH'] + 'pdb_mutated_aa.py '
     
     out = app.config['USER_DATA_DIR'] + tag + "/"
-    log = open( out + logfile, 'a')
     
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
     
     cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     if "mut" in structure:
         cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffE.pdb' 
-        bash_cmd(cmd, log)
+        bash_cmd(cmd, tag)
 
     cmd = "tsp " + hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
 
     cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name?
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
     
     if "mut" in structure:
         cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffHyPh.pdb'
-        bash_cmd(cmd, log)
+        bash_cmd(cmd, tag)
 
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
-        bash_cmd(cmd, log)
+        bash_cmd(cmd, tag)
 
         start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
     
@@ -358,18 +349,12 @@ def file_processing( tag, structure, out_file_name, logfile):
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
 
-    print("#################")
-    print("#################")
-    print("touch", out_file_name)
     cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  
-    bash_cmd(cmd, log)
-    print("#################")
-    print("#################")
+    bash_cmd(cmd, tag)
 
     cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
-    bash_cmd(cmd, log)
+    bash_cmd(cmd, tag)
     
-    log.close()
 
 
 
@@ -441,7 +426,7 @@ def save_pdb_file(file_path, upload, pdb, af):
     return original_name, error, error_message, msg
 
 
-def filter_structure(outdir, file_path, chain_filter, remove_hets):
+def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
     if chain_filter != "" or remove_hets:
         chains = chain_filter.split()
 
@@ -456,8 +441,7 @@ def filter_structure(outdir, file_path, chain_filter, remove_hets):
                             continue
                     f_out.write(line)
 
-        print("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) 
-        bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
+        bash_cmd("tsp mv " + outdir + "structure2.pdb " + file_path, tag)
         return True
     return False
 
@@ -509,12 +493,25 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
 
             
 
-def score_structure( infile, outdir, outfile):
-    cmd = app.config['ROSETTA_PATH'] + 'score_jd2.static.linuxgccrelease -in:file:s ' + outdir + infile + ' -nstruct 1 -out:pdb -out:prefix ' + outdir
-    os.system( cmd )
-    cmd = "mv " + infile[:-4] + '_0001.pdb ' + outfile
-    os.system( cmd )
-            
+def score_structure(tag, outdir, name, structure):
+    logfile = "log.txt"
+
+    status_update(tag, "Start+scoring+for+" + name)
+
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + 'score_jd2.static.linuxgccrelease -in:file:s ' + outdir + structure + ' -nstruct 1 -out:pdb -out:prefix ' + outdir
+    bash_cmd(cmd, tag)
+
+    status_update(tag, "scoring+for+" + name + "+done")
+
+    cmd = "tsp mv " + outdir + structure[:-4] + '_0001.pdb ' + outdir + name + '.pdb'
+    bash_cmd(cmd, tag)
+
+    # TODO: rasp 
+    # calc_rasp(tag, structure, name, logfile, path_to_store)
+    # see fixbb / relax_initial_structure
+
+    file_processing(tag, structure, name, logfile)
+
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -536,7 +533,8 @@ def submit():
     email = False
     #email = request.form['email'].strip()
 
-    min_type = request.form['min-selector'] # = short | long
+    min_type = request.form['min-selector'] # = long | short | none
+    minimize = (min_type != 'none')
     longmin = (min_type == 'long')
 
 
@@ -569,7 +567,7 @@ def submit():
         return render_template("submit.html", error = error_message)
 
     # filter (remove) chains, heteroatoms
-    filtered = filter_structure(outdir, file_path, chain_filter, remove_hets)
+    filtered = filter_structure(tag, outdir, file_path, chain_filter, remove_hets)
 
     print("submit\n")
     if os.path.isfile( file_path):
@@ -592,7 +590,11 @@ def submit():
         f.write(original_name)
         
     # relax structure
-    relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+    if minimize:
+        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+    else:
+        score_structure(tag, outdir, "mut_0", "structure.pdb")
+
     print('fixbb started for initial upload\n')
 
     return redirect(url_for('mutate', tag = tag, msg=msg))
@@ -841,7 +843,8 @@ def vcf():
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
 
-    min_type = request.form['min-selector'] # = short | long
+    min_type = request.form['min-selector'] # = long | short | none
+    minimize = (min_type != 'none')
     longmin = (min_type == 'long')
 
 
@@ -908,24 +911,28 @@ def vcf():
         f.write(alphafold)
 
     # relax structure
-    if msg != "found":
+    if minimize:
+        if msg != "found":
 
-        path = ""
-        rose = app.config['ROSEMINT_PATH']
-        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
+            path = ""
+            rose = app.config['ROSEMINT_PATH']
+            path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
-        print("Store " + path)
-        start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
+            print("Store " + path)
+            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
+        else:
+            shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+            rose = app.config['ROSEMINT_PATH']
+            path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
+
+            print("path rasp: " + path)
+            calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
+            file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
+            file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
+        print( 'fixbb started for initial upload\n')
     else:
-        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
-        rose = app.config['ROSEMINT_PATH']
-        path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
-
-        print("path rasp: " + path)
-        calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
-        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
-        file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
-    print( 'fixbb started for initial upload\n')
+        score_structure(tag, outdir, "mut_0", "structure.pdb")
+        pass
 
     if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
@@ -956,12 +963,14 @@ def interface_one_structure(tag, mutant, inputs):
     filtered = inputs["base_filtered"]
     msg = inputs["base_msg"]
 
-    if inputs['longmin'] == 'none':
-        score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
-    else:
+    minimize = inputs["minimize"]
+    longmin = inputs["longmin"]
+
+    if minimize:
         # relax provided structure
-        longmin = ( inputs["longmin"] == 'long' )
         relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+    else:
+        score_structure(tag, outdir, "mut_0", "structure.pdb")
 
 
     ### get mutations 
@@ -1019,12 +1028,15 @@ def interface_two_structures(tag, inputs):
     target_filtered = inputs["target_filtered"]
     target_msg = inputs["target_msg"]
 
-    if inputs['longmin'] == 'none':
-        score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
-        score_structure( 'structure2.pdb', outdir, 'mut_1.pdb')
+    minimize = inputs["minimize"]
+    longmin = inputs["longmin"]
+
+
+    if minimize:
+        score_structure(tag, outdir, "mut_0", "structure.pdb")
+        score_structure(tag, outdir, "mut_1", "structure2.pdb")
     else:
         # relax provided structure                                                                                                                                                                 
-        longmin = ( inputs["longmin"] == 'long' )
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
@@ -1139,7 +1151,9 @@ def interface(tag):
     inputs["target_chain"] = secure_filename( request.form['target_chain'].strip() )
 
     # options
-    inputs["longmin"] = request.form['min-selector'] # = short | long | none
+    min_type = request.form['min-selector'] # = long | short | none
+    inputs["minimize"] = (min_type != 'none')
+    inputs["longmin"] = (min_type == 'long')
 
     rasp_checkbox = request.form.get('rasp-checkbox') # = on | none
     inputs["rasp_calculation"] = (rasp_checkbox == 'on')
@@ -1216,7 +1230,7 @@ def get_status(tag, filename):
     if check_status:
         status_file = open(status_path)
         msg = status_file.read()
-        print(msg)
+        # print(msg)
         msg = msg.replace("+", " ")
         msg = msg.replace("\n", "<br>")
         if("no mutations defined" in msg):
@@ -1735,12 +1749,6 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
     pdb_chains = {k: v[0] for (k, v) in pdb2seq(structure).items()} # dict; key: chain, value: seq
 
-    print("###############")
-    print("find_pdb_in_alignment")
-
-    print(alignment)
-    print(pdb_chains)
-
     # find all (clustal id, chain) pairs with matching sequences
     matches = []
     for (cid, clustal_seq) in alignment.items():
@@ -1809,8 +1817,6 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
     # find matching pdb chain, clustal id pair
     pdb_match = find_pdb_in_alignment(clustal, base_structure, chain=base_chain, clustal_id=base_clustal_id)
     if pdb_match is None:
-        print("##################")
-        print("error muts from alignment: no matching base sequence found")
         #exit(1) # TODO: error?
         return []
     pdb_cid, pdb_chain = pdb_match
