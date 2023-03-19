@@ -68,8 +68,12 @@ def same_group( A, B ):
 
 
 alignment = bali.ReadAlignment( ali_file)[1]
-nr = len( alignment)
 
+for seq in alignment:
+    if "*" in seq:
+        alignment.remove(seq)
+
+nr = len( alignment)
 
 
 if ali_id >= nr:

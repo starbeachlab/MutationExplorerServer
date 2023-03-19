@@ -264,18 +264,43 @@ def mutant_calc_conservation(tag, structure, logfile):
         if not os.path.isfile(chain_alignment):
             continue
 
-        pdb_match = find_pdb_in_alignment(chain_alignment, structure)
-        if pdb_match is None:
+        # check if chain is mutated; otherwise continue to next chain
+        cid = structure[:-4].split("/")[-1]
+        muts = mutations_from_alignment(chain_alignment, structure, base_clustal_id=cid, base_chain=c)
+        print("##############")
+        print("CHAIN", c)
+        print(chain_alignment)
+        print(structure)
+        print(cid)
+        print(c)
+
+        print()
+        print("MUTATIONS")
+        for m in muts:
+            print(m)
+
+        if len(muts) == 0:
+            print("no mutations on chain")
             continue
-        cid, chain = pdb_match
+
+
+        #pdb_match = find_pdb_in_alignment(chain_alignment, structure, chain=c, clustal_id=structure[:-4])
+        #if pdb_match is None:
+        #continue
+        #cid, chain = pdb_match
 
         sid = get_seq_id(chain_alignment, cid)
         if sid is None:
+            print("seq id not found")
             continue
 
         alignment = chain_alignment
         pdb_chain = c
         seq_id = sid
+
+        print("break")
+
+        break
 
     if alignment == "":
         # no viable alignment found
@@ -287,6 +312,13 @@ def mutant_calc_conservation(tag, structure, logfile):
 
 
 def file_processing( tag, structure, out_file_name, logfile):
+    print("#################")
+    print("#################")
+    print(" file processing")
+    print(tag)
+    print(out_file_name)
+    print("#################")
+    print("#################")
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
@@ -320,14 +352,19 @@ def file_processing( tag, structure, out_file_name, logfile):
         cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, log)
 
-        mutant_calc_conservation(tag, out + out_file_name + '.pdb', logfile)
+        start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
     
     
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
 
-    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  ### TODO: what was this for??
+    print("#################")
+    print("#################")
+    print("touch", out_file_name)
+    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  
     bash_cmd(cmd, log)
+    print("#################")
+    print("#################")
 
     cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, log)
@@ -983,8 +1020,8 @@ def interface_two_structures(tag, inputs):
     target_msg = inputs["target_msg"]
 
     if inputs['longmin'] == 'none':
-	score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
-	score_structure( 'structure2.pdb', outdir, 'mut_1.pdb')
+        score_structure( 'structure.pdb', outdir, 'mut_0.pdb')
+        score_structure( 'structure2.pdb', outdir, 'mut_1.pdb')
     else:
         # relax provided structure                                                                                                                                                                 
         longmin = ( inputs["longmin"] == 'long' )
@@ -1774,13 +1811,17 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
     if pdb_match is None:
         print("##################")
         print("error muts from alignment: no matching base sequence found")
-        exit(1)
+        #exit(1) # TODO: error?
+        return []
     pdb_cid, pdb_chain = pdb_match
 
 
     # select target clustal id
     target_cid = ""
     available_cids = [cid for cid in alignment.keys() if alignment[cid] != alignment[pdb_cid]]
+    if len(available_cids) == 0:
+        return []
+
     if target_clustal_id != "" and target_clustal_id in available_cids:
         target_cid = target_clustal_id
     else:
