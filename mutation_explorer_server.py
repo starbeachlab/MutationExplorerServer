@@ -1878,10 +1878,14 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
 
     # get mutations
-    base_seq = pdb_chains[pdb_chain]
+    #base_seq = pdb_chains[pdb_chain]
+    base_seq = alignment[pdb_cid]
     target_seq = alignment[target_cid]
 
     base_resids = resids[pdb_chain]
+
+
+    assert len(base_seq) == len(target_seq)
 
     print("################")
     print("get mutations from alignment")
@@ -1891,17 +1895,20 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
     mutations = []
 
     count = 0
-    at_end = False
     for i in range( len( base_seq )):
-        while target_seq[count] == '-':
+        # i = index for sequences in alignment; might include gaps
+        # cound = index for base sequence exluding all gaps
+
+        # no mutations from gaps
+        if base_seq[i] == '-':
+            continue
+        if target_seq[i] == '-':
             count += 1
-            if count == len(target_seq) - 1:
-                at_end = True
-                break
-        if at_end:
-            break
-        if target_seq[count] != base_seq[i]:
-            mutations.append( pdb_chain + ':' + str(base_resids[i]) + target_seq[count] )
+            continue
+
+        # sequences contain different residues (no gaps) => mutation
+        if target_seq[i] != base_seq[i]:
+            mutations.append( pdb_chain + ':' + str(base_resids[count]) + target_seq[i] )
         count += 1
 
     print( __name__, 'found', len(mutations), 'mutations')
