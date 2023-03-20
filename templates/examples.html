@@ -42,6 +42,7 @@
     <a href="{{url_for('load_example', tag='rtel1')}}" class="btn">load demo</a>
     <br>
     <br>
+    <p>Via &ldquo;upload vcf&rdquo;</p>
     <p>Input:</p>
     <a href="{{url_for('download', tag = 'rtel1', filename = 'rtel1.vcf')}}" download class="btn-small grey ligthen-1">rtel1.vcf</a>
     <br>
@@ -50,10 +51,12 @@
     <a href="{{url_for('load_example', tag='agpcr_demo')}}" class="btn">load demo</a>
     <br>
     <br>
+    <p>Via &ldquo;upload structure and mutations&rdquo;</p>
     <p>Input:</p>
     Upload PDB: 4DLQ, remove HETATMs
     <br>
-    Mutations: A:804S, A:815S, A:806A, A:803Y
+    Initial mutation: A:804S <br>
+    Additional mutations of mut_0 (in explorer view): A:815S; A:806A; A:803Y
     <br>
   </div>
 </div>
