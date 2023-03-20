@@ -1750,8 +1750,18 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     # returns a (clustal id, chain) pair with matching sequences, if possible with provided chain and/or clustal id
     # if no such pair exists, None is returned
 
+    print("################")
+    print("find pdb in alignment")
+    print(clustal)
+    print(structure)
+    print(chain)
+    print(clustal_id)
+
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
     pdb_chains = {k: v[0] for (k, v) in pdb2seq(structure).items()} # dict; key: chain, value: seq
+
+    print(alignment)
+    print(pdb_chains)
 
     # find all (clustal id, chain) pairs with matching sequences
     matches = []
@@ -1797,8 +1807,14 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
                 # otherwise, take random (first) clustal id
                 selected_match[0] = available_clustal_ids[0]
 
+            print("############")
+            print("point of no return")
+            print(matches)
+            print(clustal_id)
+
             # select chain
-            available_chains = [m[1] for m in matches if m[0] == clustal_id]
+            available_chains = [m[1] for m in matches if m[0] == selected_match[0]]
+            print(available_chains)
             if chain != "" and chain in available_chains:
                 # if possible, take provided base chain
                 selected_match[1] = chain
@@ -1843,6 +1859,11 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
     target_seq = alignment[target_cid]
 
     base_resids = resids[pdb_chain]
+
+    print("################")
+    print("get mutations from alignment")
+    print(base_seq)
+    print(target_seq)
 
     mutations = []
 
