@@ -28,35 +28,35 @@
 <br>
 
 <div class="row">
-  <div class="col s4">
+  <div class="col s6">
     <h5>VCF demo</h5>
   </div>
   
-  <div class="col s4">
+  <div class="col s6">
     <h5>aGPCR demo</h5>
   </div>
 </div>
 
 <div class="row">
-  <div class="col s4">
+  <div class="col s6">
     <a href="{{url_for('load_example', tag='rtel1')}}" class="btn">load demo</a>
     <br>
     <br>
-    <p>Via &ldquo;upload vcf&rdquo;</p>
+    <p>Via: &ldquo;upload vcf&rdquo;</p>
     <p>Input:</p>
     <a href="{{url_for('download', tag = 'rtel1', filename = 'rtel1.vcf')}}" download class="btn-small grey ligthen-1">rtel1.vcf</a>
     <br>
   </div>
-  <div class="col s4">
+  <div class="col s6">
     <a href="{{url_for('load_example', tag='agpcr_demo')}}" class="btn">load demo</a>
     <br>
     <br>
-    <p>Via &ldquo;upload structure and mutations&rdquo;</p>
+    <p>Via: &ldquo;upload structure and mutations&rdquo;</p>
     <p>Input:</p>
-    Upload PDB: 4DLQ, remove HETATMs
+    1) Upload PDB: 4DLQ, remove HETATMs
     <br>
-    Initial mutation: A:804S <br>
-    Additional mutations of mut_0 (in explorer view): A:815S; A:806A; A:803Y
+    2) Initial mutation: A:804S <br>
+    2b) Additional mutations of mut_0 (in explorer):<br> &emsp;&ensp; A:815S, A:806A, A:803Y
     <br>
   </div>
 </div>
@@ -72,43 +72,29 @@
 
 <div class="row">
 
-<div class="col s4">
-  <h5>Manual mutations</h5>
-  <a href="{{url_for('load_example', tag='4dlq')}}" class="btn">load 4dlq</a>
-  <br>
-  <br>
-  <p id="list-head">Inputs:</p>
-  <ul id="input-list">
-    <li>Upload PDB ID: 4dlq, remove HETATMs</li>
-    <li>Mutations: A:804S, A:815S, A:806A, A:803Y</li>
-  </ul>
-</div>
 
-
-<div class="col s4">
-  <h5>Sequence alignment</h5>
+<div class="col s6">
+  <h5>Sequence alignment</h5><br>
   <a href="{{url_for('load_example', tag='1lib_2')}}" class="btn">load 1lib</a>
   <br>
   <br>
-  <p id="list-head">Inputs:</p>
-  <ul id="input-list">
-    <li>Upload PDB ID: 1lib</li>
-    <li>Sequence alignment:</li>
-  </ul>
+  <p id="list-head">Inputs:<br>
+    1) Upload PDB ID: 1lib<br>
+    2) Sequence alignment:<br>
+  </p><br>
   <a href="{{url_for('download', tag = '1lib_2', filename = 'seq_alignment.clw')}}" download class="btn-small grey lighten-1">alignment.clw</a>
 </div>
 
 
-<div class="col s4">
-  <h5>Target sequence</h5>
+<div class="col s6">
+  <h5>Target sequence</h5><br>
   <a href="{{url_for('load_example', tag='1lib_3')}}" class="btn">load 1lib</a>
   <br>
   <br>
-  <p id="list-head">Inputs:</p>
-  <ul id="input-list">
-    <li>Upload PDB ID: 1lib</li>
-    <li>Target sequence:</li>
-  </ul>
+  <p id="list-head">Inputs:<br>
+    1) Upload PDB ID: 1lib<br>
+    2) Target sequence:<br>
+  </p><br>
   <a href="{{url_for('download', tag = '1lib_3', filename = '1lib_target_sequence.fa')}}" download class="btn-small grey lighten-1">1lib_seq.fa</a>
 </div>
 </div>
