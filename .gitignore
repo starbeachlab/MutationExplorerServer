@@ -7,3 +7,5 @@ env/
 static/tmp/
 static/old/
 app.cfg
+*.log
+_*_
