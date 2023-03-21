@@ -88,7 +88,7 @@
 
 	<div>
           <div class="input-field">
-            <input type="text" name="mutations" class="validate" placeholder="X:123Y; A:45B" required>
+            <input type="text" name="mutations" class="validate" placeholder="X:123L,A:45G" required>
             <label for="mutations">Enter mutations</label>
           </div>
 	  <div>
@@ -119,16 +119,8 @@
 	  </div>
 	</div>
 
-      <span>Parent: {{parent}} </span>
-      
-      <br>
-      
-      <span>Mutations: {{mutations}} </span>
-      
-      <br>
-      
-      <span>Exploration: {{tag }} </span>
-      
+	<div id="info-corner"></div>
+	
     </div>
     <br>
     <br>
@@ -136,7 +128,7 @@
   </div>
 
   <div class="col s9" style="height: 100%;">
-    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_gamma/molstar/{{tag}}/">
+    <iframe id="ms" style="width: 99%; height: 90vh; margin: .5rem 0;" src="https://proteinformatics.uni-leipzig.de/mutation_explorer_delta/molstar/{{tag}}/">
         <b>IFrame is unavailable here</b>
     </iframe>
   </div>
@@ -151,7 +143,7 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="{{url_for('static', filename='v3/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
 
 <script type="text/javascript">
   
@@ -175,7 +167,7 @@
     }
   }
   $("#discol").html(the_name + the_ending);
-  document.getElementById('fname').value = the_name; // + ".pdb";
+  document.getElementById('fname').value = the_name; // + ".pdb";  // TODO: check fname concept, maybe it is not doing anything
 
   $(document).ready(function(){
       $('select').formSelect();
@@ -197,7 +189,7 @@
     // fill html elements
     document.getElementById('discol').innerHTML = the_name + the_ending;
     document.getElementById('fname').value = the_name; // + ".pdb";
-
+    updateInfoSection( the_name);
     // input files
     console.log(name)
     console.log("#1 coloring", coloring)
@@ -295,7 +287,17 @@
     //$($("ul:contains(Energy)")[0].children[2]).addClass("disabled")
   }
 
-  
+    function updateInfoSection(fname) {
+      var loc = window.location;
+      var command = loc.protocol + "//" + loc.host + "{{url_for('info', tag=tag, filename='')}}" + fname;
+      console.log( "updateInfoSection: " + command);
+      $.get( command, function(response) {
+        $("#info-corner").html(response);
+       });
+    }
+
+    
+ 
   /*
   function getFileName(){
   alert( the_name);

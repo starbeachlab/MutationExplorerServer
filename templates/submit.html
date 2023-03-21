@@ -29,7 +29,7 @@
 
 
 <div class="input-field col offset-s3 s6">
-    <input id="chain" type="text" name="pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending)">
+    <input id="chain" type="text" name="pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
     <label for="chain">Load structure from PDB</label>
 </div>
 
@@ -38,20 +38,44 @@
     <label for="chain">Load prediction from AlphaFold DB</label>
 </div>
 
-<!--
-<div class="col offset-s3 s6 center-align">
-<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">filter structkure</button>
+
+<div class="input-field col offset-s3 s6">
+    <input id="chain" type="text" name="email" class="validate" placeholder="Email (optional, recommended for long minimization)">
+    <label for="chain">Get notified after job completion </label>
 </div>
-<-- Modal Structure ->
+
+
+
+<div class="col offset-s3 s6 center-align">
+<button id="filter-btn" data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information">filter structure</button>
+
+
+
+</div>
+<!-- Modal Structure -->
 <div id="modal1" class="modal">
     <div class="modal-content">
     <h4>Filter structure</h4>
 
-    <div class="input-field">
-        <input id="chain" type="text" name="alphafoldid" class="validate" placeholder="Uniprot ID">
-        <label for="chain">filter chains</label>
-    </div>
+    <br>
+    <br>
 
+    <div class="row">
+        <div class="input-field col offset-s2 s8">
+            <input id="chain" type="text" name="chain_filter" class="validate" placeholder="A B C">
+            <label for="chain">remove  chains:</label>
+        </div>
+
+        <div class="col offset-s2 s8">
+            <p>
+                <label>
+                    <input type="checkbox" name="hetatom_filter"/>
+                    <span>remove hetatoms</span>
+                </label>
+            </p>
+        </div>
+
+    </div>
     
 
     </div>
@@ -59,7 +83,55 @@
     <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
 </div>
--->
+
+
+<div id="radio-field" class="input-field col offset-s3 s6">
+  <span id="radio-title" class="grey-text text-darken-1">Minimization <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalmin" title="Further information" style="float:right;">i</a></span>
+
+      <!-- Modal Structure -->
+      <div id="modalmin" class="modal">
+	<div class="modal-content">
+	  <h4>Minimization</h4>
+	  <p>
+	    The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
+	    We continuously pre-minimize structures from the PDB using the commandline described below.
+	    If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
+	    Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
+	  </p>
+	  <h4> AlphaFold and your own models</h4>
+	  <p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be minimized, but the minimization has to be performed with the same energy functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
+	  
+	  <h4> Do it yourself!</h4>
+	  <p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+	    However, we recommend you to perform the following minimization. It is optimizing also the backbone in a limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be leading to problems for e.g. membrane proteins. </p>
+	  <div class="codebox">
+	    <code>
+	      PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+	    </code>
+	  </div>
+
+	  <p>
+	    This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
+	  
+	</div>
+	<div class="modal-footer">
+	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+	</div>
+      </div>
+  
+  <p>
+    <label>
+      <input type="radio" name="min-selector" value="long" checked required />
+      <span>long (~3 min, recommended)</span>
+    </label>
+  </p>
+  <p>
+    <label>
+      <input type="radio" name="min-selector" value="short" />
+      <span>quick (~1 min)</span>
+    </label>
+  </p>
+</div>
 
 
 <div class="col offset-s3 s6 center-align">

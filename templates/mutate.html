@@ -159,6 +159,10 @@
 					<th>Valine</th>
 					<th>V</th>
 				</tr>
+				<tr>
+					<th>Alanine</th>
+					<th>A</th>
+				</tr>
 			</tbody>
 		</table>
 
@@ -206,33 +210,63 @@
 
 	<br>
 	
-    <div class="row">
-      <div class="col offset-s3 s6">
-	<div class="file-field input-field" style="width: 100%">
-	  <div class="btn" style="width: 100%">
-	    <span>Upload a ClustalW file</span>
-	    <input type="file" name="clustal1">
-	  </div>
-	</div>
-      </div>
+	<!--
+	  	<div class="row">
+			<div class="col s3">
+				<div class="input-field chain-select-field" sel="chainF1"></div>
+			</div>
+			<div class="col s6">
+				<div class="file-field input-field" style="width: 100%">
+					<div class="btn" style="width: 100%">
+						<span>Upload a FASTA file</span>
+						<input type="file" name="fasta1">
+					</div>
+				</div>
+			</div>
+	  	</div>
+	-->
 
-		<div class="col offset-s3 s6">
-			<div class="file-field input-field additional clw1" style="width: 100%">
+    <div class="row">
+		<div class="col s3">
+			<div class="input-field chain-select-field" sel="chainF1"></div>
+		</div>
+		<div class="col s6">
+			<div class="file-field input-field" style="width: 100%">
+				<div class="btn" style="width: 100%">
+					<span>Upload a ClustalW file</span>
+					<input type="file" name="clustal1">
+				</div>
+			</div>
+    	</div>
+	</div>
+
+    <div class="row clw1 additional">
+		<div class="col s3">
+			<div class="input-field chain-select-field" sel="chainF1"></div>
+		</div>
+		<div class="col s6">
+			<div class="file-field input-field" style="width: 100%">
 				<div class="btn" style="width: 100%">
 					<span>Upload a ClustalW file</span>
 					<input type="file" name="clustal2">
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<div class="col offset-s3 s6">
-			<div class="file-field input-field additional clw2" style="width: 100%">
+    <div class="row clw2 additional">
+		<div class="col s3">
+			<div class="input-field chain-select-field" sel="chainF1"></div>
+		</div>
+		<div class="col s6">
+			<div class="file-field input-field" style="width: 100%">
 				<div class="btn" style="width: 100%">
 					<span>Upload a ClustalW file</span>
 					<input type="file" name="clustal3">
 				</div>
 			</div>
 		</div>
+	</div>
 
 		<div style="width: 100%; display: flex; justify-content: center">
 			<div id="add-clw" style="margin-top: 2rem">
@@ -259,24 +293,19 @@
 
 	<!-- 1) FASTA uploads -->
 	<div>
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field chain-select-field" sel="chainF1">
-		<!--<select id="chainF1"></select>-->
-		<!--<input id="chainF1" type="text" name="chainF1" class="validate" >
-		<label for="chainF1">PDB Chain</label>-->
-	
-	      </div>
-	    </div>
-	    <div class="col s6">
-	      <div class="file-field input-field" style="width: 100%">
-		<div class="btn" style="width: 100%">
-		  <span>Upload a FASTA file</span>
-		  <input type="file" name="fasta1">
-		</div>
-	      </div>
-	    </div>
-	  </div>
+	  	<div class="row">
+			<div class="col s3">
+				<div class="input-field chain-select-field" sel="chainF1"></div>
+			</div>
+			<div class="col s6">
+				<div class="file-field input-field" style="width: 100%">
+					<div class="btn" style="width: 100%">
+						<span>Upload a FASTA file</span>
+						<input type="file" name="fasta1">
+					</div>
+				</div>
+			</div>
+	  	</div>
 	  
 	  <div class="row additional fasta1">
 	    <div class="col s3">
@@ -453,7 +482,13 @@
     
    </ul>
    <br>
-  
+
+
+   <div id="status-info"><h5 style="color:blue;">{{status}}</h5> </div>
+
+
+
+   
    <div class="col offset-s3 s6 center-align">
      <input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
    </div>
@@ -499,7 +534,7 @@
   var seqs = 0;
   var uniprots = 0;
 
-  document.getElementById( 'chain_list').innerHTML = "{{chains}}".split('');
+  document.getElementById( 'chain_list').innerHTML = "{{chains_range}}".replace( /,/g, '<br/>');  // .split('');   // availabe chains manual-mut
 
   chainSelect();
   
@@ -512,7 +547,7 @@
       select.add( new Option( 0, 'Chain in PDB'));
       for (var i = 0; i < chains.length; i++)
       {
-	   select.options.add(new Option( i, chains.charAt(i)));
+	   select.options.add(new Option( i, chains.charAt(i)));     // chains target seq
            //var opt = document.createElement('option');
            //opt.value = i;
            //opt.innerHTML = chains.charAt(i);

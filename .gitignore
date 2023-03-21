@@ -4,3 +4,5 @@
 .#*
 rosetta/
 env/
+static/tmp/
+static/old/

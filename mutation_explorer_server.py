@@ -5,6 +5,7 @@ import requests
 import glob
 from collections import defaultdict
 from werkzeug.utils import secure_filename
+import shutil
 
 app = Flask(__name__)
 
@@ -12,7 +13,8 @@ app = Flask(__name__)
 app.config['USER_DATA_DIR'] = "/disk/user_data/mutation_explorer_gamma/"
 app.config['EXAMPLE_DIR'] = "/disk/data/mutation_explorer_gamma/examples/"
 app.config['ROSETTA_PATH']  = "/home/hildilab/dev/ext/rosetta/bin/"
-app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_gamma/scripts/"
+app.config['SCRIPTS_PATH']  = "/home/hildilab/app/mutation_explorer_delta/scripts/"
+app.config['RASP_PATH']  = "/home/hildilab/dev/ext/rasp/"
 
 
 @app.route('/')
@@ -99,21 +101,33 @@ def bash_cmd(cmd, log):
     log.write(p + '\n')
 
 
-def fixbb(tag, structure, resfile, out_file_name, logfile):
-    print("######## fixbb  #######")
-    print('infile:', structure, "out_file_name: ", out_file_name)
+def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False):
+    #print("######## fixbb  #######")
+    #print('infile:', structure, "out_file_name: ", out_file_name)
     out = app.config['USER_DATA_DIR'] + tag + "/"
     log = open( out + logfile, 'a')
+    
     
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
 
-    ext = out_file_name
+    #ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -out:pdb  -out:prefix ' + out 
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
+    if longmin == True:
+        cmd += " -ex1 -ex2  "
     bash_cmd(cmd, log)
 
+    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
+    bash_cmd(cmd, log)
+
+    file_processing( tag, structure, out_file_name, logfile)
+
+    log.close()
+
+    
+def file_processing( tag, structure, out_file_name, logfile):
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
@@ -121,8 +135,11 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     hdiff = app.config['SCRIPTS_PATH'] + 'pdb_hydrophobicity_diff_to_bfactor.py '
     mutti = app.config['SCRIPTS_PATH'] + 'pdb_mutated_aa.py '
     
-    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
-    bash_cmd(cmd, log)
+    out = app.config['USER_DATA_DIR'] + tag + "/"
+    log = open( out + logfile, 'a')
+    
+    if out_file_name[-4:] == '.pdb':
+        out_file_name = out_file_name[:-4]
     
     cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
     bash_cmd(cmd, log)
@@ -148,10 +165,12 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
 
-    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"
+    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  ### TODO: what was this for??
     bash_cmd(cmd, log)
-        
-    log.write("### THREAD FINISHED ###\n")
+
+    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
+    bash_cmd(cmd, log)
+    
     log.close()
 
 
@@ -172,15 +191,33 @@ def submit():
     upload = request.files['pdbfile']
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
+    chain_filter = request.form['chain_filter'].strip().upper()
+    hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
+
+    email = request.form['email'].strip()
+    min_type = request.form['min-selector'] # = short | long
+    longmin = False
+    if min_type == 'long':
+        longmin = True
+
+    if email:
+        results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "")
+        write_email(outdir + "mail.txt", email, results_link)
 
     # save file
+    msg = "x"
     file_path = outdir + "structure.pdb"    
     if upload.filename != "":
         upload.save(file_path)
     elif pdb != "":
         if pdb[-4:] == ".pdb":
             pdb = pdb[:-4]
-        download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+        if is_in_db( pdb):
+            msg="found"
+            cp_from_db(pdb,file_path)
+        else:
+            msg="notfound"
+            download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
     elif af != "":
         af = get_alphafold_id(af)
         print( 'alphafold:', af)
@@ -191,6 +228,36 @@ def submit():
 
     if not is_pdb( file_path):
         return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
+
+    # extract first model in PDB (NMR structures)  ### REPLACE THIS WITH CLEANUP SCRIPT! 
+    with open( file_path) as r, open( file_path[:-4] + '.tmp', 'w') as w:
+        model_count = 0
+        for l in r:
+            if l[:5] == "MODEL":
+                model_count += 1
+            if l[:6] == 'ENDMDL' or model_count > 1:
+                break
+            w.write(l)
+        os.rename( file_path[:-4] + '.tmp', file_path )
+
+    # filter structure
+    remove_hets = (hetatom_filter is not None)
+    if chain_filter != "" or remove_hets:
+        chains = chain_filter.split()
+
+        with open(file_path, "r") as f_in:
+            with open(outdir + "structure2.pdb", "w") as f_out:
+                for line in f_in:
+                    if line[:4] == "ATOM":
+                        if chain(line) in chains:
+                            continue
+                    if line[:6] == "HETATM":
+                        if remove_hets:
+                            continue
+                    f_out.write(line)
+
+        bash_cmd("mv " + outdir + "structure2.pdb " + file_path, open(outdir + "temp.log", "a")) # TODO: log file
+
     
     # create log file
     print("submit\n")
@@ -205,32 +272,131 @@ def submit():
     # create info file
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
-        f.write("-")
+        f.write("none\n")
 
 
     resfile =  "mut_0_resfile.txt"   
     mutations_to_resfile( [] , outdir + resfile )    
 
     # relax structure
-    start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt"], "minimisation")
+    if msg != "found":
+        start_thread(fixbb, [tag, "structure.pdb", resfile, "mut_0", "log.txt", longmin], "minimisation")
+    else:
+        shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
+        file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
     print( 'fixbb started for initial upload\n')
-    return redirect(url_for('mutate', tag = tag))
+    return redirect(url_for('mutate', tag = tag, msg=msg))
 
 
-@app.route('/mutate/<tag>', methods=['GET', 'POST'])
-def mutate(tag):
+def add_mutations(tag, mutant, inputs):
 
     outdir =   app.config['USER_DATA_DIR'] + tag + "/"
     
-    if request.method == 'GET':
-        chains = get_chains( outdir + "structure.pdb")
-        return render_template("mutate.html", tag = tag, chains=chains, error = "")
-
-    ###  get form values
-    mutations = request.form['mutations'].strip().replace( ' ','').split(',')
-    if len(mutations)==1 and mutations[0] == '':
+    mutations = inputs["mutations"]
+    if len(mutations) == 1 and mutations[0] == '':
         print(__name__, 'reset')
         mutations = []
+
+    #mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+    print( 'mutate: ' + mutant + '\n')
+    print(mutant)
+
+    parent =   "mut_0.pdb"
+    resfile =  mutant[:-4] + "_resfile.txt"
+    align =    mutant[:-4] + ".clw"  # align with parent
+    mutfile =  "info/" + mutant[:-4] + ".txt"  # parent and mutations
+    
+    """
+    ###  return error message if no mutations given
+    if len(mutations) == 0 and   clustal1.filename == '' and  fasta1.filename == '' and seq_input1 == '' and uniprot1 == '':
+        print( 'no mutations defined')
+        return render_template("mutate.html", tag = tag, error = "Please provide a mutation") # nutzlos, da javascript das gar nicht durchlaesst ohne eingabe 
+    else:
+        print( 'mutations defined')
+    """
+    
+    print( 'wait for parent to exist\n')
+    ### wait for parent to exist:
+    if wait( outdir + parent, 1, 900) == False:
+        #return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
+        return
+
+    
+    # get all mutations
+    i = 0
+    for clustal in inputs["clustals"]:
+        if clustal.filename != "":
+            clustal_file = os.path.join( outdir , clustal.filename )
+            clustal.save( clustal_file)
+            add_mutations_from_alignment( mutations, clustal_file, outdir + parent)
+    for fasta, chainF in zip(inputs["fastas"], inputs["chainFs"]):
+        i += 1
+        if fasta.filename != "" and chainF != "":
+            secure_str(chainF)
+            chainF = chainF[0]
+            fasta_file =  outdir + fasta.filename
+            fasta.save(fasta_file)
+            head, target = seq_from_fasta( fasta_file) 
+            add_mutations_from_sequence( mutations, target, chainF, "fa" + (i % 3), outdir+parent)
+    for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
+        i += 1
+        if seq_input != "" and chainS != "":
+            secure_str(chainS)
+            chainS = chainS[0]
+            secure_str(seq_input)
+            add_mutations_from_sequence( mutations, seq_input, chainS, "seq" + (i % 3), outdir+parent)
+    for uniprot, chainU in zip(inputs["uniprots"], inputs["chainUs"]):
+        i += 1
+        if uniprot != "" and chainU != '':
+            uni_file = outdir + uniprot
+            download_uniprot( uniprot, uni_file)
+            target = seq_from_fasta( uni_file)
+            add_mutations_from_sequence( mutations, target, chainU, "uni" + (i % 3), outdir + parent)
+
+    print(__name__, 'total number of mutations:', len(mutations))
+    if len(mutations) != 0:
+        helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
+    else:
+        print("no mutations")
+        #return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        return
+    
+    #start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti") # fixbb sends all cmds to threads 
+    fixbb(tag, parent, resfile, mutant, "log.txt")
+
+    #add_energy(  outdir + mutant, outdir +  mutfile ) # part of fixbb now !!
+    
+
+    send_email(outdir + "mail.txt")
+
+
+@app.route('/mutate/<tag>', methods=['GET', 'POST'])
+@app.route('/mutate/<tag>/<msg>', methods=['GET', 'POST'])
+def mutate(tag,msg=""):
+
+    outdir =   app.config['USER_DATA_DIR'] + tag + "/" # TR
+    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+    
+    if request.method == 'GET':
+        chains_range = get_chains_and_range( outdir + "structure.pdb") # TODO fix 
+        chains = "".join([w[0] for w in chains_range.split(",")])[0:-1]
+        status = ""
+        if msg=="found":
+            status="Your PDB ID was found in our DB, no minimization will be performed."
+        elif msg == "notfound":
+            status = "Your PDB-ID was not found in our DB, minimization will be performed."
+            
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
+
+    ###  get form values
+    mutations = request.form['mutations'].strip().replace(' ','').split(',')
+
+    """ # TR
+    if len(mutations) == 1 and mutations[0] == '':
+        print(__name__, 'reset')
+        mutations = []
+    """
+
     #for m in mutations:
     #    w.write( m + '\n')
     #w.write( '?\n')
@@ -264,6 +430,19 @@ def mutate(tag):
     chainU1 = request.form['chainU1']
     chainU2 = request.form['chainU2']
     chainU3 = request.form['chainU3']
+
+    inputs = {}
+    inputs["mutations"] = mutations
+    inputs["clustals"] = [clustal1, clustal2, clustal3]
+    inputs["fastas"] = [fasta1, fasta2, fasta3]
+    inputs["chainFs"] = [chainF1, chainF2, chainF3]
+    inputs["seq_inputs"] = [seq_input1, seq_input2, seq_input3]
+    inputs["chainSs"] = [chainS1, chainS2, chainS3]
+    inputs["uniprots"] = [uniprot1, uniprot2, uniprot3]
+    inputs["chainUs"] = [chainU1, chainU2, chainU3]
+
+    start_thread(add_mutations, [tag, mutant, inputs], "add_muts")
+    #add_mutations(tag, mutant, inputs)
     
     #w.write( "chain: " +  uniprot_chain1+ '\n')
     #
@@ -271,6 +450,7 @@ def mutate(tag):
     #    name = request.form['name'].strip() + ".pdb"  
     #    if name == ".pdb":
 
+    """ # TR
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
     print( 'mutate: ' + mutant + '\n')
     print(mutant)
@@ -289,7 +469,7 @@ def mutate(tag):
 
     print( 'wait for parent to exist\n')
     ### wait for parent to exist:
-    if wait( outdir + parent, 1, 20) == False:
+    if wait( outdir + parent, 1, 900) == False:
         return render_template("mutate.html", tag = tag, error = "Your structure could not be uploaded.")
     
     ###  case separation
@@ -368,7 +548,8 @@ def mutate(tag):
     start_thread(fixbb, [tag, parent, resfile, mutant, "log.txt"], "mutti")
 
     print( 'started with nr mutations: ' + str( len(mutations) ) + '\n')
-    
+    """
+
     return redirect(url_for('status', tag = tag, filename = mutant))
 
 
@@ -390,20 +571,22 @@ def vcf():
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
     vcf.save( outdir + vcf_file)
-    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file;
+    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file
     print(cmd)
     p = subprocess.check_output(cmd.split())
     print(p)
 
-    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 90) == False:
+    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 900) == False:
         return render_template("vcf.html", error = "No missense was found.")
     
-    # create info file
+
+    # create info file ## should this block be here?
     os.mkdir(outdir + "info/")
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("-")
     with open( outdir + "mut_0_resfile.txt", 'w') as w:
         w.write('NATAA\nstart\n')
+
 
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
@@ -411,12 +594,20 @@ def vcf():
     if not is_pdb( outdir + 'structure.pdb'):
         return render_template("vcf.html", error = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded")
 
+    # create info file
+    os.mkdir(outdir + "info/")
+    with open(outdir + "info/mut_0.txt", "w") as f:
+        f.write("none\n")
+    with open( outdir + "mut_0_resfile.txt", 'w') as w:
+        w.write('NATAA\nstart\n')
+
             
     # relax structure
     start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt"], "minimisation")
     print( 'fixbb started for initial upload\n')
 
-    if wait( outdir + 'mut_0.pdb', 1, 30) == False:
+
+    if wait( outdir + 'mut_0.pdb', 1, 920) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
 
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
@@ -426,6 +617,76 @@ def vcf():
 
     
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
+
+
+
+@app.route('/interface', methods=["GET", "POST"])
+def interface():
+    if request.method == 'POST':
+
+        # get data from form
+
+        tag = str(random.randint(0, 999999))
+        outdir = app.config['USER_DATA_DIR'] + tag + "/"
+        while os.path.exists(outdir):
+            tag = str(random.randint(0, 999999))
+            outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
+        print("############## DELTA INTERFACE ##############")
+        print(tag)
+        os.mkdir(outdir)
+
+        #conv_file_upload = True
+        conv_filename = ""
+
+        file_conv = request.files['file_conv']
+        if file_conv.filename != "":
+            file_conv.save(outdir + secure_filename(file_conv.filename))
+            conv_filename = secure_filename(file_conv.filename)
+        else:
+            conv_file_upload = False
+            pdb_conv = request.form.getlist('pdb_conv')[0]
+            file_conv_link = "https://files.rcsb.org/download/" + pdb_conv + ".pdb"
+            req = requests.get(file_conv_link)
+            with open(outdir + pdb_conv + ".pdb", "w") as f:
+                f.write(req.content)
+            conv_filename = pdb_conv + ".pdb"
+
+        superimpose = False
+        #super_file_upload = True
+        super_filename = ""
+
+        file_super = request.files['file_super']
+        if file_super.filename != "":
+            superimpose = True
+            file_super.save(outdir + secure_filename(file_super.filename))
+            super_filename = secure_filename(file_super.filename)
+        else:
+            pdb_super = request.form.getlist('pdb_super')[0]
+            if pdb_super != "":
+                file_super_link = "https://files.rcsb.org/download/" + pdb_super + ".pdb"
+                superimpose = True
+                #super_file_upload = False
+                req = requests.get(file_super_link)
+                with open(outdir + pdb_super + ".pdb", "w") as f:
+                    f.write(req.content)
+                super_filename = pdb_super + ".pdb"
+
+
+        alignment_link = request.form.getlist('alignment_link')[0]
+        #alignment_link = "https://www.bioinfo.mpg.de/AlignMeBeta/work/" + alignment_link.split("work/")[1]
+        #alignment = outdir + "alignment.aln"
+        print("########### alignment link")
+        print(alignment_link)
+        
+        """
+        #alignment_link = app.config['USER_DATA_DIR'] + "alignment.aln"
+
+        req = requests.get(alignment_link)
+        with open(alignment, "w") as f:
+            f.write(req.content)
+        """
+        return "<h1>Hallo Welt</h1>"
 
     
 
@@ -444,13 +705,28 @@ def get_status(tag, filename):
         else:
             status = "error"
             msg = "Rosetta calculation encountered an error"
-    print( 'get_status', dirname, str(done))
+    #print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
 
 
 @app.route('/status/<tag>/<filename>')
 def status(tag, filename):
     return render_template("status.html", tag = tag, filename = filename)
+
+@app.route('/info/<tag>/<filename>')
+def info(tag, filename):
+    outdir = app.config['USER_DATA_DIR'] + tag + "/info/"
+    print( 'info', tag, filename)
+    mutations = ""
+    with open( outdir + filename + ".txt") as r:
+        lines = r.readlines()
+        parent = lines[0].strip()
+        energy = lines[-1].strip()
+        if len(lines) > 2:
+            mutations += lines[1].strip()
+            for i in range(2,len(lines)-1):
+                mutations += ',' + lines[i].strip()
+    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy)
 
 
 def build_list(d):
@@ -467,7 +743,7 @@ def build_list(d):
 
 
 def load_explore_page(out, tag, filename):
-    mut_tree = build_mutation_tree(out, tag, "-")
+    mut_tree = build_mutation_tree(out, tag, "none")
     print('explore::tree', mut_tree)
     structures = "<ul>" + build_list(mut_tree) + "</ul>"
     print('explore::tree:', structures)
@@ -477,6 +753,7 @@ def load_explore_page(out, tag, filename):
         filename = "mut_0.pdb"
     with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
         parent = r.readline().strip()
+        energy = r.readline().strip()
         mutations += r.readline().strip()
         for l in r:
             mutations += ',' + l.strip()
@@ -484,9 +761,10 @@ def load_explore_page(out, tag, filename):
     if parent == "-":
         chains = get_chains(outdir + filename)
     else:
-        chains = get_chains( outdir + parent) 
+        chains = get_chains( outdir + parent)
+    #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy)
 
 
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
@@ -535,6 +813,10 @@ def load_example(tag):
 def faq():
     return render_template("faq.html")
 
+@app.route('/tutorial')
+def tutorial():
+    return render_template("tutorial.html")
+
 
 @app.route('/downloads/<tag>/<filename>')
 def download(tag, filename):
@@ -559,6 +841,20 @@ def download(tag, filename):
 def fbt():
     fixbb("/disk/user_data/mutation_explorer_gamma/863040/", "structure_1.pdb", ['A:1A'], "", "log")
     return render_template("faq.html")
+
+"""
+@app.route('/rasp/<tag>/<model>')
+@app.route('/rasp/<tag>/<model>/<chain>')
+def rasp( tag, model, chain = ""):
+    outname =  app.config['USER_DATA_DIR'] + tag + 'rasp_' + chain + '.csv'
+    if model[:-4] == '.pdb':
+        model = model[:-4]
+    cmd = app.config['RASP_PATH'] + 'rasp.py ' + app.config['USER_DATA_DIR'] + tag + '/' + model + '.pdb ' + chain + ' ' + outname
+    bash_cmd( cmd, log)
+    return jsonfy( ) # oder file schreiben?
+    #while not file_exists( outname ):   needed?
+    #    sleep(5s)
+"""        
 
 
 if __name__ == "__main__":
@@ -732,7 +1028,7 @@ def mutation_parent_file( mutations, parent, mutfile):
             for mut in mutations:
                 f.write(mut + "\n")
         else:
-            f.write("-\n")
+            f.write("none\n")
 
             
 def helper_files_from_mutations( mutations, parent, resfile, align, mutfile):
@@ -933,6 +1229,37 @@ def get_chains( fname):
                     chains += c
     return chains
 
+def get_chains_and_range( fname):
+    chains = {}
+    with open( fname) as r:
+        for l in r:
+            if l[:4] == "ATOM":  # does not make sense: or l[:6] == "HETATM":
+                c = chain(l)
+                r = resid(l)
+                if c not in chains.keys():
+                    chains[c] = [r,r]
+                else:
+                    chains[c][1] = r
+    chainstr = ""
+    for c,v in chains.items():
+        chainstr += c + ': ' + str(v[0]) + '-' + str(v[1]) + ', '
+    #print( chainstr)
+    return chainstr
+    
+
+def get_energy( fname):
+    print( __name__, 'get', fname)
+    with open( fname) as r:
+        for l in r:
+            if l[:4] == "pose":
+                return float( l.split()[-1])
+    print( 'WARNING: no energy found in', fname)
+    return -0
+
+def add_energy( fromfile, tofile):
+    with open( tofile, 'a') as w:
+        w.write( str( get_energy(fromfile)) + '\n')
+        
 def is_pdb( fname):
     if not os.path.isfile(fname):
         return False
@@ -941,3 +1268,57 @@ def is_pdb( fname):
             if l[:4] == "ATOM" or l[:6] == "HETATM":
                 return True
     return False
+
+
+def write_email(fil, user, link):
+    with open(fil, 'w') as out:
+        out.write('From: mutex@proteinformatics.de\n')
+        out.write('Subject: MutationExplorer results \n')
+        out.write('To: ' + user + '\n\n')
+        out.write('Hello  ' + user + '!\n\n')
+        out.write('Your MutationExplorer calculation is done. \n')
+        out.write('You can view the results here: \n\n' + link + '\n\n')
+        out.write('Thanks for using MutEx.\n\n')
+        out.write('Have a nice day!\n\n')
+
+def send_email(fil):
+    if(os.path.exists(fil)):
+        os.system('sendmail -t < ' + fil)
+
+
+"""
+def send_email(user, link):
+    #log = open( 'calc.log', 'w' )
+    #log.write( 'send mail\n')
+    #log.write( os.getcwd() + '\n')
+    with open( '/home/hildilab/app/mutation_explorer_delta/mail/mail.txt', 'w') as out:
+        out.write('From: voronoia@proteinformatics.de\n')
+        out.write('Subject: MutationExplorer results \n')
+        out.write('To: ' + user + '\n\n')
+        out.write('hello  ' + user + '!\n\n')
+        out.write('your voronoia calculation is done. \n')
+        out.write('you can view the results here: \n\n' + link + '\n\n')
+        out.write('thanks for using voronoia.\n\n')
+        out.write('have a nice day!\n\n')
+    os.system( 'sendmail -t < /home/hildilab/app/mutation_explorer_delta/mail/mail.txt' )
+    #log.close()
+"""
+
+def is_in_db( pdb):
+    return len(glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')) > 0
+
+def cp_from_db( pdb, outfile):
+    listig =  glob.glob( '/disk/data/rosemint/fixbb/' + pdb.upper() + '*.pdb')
+    listig.extend( glob.glob( '/disk/data/rosemint/relax/' + pdb.upper() + '*.pdb'))
+    if len(listig) == 1:
+        print( listig[0], outfile)
+        shutil.copyfile(listig[0],outfile)
+    else:
+        mini = 1e9
+        best = ''
+        for l in listig:
+            energy = get_energy( l)
+            if energy < mini:
+                best = l.strip()
+                mini = energy
+        shutil.copyfile(best,outfile)
