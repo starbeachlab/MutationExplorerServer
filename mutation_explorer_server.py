@@ -856,46 +856,30 @@ def mutate(tag,msg=""):
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
 
 
-@app.route('/vcf', methods=['GET', 'POST'])
-def vcf():
-    if request.method == 'GET':
-        return render_template("vcf.html", error = "")
-  
 
-    ### get form values
+def vcf_calculation(tag, inputs):
 
-    vcf = request.files['vcf']
-    vcf_file = vcf.filename
-    if vcf_file == "":
-        return render_template("vcf.html", error = "no filename was given")
+    vcf = inputs["vcf"]
 
-    min_type = request.form['min-selector'] # = long | short | none
-    minimize = (min_type != 'none')
-    longmin = (min_type == 'long')
+    minimize = inputs["minimize"]
+    longmin = inputs["longmin"]
 
+    rasp_calculation = inputs["rasp_calculation"]
 
-    ### processing
-
-    outdir, tag = create_user_dir()
-
-
-    rasp_calculation = False
-    rasp_checkbox = request.form.get('rasp-checkbox') # on none
-
-    if(rasp_checkbox == "on"):
+    # rasp.status
+    if rasp_calculation:
         rasp_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/rasp.status")
         with open(rasp_path, "w") as f:
-            f.write(rasp_checkbox)
+            #f.write(rasp_checkbox)
+            f.write(rasp_calculation)
     
     print(rasp_calculation)
 
-    vcf.save( outdir + vcf_file)
-
     # call run_vcf 
     cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file
-    print(cmd)
-    p = subprocess.check_output(cmd.split())
-    print(p)
+    bash_cmd(cmd, tag)
+
+    # wait for missense file
     if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
         return render_template("vcf.html", error = "No missense was found.")
     
@@ -912,10 +896,10 @@ def vcf():
     else:
         msg="notfound"
         download_file("https://alphafold.ebi.ac.uk/files/" + alphafold.strip() + "-model_v4.pdb", outdir + 'structure.pdb' )
-    print(msg)
+
     if not is_pdb( outdir + 'structure.pdb'):
         error_message = "It was not possible to upload the AlphaFold model: " + alphafold + "<br>Currently only the first candidate can be uploaded"
-        return render_template("vcf.html", error = error_message)
+        fatal_error(tag, error_message)
 
     # create info file
     os.mkdir(outdir + "info/")
@@ -925,16 +909,12 @@ def vcf():
         w.write('NATAA\nstart\n')
 
 
-    #create status file
-    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+    # save file name
     name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
-    # print("status")
-    # print(status_path)
-    with open(status_path, "w") as f:
-        f.write(get_current_time()+"+Start+Calculation\n")
-
     with open(name_path, "w") as f:
         f.write(alphafold)
+
+    status_update(tag, "Start+Calculation")
 
     # relax structure
     if minimize:
@@ -958,16 +938,59 @@ def vcf():
         print( 'fixbb started for initial upload\n')
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
-        pass
 
+    # wait for relaxation
     if wait( outdir + 'mut_0.pdb', 1, WAIT_RELAXATION) == False:
-        return render_template("vcf.html", error = "Your structure could not be minimized.")
+        fatal_error(tag, RELAXATION_FAILED)
 
     # mutate
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
-    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt"], "mutti")
+    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt"], "mutti") # thread isnt needed anymore
 
+
+    # check if mutation successful
+    if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
+        fatal_error(tag, MUTATION_FAILED)
+
+
+
+
+@app.route('/vcf', methods=['GET', 'POST'])
+def vcf():
+    if request.method == 'GET':
+        return render_template("vcf.html", error = "")
+  
+
+    ### get form values
+
+    outdir, tag = create_user_dir()
+
+    inputs = {}
+
+    vcf = request.files['vcf']
+    vcf_file = vcf.filename
+    if vcf_file == "":
+        return render_template("vcf.html", error = "no filename was given")
+
+    vcf.save( outdir + vcf_file)
+    inputs["vcf"] = outdir + vcf_file
+
+
+    min_type = request.form['min-selector'] # = long | short | none
+    inputs["minimize"] = (min_type != 'none')
+    inputs["longmin"] = (min_type == 'long')
+
+
+    rasp_calculation = False
+    rasp_checkbox = request.form.get('rasp-checkbox') # on none
+    inputs["rasp_calculation"] = (rasp_checkbox == 'on')
+
+
+    ### start calculation
+
+    start_thread(vcf_calculation, [tag, inputs], "vcf calc")
     
+
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
 
 
@@ -1440,6 +1463,8 @@ def download(tag, filename):
                 if ".clw" in f:
                     cmd.append(f)
                 if ".csv" in f:
+                    cmd.append(f)
+                if ".aln" in f:
                     cmd.append(f)
             p = subprocess.check_output(cmd)
 

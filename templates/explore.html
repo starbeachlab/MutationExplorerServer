@@ -204,24 +204,37 @@
     }
     document.getElementById('discol').innerHTML = name + coloring;
     document.getElementById('fname').value = name; // + ".pdb";
-    var pdbFile = getURL(name + coloring);
+
     var pdbFiles = [];
 
-    pdbFiles.push(getURL(name + coloring))
-    
-    var clustalFiles = []
+    if(two_strcs && (name == "mut_0" || name == "mut_1")) {
 
-    for (i = 0; i < allchains.length; i++) {
-      //console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
-      if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
-      {
-        //console.log("Does not exist")
+      pdbFiles.push(getURL("mut_0" + coloring))
+      pdbFiles.push(getURL("mut_1" + coloring))
+
+      var clustalFiles = [getURL("alignment.aln")]
+
+      // two strcs
+    } else {
+
+      var pdbFile = getURL(name + coloring);
+
+      pdbFiles.push(getURL(name + coloring))
+      
+      var clustalFiles = []
+
+      for (i = 0; i < allchains.length; i++) {
+        //console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
+        if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
+        {
+          //console.log("Does not exist")
+        }
+        else 
+        {
+            clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+        }
       }
-      else 
-	    {
-      		clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
-	    }
-    }
+    } 
 
     // wait until loadViewer is defined
     var interval = setInterval(function() {
