@@ -88,6 +88,11 @@ def status_update(tag, status, check_rasp=""):
     bash_cmd(cmd, tag) 
 
 
+def dev_status(tag, status):
+    # for development purposes; to be removed (visible for user)
+    status_update(tag, status)
+
+
 
 @app.route('/')
 def index():
@@ -252,7 +257,7 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
 
 
 
-def superimpose(tag, align_structure, align_chain, template_structure, template_chain, alignment, logfile):
+def superimpose(tag, align_structure, align_chain, template_structure, template_chain, alignment):
     si = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_superimpose.py alignment: '
 
     tmp = align_structure[:-4] + '_tmp.pdb'
@@ -968,7 +973,6 @@ def vcf():
 
 
 def interface_one_structure(tag, mutant, inputs):
-    # TODO: log
     # TODO: rasp_calculation (option to not do rasp calculation)
 
     outdir = app.config['USER_DATA_DIR'] + tag + '/'
@@ -1095,6 +1099,7 @@ def interface_two_structures(tag, inputs):
     if base_seq_id == target_seq_id:
         fatal_error(tag, NO_MUTATIONS)
 
+    dev_status(tag, "superimpose")
 
     # superimpose
     if base_seq_id < target_seq_id:
@@ -1102,11 +1107,14 @@ def interface_two_structures(tag, inputs):
     else:
         superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
+    dev_status(tag, "calc conservation")
 
     # calculate conservation
     calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
 
     calc_conservation(tag, target_strc, clustal, target_chain, target_seq_id, "log.txt")
+
+    dev_status(tag, "finished calculation")
 
 
 
@@ -1207,15 +1215,16 @@ def interface(tag):
     inputs["target_msg"] = target_msg
     inputs["target_filtered"] = False
 
-    #create status file
-    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
-    with open(status_path, "w") as f:
-        f.write(get_current_time()+"+Start+Calculation\n")
+
+    print("status update")
+    status_update(tag, "Start+Calculation")
 
     # save original filename
     name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name.log")
     with open(name_path, "w") as f:
         f.write(base_original_name)
+
+    print("info files")
 
     # create info file for mut_0, (mut_1)
     if not os.path.isdir( outdir + 'info/'):
@@ -1224,6 +1233,8 @@ def interface(tag):
         f.write("none\n")
 
     if target_given:
+        #print("target given")
+        dev_status(tag, "Target+given")
         with open(outdir + "info/mut_1.txt", "w") as f:
             f.write("none\n")
 
@@ -1717,6 +1728,7 @@ def read_clustal( clust):
             c = l.split()
             if len(c) != 2: continue
             ali[c[0]] += c[1]
+    print( 'read_clustal:', ali)
     return ali
 
 
@@ -1781,10 +1793,12 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     print(chain)
     print(clustal_id)
 
+    # warum doppelt?
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
     pdb_chains = {k: v[0] for (k, v) in pdb2seq(structure).items()} # dict; key: chain, value: seq
-
+    print( "alignment:")
     print(alignment)
+    print( "chains:")
     print(pdb_chains)
 
     # find all (clustal id, chain) pairs with matching sequences
@@ -1795,6 +1809,7 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
                 matches.append([cid, c])
 
     if len(matches) == 0:
+        print("nothing found")
         # no matching pair exists
         return None
 
@@ -1852,6 +1867,7 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
 
 def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target_clustal_id="", base_chain="" ):
 
+    print( "mutations_from_alignment")
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
     pdb_chains = {k: v[0] for (k, v) in pdb2seq(base_structure).items()} # dict; key: chain, value: seq
 
@@ -1886,12 +1902,13 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
     base_resids = resids[pdb_chain]
 
 
-    assert len(base_seq) == len(target_seq)
+    if len(base_seq) != len(target_seq):
+        print( "seqs differ in length:",  len(base_seq) , len(target_seq) )
 
     print("################")
     print("get mutations from alignment")
-    print(base_seq)
-    print(target_seq)
+    print('base:', base_seq)
+    print('target:', target_seq)
 
     mutations = []
 
