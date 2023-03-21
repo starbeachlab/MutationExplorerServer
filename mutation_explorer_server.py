@@ -111,7 +111,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile):
     ext = out_file_name
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -linmem_ig 10 -out:pdb  -out:prefix ' + out 
+    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1 -out:pdb  -out:prefix ' + out 
     bash_cmd(cmd, log)
 
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
@@ -403,7 +403,7 @@ def vcf():
     with open(outdir + "info/mut_0.txt", "w") as f:
         f.write("-")
     with open( outdir + "mut_0_resfile.txt", 'w') as w:
-        w.write('NATRO\nstart\n')
+        w.write('NATAA\nstart\n')
 
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
@@ -567,7 +567,7 @@ if __name__ == "__main__":
     
 def mutations_to_resfile( mutations, resfile):
     with open(resfile, 'w') as f:
-        f.write('NATRO\n')
+        f.write('NATAA\n')
         f.write('start\n')
         prev_chains = []
         for mut in mutations:
