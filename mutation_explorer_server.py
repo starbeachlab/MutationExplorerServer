@@ -44,6 +44,14 @@ MUTATION_FAILED = "Mutation failed"
 STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
 
 
+# wait times before error is returned (in seconds)
+# could be useful to adjust for minimization option
+WAIT_RELAXATION = 900
+WAIT_MUTATION = 900
+WAIT_VCF = 900
+WAIT_SUPERIMPOSE = 900
+
+
 
 
 
@@ -252,7 +260,7 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
     bash_cmd(cmd, tag)
 
     # wait for superimposed structure
-    if not wait(tmp, 1, 900):
+    if not wait(tmp, 1, WAIT_SUPERIMPOSE):
         return
 
     os.rename(tmp, align_structure)
@@ -270,7 +278,7 @@ def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
 def mutant_calc_conservation(tag, structure, logfile):
 
     # wait for mutant structure
-    if(not wait(structure, 1, 900)):
+    if(not wait(structure, 1, WAIT_MUTATION)):
         return
 
 
@@ -639,7 +647,7 @@ def add_mutations(tag, mutant, inputs):
     
     print( 'wait for parent to exist\n')
     ### wait for mut_0.pdb to exist
-    if wait( outdir + parent, 1, 900) == False:
+    if wait( outdir + parent, 1, WAIT_RELAXATION) == False:
         fatal_error(tag, RELAXATION_FAILED)
 
     
@@ -682,7 +690,7 @@ def add_mutations(tag, mutant, inputs):
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
     # wait for mutation 
-    if wait(mutant, 1, 900) == False:
+    if wait(mutant, 1, WAIT_MUTATION) == False:
         fatal_error(tag, MUTATION_FAILED)
 
     send_email(outdir + "mail.txt")
@@ -883,7 +891,7 @@ def vcf():
     print(cmd)
     p = subprocess.check_output(cmd.split())
     print(p)
-    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, 900) == False:
+    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
         return render_template("vcf.html", error = "No missense was found.")
     
     # get mutations
@@ -947,7 +955,7 @@ def vcf():
         score_structure(tag, outdir, "mut_0", "structure.pdb")
         pass
 
-    if wait( outdir + 'mut_0.pdb', 1, 920) == False:
+    if wait( outdir + 'mut_0.pdb', 1, WAIT_RELAXATION) == False:
         return render_template("vcf.html", error = "Your structure could not be minimized.")
 
     # mutate
@@ -994,7 +1002,7 @@ def interface_one_structure(tag, mutant, inputs):
     mutfile = "info/" + mutant[:-4] + ".txt"
 
     # wait for mut_0.pdb
-    if wait(outdir + parent, 1, 900) == False:
+    if wait(outdir + parent, 1, WAIT_RELAXATION) == False:
         fatal_error(tag, RELAXATION_FAILED)
 
 
@@ -1013,7 +1021,7 @@ def interface_one_structure(tag, mutant, inputs):
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
     # check mutation success
-    if wait(mutant, 1, 900) == False:
+    if wait(mutant, 1, WAIT_MUTATION) == False:
         fatal_error(tag, MUTATION_FAILED)
 
 
@@ -1053,12 +1061,12 @@ def interface_two_structures(tag, inputs):
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
-        if(not wait(outdir + "mut_0.pdb", 1, 900)):
+        if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
             fatal_error(tag, RELAXATION_FAILED)
 
         relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
     
-        if(not wait(outdir + "mut_1.pdb", 1, 900)):
+        if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
             fatal_error(tag, RELAXATION_FAILED)
 
     base_strc = outdir + "mut_0.pdb"
@@ -1117,9 +1125,12 @@ def interface_post():
 
     # save alignment file
     clustal = outdir + "alignment.aln"
-    req = requests.get(alignment_link) 
+    req = requests.get(alignment_link)
+    print( "ali:\n", req.content)
+    content = req.content.decode('ASCII')
+    print( "with conservation:\n", add_conservation(content))
     with open(clustal, "w") as f:
-        f.write(add_conservation(req.content)) # add conservation because it is needed for spheres in mol*
+        f.write(add_conservation(content)) # add conservation because it is needed for spheres in mol*
 
 
     return redirect(url_for('interface', tag = tag))

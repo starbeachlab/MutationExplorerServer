@@ -90,8 +90,16 @@ h1 {
         overflow:auto;    
         padding:10px;
     }
-    .codebox code {
-        /* Styles in here affect the text of the codebox */
-        font-size:0.9em;
-        /* You could also put all sorts of styling here, like different font, color, underline, etc. for the code. */
-    }
+.codebox code {
+    /* Styles in here affect the text of the codebox */
+    font-size:0.9em;
+    /* You could also put all sorts of styling here, like different font, color, underline, etc. for the code. */
+}
+
+
+/* results */
+
+#info-table {
+    table-layout: fixed;
+    word-wrap: break-word;
+}
