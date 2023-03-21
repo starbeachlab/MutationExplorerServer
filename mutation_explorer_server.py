@@ -70,7 +70,6 @@ def fatal_error(tag, msg):
 
 
 def status_update(tag, status, check_rasp=""):
-    # TODO: replace "manual" status calls with function
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
     status_path = outdir + "status.log"
 
@@ -177,10 +176,8 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
         out_file_name = out_file_name[:-4]
 
     #ext = out_file_name
-    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     status = "Start+fixbb+for+" + out_file_name
-    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-    bash_cmd(cmd, tag)
+    status_update(tag, status)
 
 
 
@@ -191,11 +188,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     bash_cmd(cmd, tag)
     print("rosetta done")	
 
-
-    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
     status = "fixbb+for+" + out_file_name + "+done"
-    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-    bash_cmd(cmd, tag)
+    status_update(tag, status)
+
 
     if(path_to_store != ""):
         cmd = "tsp cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
@@ -228,10 +223,8 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                     print( listig[0], out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
                     shutil.copyfile(listig[0],out + "cavity_pred_" + out_file_name + "_" + chain + ".csv")
             else:
-                status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
                 status = "Start+RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain
-                cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
-                bash_cmd(cmd, tag)
+                status_update(tag, status)
 
 
                 cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
@@ -246,11 +239,8 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
         
 
 
-                status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
                 status = "RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
-                cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path + " " + "check_rasp " + os.path.join( app.config['USER_DATA_DIR'], tag + "/cavity_pred_" + out_file_name + "_" + chain + ".csv")
-                print(cmd)
-                bash_cmd(cmd, tag)
+                status_update(tag, status)
 
 
 
@@ -1129,7 +1119,7 @@ def interface_post():
     clustal = outdir + "alignment.aln"
     req = requests.get(alignment_link) 
     with open(clustal, "w") as f:
-        f.write(req.content)
+        f.write(add_conservation(req.content)) # add conservation because it is needed for spheres in mol*
 
 
     return redirect(url_for('interface', tag = tag))
@@ -2031,3 +2021,35 @@ def get_current_time():
 
 
 
+def add_conservation( ali ):
+    s = defaultdict( list )
+    rows = ali.split('\n')
+    newali = rows[0] + '\n\n'
+    for l in rows[2:]:
+        if l.strip() == '' or l[:4] == '    ': continue # ignore empty lines or existing conservation lines
+        c = l.split()
+        if len(c) != 2: continue
+        s[c[0]].append( c[1])
+    k = list(s.keys())
+    m = max( len(k[0]), len(k[1]) )
+    a = k[0].ljust(m)
+    b = k[1].ljust(m)
+    e = ''.ljust( m)
+    
+    if len(k) != 2 or ( len( s[k[0]] ) != len( s[k[1]] ) ):
+        print('ERROR in alignment: input:', content, '\nnow:', s )
+        return ''
+    for i in range( len( s[k[0]] ) ):
+        s1 = s[k[0]][i]
+        s2 = s[k[1]][i]
+        newali +=  a + '\t' + s1 + '\n'
+        newali +=  b + '\t' + s2 + '\n'
+        newali +=  e + '\t'
+        for j in range( len(s1)):
+            if s1[j] == s2[j]:
+                newali += '*'
+            else:
+                newali += ' '
+        
+        newali += '\n\n'
+    return newali
