@@ -860,10 +860,12 @@ def mutate(tag,msg=""):
 def vcf_calculation(tag, inputs):
 
     vcf = inputs["vcf"]
-
+    print(vcf)
+    vcf_file = vcf.split("/").pop()
+    print(vcf_file)
     minimize = inputs["minimize"]
     longmin = inputs["longmin"]
-
+    outdir = os.path.join( app.config['USER_DATA_DIR'], tag + "/")
     rasp_calculation = inputs["rasp_calculation"]
 
     # rasp.status
@@ -871,18 +873,18 @@ def vcf_calculation(tag, inputs):
         rasp_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/rasp.status")
         with open(rasp_path, "w") as f:
             #f.write(rasp_checkbox)
-            f.write(rasp_calculation)
+            f.write(str(rasp_calculation))
     
     print(rasp_calculation)
 
     # call run_vcf 
-    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir + ' ' + vcf_file
+    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir +" " + vcf_file
     bash_cmd(cmd, tag)
-
+    print(outdir +  vcf_file[:-4] + '_missense.csv')
     # wait for missense file
     if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
         return render_template("vcf.html", error = "No missense was found.")
-    
+    print("test")
     # get mutations
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
