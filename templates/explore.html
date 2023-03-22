@@ -236,6 +236,19 @@
       }
     } 
 
+    // TODO: set units
+    unit = ""
+    colorType = "";
+    if (coloring == "_absE.pdb" || coloring == "_diffE.pdb") {
+      colorType = "energy";
+      unit = "R.E.U"
+    } else if (coloring == "_HyPh.pdb" || coloring == "_diffHyPh.pdb") {
+      colorType = "hydrophobicity";
+      unit = "kcal"
+    } else if (coloring == "_cons.pdb") {
+      colorType = "conservation";
+    }
+
     // wait until loadViewer is defined
     var interval = setInterval(function() {
       var loadViewer = document.getElementById('ms').contentWindow.loadViewer
@@ -243,7 +256,7 @@
       clearInterval(interval);
 
       // update viewer
-      loadViewer(pdbFiles, clustalFiles)
+      loadViewer(pdbFiles, clustalFiles, colorType, unit)
     }, 100);
   }
   
@@ -347,7 +360,13 @@
 
     function updateInfoSection(fname) {
       var loc = window.location;
-      var command = loc.protocol + "//" + loc.host + "{{url_for('info', tag=tag, filename='')}}" + fname;
+      var command = loc.protocol + "//" + loc.host
+      if(fname.indexOf("mut_1") >= 0) {
+        // if the structure is a descendant of mut_1, get the original name of mut_1.pdb instead
+        command += "{{url_for('info', tag=tag, filename='')}}" + fname + "/true";
+      } else {
+        command = "{{url_for('info', tag=tag, filename='')}}" + fname;
+      }
       //console.log( "updateInfoSection: " + command);
       $.get( command, function(response) {
         $("#info-corner").html(response);

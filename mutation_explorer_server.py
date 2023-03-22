@@ -302,7 +302,7 @@ def mutant_calc_conservation(tag, structure, logfile):
 
         # check if chain is mutated; otherwise continue to next chain
         cid = structure[:-4].split("/")[-1]
-        muts = mutations_from_alignment(chain_alignment, structure, base_clustal_id=cid, base_chain=c)
+        muts, noncanonical_residues = mutations_from_alignment(chain_alignment, structure, base_clustal_id=cid, base_chain=c)
 
         if len(muts) == 0:
             print("no mutations on chain")
@@ -1033,10 +1033,13 @@ def interface_one_structure(tag, mutant, inputs):
         fatal_error(tag, RELAXATION_FAILED)
 
 
-    mutations = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
+    mutations, noncanonical_residues = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
 
     if len(mutations) == 0:
         fatal_error(tag, NO_MUTATIONS)
+
+    if noncanonical_residues:
+        status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
 
 
     ### calculation
@@ -1101,19 +1104,25 @@ def interface_two_structures(tag, inputs):
 
 
     # get clustal ids, chains, sequence ids
-    pdb_match = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
+    pdb_match, base_noncanonical_residues = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
     if pdb_match is None:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
+
+    if base_noncanonical_residues:
+        status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
 
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
         return
 
-    pdb_match = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
+    pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match is None:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
+
+    if target_noncanonical_residues:
+        status_update(tag, "mut_1.pdb containes noncanonical residues, which are ignored")
 
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
@@ -1247,6 +1256,11 @@ def interface(tag):
     with open(name_path, "w") as f:
         f.write(base_original_name)
 
+    if target_given:
+        name_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/name2.log")
+        with open(name_path, "w") as f:
+            f.write(target_original_name)
+
     print("info files")
 
     # create info file for mut_0, (mut_1)
@@ -1323,7 +1337,8 @@ def status(tag, filename, msg=""):
     return render_template("status.html", tag = tag, filename = filename, msg=msg)
 
 @app.route('/info/<tag>/<filename>')
-def info(tag, filename):
+@app.route('/info/<tag>/<filename>/<two_structures>')
+def info(tag, filename, two_structures=""):
     if tag.isdigit():
         path = app.config['USER_DATA_DIR'] + tag + "/info/"
     else:
@@ -1338,13 +1353,18 @@ def info(tag, filename):
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
                 mutations += ',' + lines[i].strip()
+
+    name_file = "/name.log"
+    if two_structures != "":
+        name_file = "/name2.log"
     if tag.isdigit():
-        path = app.config['USER_DATA_DIR'] + tag + "/name.log"
+        path = app.config['USER_DATA_DIR'] + tag + name_file
     else:
-        path = app.config['EXAMPLE_DIR'] + tag + "/name.log"
+        path = app.config['EXAMPLE_DIR'] + tag + name_file
     name_file = open(path, "r")
     name = name_file.read()
     print(name)
+
     return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name)
 
 
@@ -1717,7 +1737,7 @@ def add_mutations_from_sequence( mutations, target, chain, idy, parent):
     print(cmd)
     p = subprocess.check_output( cmd.split())
     print(p)
-    mutations.extend( mutations_from_alignment( f3, parent) )
+    add_mutations_from_alignment(mutations, f3, parent)
 
     
 def seq_from_fasta( filename):
@@ -1740,7 +1760,7 @@ def write_fasta( filename, seq, header=""):
         w.write(seq + '\n')
     
 def add_mutations_from_alignment( mutations, clustal_file, parent, base_chain=""):
-    mutations.extend( mutations_from_alignment( clustal_file, parent, base_chain=base_chain) )
+    mutations.extend( mutations_from_alignment( clustal_file, parent, base_chain=base_chain)[0] )
 
 
         
@@ -1767,7 +1787,8 @@ def sequences( ali):
 
 
 # nearly same as sequence_chain_resids()
-def pdb2seq( pdb):
+def pdb2seq( pdb, noncanon_warning=False):
+    noncanonical_residues = False
     chains = defaultdict( lambda : ['',[]] )
     with open( pdb) as r:
         prev_chain = 'xxx'
@@ -1780,10 +1801,17 @@ def pdb2seq( pdb):
                 #print(prev_chain)
                 #print(prev_id)
                 #print(chains)
-                chains[c][0] += single_letter( residue_name(l))
+                aa = single_letter( residue_name(l))
+                if aa == 'X':
+                    noncanonical_residues = True
+                    continue
+                chains[c][0] += aa
                 chains[c][1].append( res )
                 prev_chain = c
                 prev_id = res
+
+    if noncanon_warning:
+        return chains, noncanonical_residues
     return chains
 
 
@@ -1820,7 +1848,9 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
 
     # warum doppelt?
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
-    pdb_chains = {k: v[0] for (k, v) in pdb2seq(structure).items()} # dict; key: chain, value: seq
+    pdb_seq, noncanonical_residues = pdb2seq(structure, noncanon_warning = True)
+    pdb_chains = {k: v[0] for (k, v) in pdb_seq.items()} # dict; key: chain, value: seq
+
     print( "alignment:")
     print(alignment)
     print( "chains:")
@@ -1886,7 +1916,7 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
                 # otherwise, take random (first) chain
                 selected_match[1] = available_chains[0]
 
-    return selected_match
+    return selected_match, noncanonical_residues
 
     
 
@@ -1900,7 +1930,7 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
 
     # find matching pdb chain, clustal id pair
-    pdb_match = find_pdb_in_alignment(clustal, base_structure, chain=base_chain, clustal_id=base_clustal_id)
+    pdb_match, noncanonical_residues = find_pdb_in_alignment(clustal, base_structure, chain=base_chain, clustal_id=base_clustal_id)
     if pdb_match is None:
         #exit(1) # TODO: error?
         return []
@@ -1956,7 +1986,7 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
     print( __name__, 'found', len(mutations), 'mutations')
 
-    return mutations
+    return mutations, noncanonical_residues
 
 
                     
