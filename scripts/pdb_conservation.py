@@ -69,9 +69,7 @@ def same_group( A, B ):
 
 alignment = bali.ReadAlignment( ali_file)[1]
 
-for seq in alignment:
-    if "*" in seq:
-        alignment.remove(seq)
+alignment = [seq for seq in alignment if "*" not in seq]
 
 nr = len( alignment)
 
@@ -80,7 +78,7 @@ if ali_id >= nr:
     print( "ERROR: sequence id too small:", ali_id, nr )
     exit(1)
 
-    
+
 vals = []
 seq = []
 for i in range( 0, len( alignment[ ali_id ] )):
