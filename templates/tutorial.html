@@ -57,7 +57,7 @@
 
 
 <h5>General philosophy and key elements of the <span class="mut-ex">MutationExplorer</span></h5>
-<center><div><img src="static/img/server2b.png" width="75%;"></div></center>
+<center><div><img src="static/img/server2b.png" width="62%;"></div></center>
 <ul class="collapsible">
 
     <li>
@@ -198,10 +198,10 @@
 	      <li> Select “long minimization” to replicate the energy values of our example page. Or, “quick” is OK if numerical precision is not a concern. “None” is fastest, but energetic calculations will be meaningless. Click the
 	      <span class="grey-text text-darken-1"> <button class="waves-effect waves-light btn modal-trigger grey lighten-2">i</button></span>
 	      at right for more details. </li>
-	      <li> Click the <img src="static/img/hook.png"> under “RaSP” if you wish to skip this stability prediction calculation.  Click the  at right for more details.</li>
+	      <li> Click the <img src="static/img/hook.png"> under “RaSP” if you wish to skip this stability prediction calculation.  Click the  <span class="grey-text text-darken-1"> <button class="waves-effect waves-light btn modal-trigger grey lighten-2">i</button></span> at right for more details.</li>
 	      <li> Click 
 	    <span class="center-align toggle-card"> <button class="waves-effect waves-light btn modal-trigger" title="download all" style="margin:0px;">submit</button> </span>
-	    to start the calculations.  The webpage tab at the top of the browser window will immedately indicate a refresh in progress.  Very soon you are transported to a new page showing “Status of Job nnnnn”.   Be patient as the calculation proceeds.  It is a good idea to right-click on “Result Page” for later references.  However, this URL will not be active until the various calculations complete.  At that time, you will be automatically redirected to this same “Result Page”.  Your patience will be well rewarded. </li>
+	    to start the calculations.  The webpage tab at the top of the browser window will immedately indicate a refresh in progress.  Very soon you are transported to a new page showing “Status of Job nnnnn”.   Be patient as the calculation proceeds.  It is a good idea to right-click on <span style="color:blue;">“Result Page”</span> for later references.  However, this URL will not be active until the various calculations complete.  At that time, you will be automatically redirected to this same <span style="color:blue;">“Result Page”</span>.  Your patience will be well rewarded. </li>
 	    </ol>
 	      <br/>
 	    <u>Troubleshooting your VCF uploads</u>
@@ -215,7 +215,7 @@
 	      <li><span  style="font-variant:small-caps">MutationExplorer</span>can only analyze one protein at a time.  You will need to split your VCF file and make separate runs, if your VCF file generates missense variations for multiple genes.</li>
 	      <li>The VEP often returns Ensembl transcript Ids which do not map to Swiss-Prot curated, canonical UniProt transcript IDs.
 		Without a UniProt ID, <span  style="font-variant:small-caps">MutationExplorer</span> cannot retrieve an AlphaFold model.
-		You may manually check cross-references between ENST… transcript IDs and Uniprot IDs at ensembl.org and uniprot.org, respectively.</li>
+		You may manually check cross-references between ENST… transcript IDs and Uniprot IDs at <a href="https://ensembl.org">ensembl.org</a> and <a href="https://uniprot.org">uniprot.org</a>, respectively.</li>
 	      <li>
 		Inputting GRCh37/hg19 genomic positions, which are indistinguishably formatted, will result in wildly incorrect results.  You must first “liftover” such coordinates, by converting your VCF coordinates to BED format, then submitting them to <a href="https://genome.ucsc.edu/cgi-bin/hgLiftOver">https://genome.ucsc.edu/cgi-bin/hgLiftOver</a>  As you use these kinds of tools, remember that <span  style="font-variant:small-caps">MutationExplorer</span> requires GRCh38</li>
 	    </ul>
