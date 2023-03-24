@@ -3,19 +3,32 @@
 {% block content %}
 
 <center>
-<br>
-<h3>Upload structure or model</h3>
-
-
-
-<br>
-<p> Choose one of the following options: </p>
+  <br>
+  <h3>Upload structure or model</h3>
+  <br>
+  <br>
 </center>
 
+<center>
+  <span id="radio-title" class="grey-text text-darken-1">  Select identifiers from the Fasta header of the uploaded alignment: <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalseq" title="Further information" style="float:right;">i</a></span>
+</center>
+<!-- Modal Structure -->
+<div id="modalseq" class="modal">
+  <div class="modal-content">
+    <h5>Fasta header</h5>
+    <p>This is required if you upload a single PDB in the subsequent step - which creates a homology model of the target sequence. </p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
 
+<br>
+<br>
 
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
 
+  <div class="row">
 <div class="col s6">
 
     <center>
@@ -25,133 +38,174 @@
     <!-- Seq select -->
 	  <div class="input-field seq-select-field" sel="base_seq"></div>
 
-    <br>
-    <br>
-    <br>
-    <br>
-    
-    <center>
-    <h5>Base structure</h5>
-    </center>
-
-    <!-- Upload -->
-    <div style="width: 100%; display: flex; justify-content: center">
-    <div class="file-field input-field" style="width: 100%">
-        <div class="btn" style="width: 100%">
-            <span>Upload a PDB file</span>
-            <input id="pdb-upl" type="file" name="base_pdbfile">
-        </div>
-    </div>
-    </div>
-
-    <!-- PDB -->
-    <div class="input-field">
-        <input id="pdb-id" type="text" name="base_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
-        <label for="chain">Load structure from PDB</label>
-    </div>
-
-    <!-- AF -->
-    <div class="input-field">
-        <input id="af-id" type="text" name="base_alphafoldid" class="validate" placeholder="Uniprot ID">
-        <label for="chain">Load prediction from AlphaFold DB</label>
-    </div>
-
-    <!-- Chain -->
-    <div class="input-field">
-        <input id="chain" type="text" name="base_chain" class="validate">
-        <label for="chain">Enter chain</label>
-    </div>
-
 </div>
-
-
 <div class="col s6">
-
-    
     <center>
     <h5>Target sequence</h5>
     </center>
 
     <!-- Seq select -->
 	  <div class="input-field seq-select-field" sel="target_seq"></div>
+</div>
+</div>
 
-    <br>
-    <br>
-    <br>
-    <br>
+<br>
+<br>
+<center>
+  <span id="radio-title" class="grey-text text-darken-1"> Upload one or two PDB formatted structures: <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalpdb" title="Further information" style="float:right;">i</a></span>
+</center>
+<!-- Modal Structure -->
+<div id="modalpdb" class="modal">
+  <div class="modal-content">
+    <h5>Upload single PDB</h5>
+    <p>If you upload a single PDB as base structure, mol_1 will be a homology model of the target sequence. That means, the target sequence is mapped onto the base structure. </p>
+    <p> Please note that residues that are missing in the PDB are not completed at this point!</p>
+    <h5>Upload two PDBs</h5>
+    <p> In this case the structures will be superimposed according to the alignment. In "Change Visualization" on the result page, you can select one of the molecules to be moved individually.</p>
+    <h5>Chains</h5>
+    <p>If you upload a homomultimer, you have to specify the chain that shall be used.</p>
+    <p>Please note that only the chains that either match the alignment or are entered in the form are considered. Others are filtered.</p>
+    <h5>Coloring</h5>
+    <p>In both cases, the models will be colored by sequence conservation, according to the alignment:</p>
+    <table>
+      <tr>
+	<td>white </td>
+	<td>identical</td>
+      </tr>
+      <tr>
+	<td>light blue</td>
+	<td>mutated within same amino acid group</td>
+      </tr>
+      <tr>
+	<td>darg blue</td>
+	<td>mutated between groups</td>
+      </tr>
+      <tr>
+	<td> red</td>
+	<td>gap</td>
+      </tr>
+    </table>
+    <p>Amino acid groups are defined as e.g. on wikipedia</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+  </div>
+</div>
+
+
+<br>
+<br>
     
+<div class="row">
+  <div class="col s6">
     <center>
-    <h5>Target structure (optional)</h5>
+      <h5>Base structure</h5>
     </center>
 
     <!-- Upload -->
     <div style="width: 100%; display: flex; justify-content: center">
-    <div class="file-field input-field" style="width: 100%">
+      <div class="file-field input-field" style="width: 100%">
         <div class="btn" style="width: 100%">
-            <span>Upload a PDB file</span>
-            <input id="pdb-upl" type="file" name="target_pdbfile">
+          <span>Upload a PDB file</span>
+          <input id="pdb-upl" type="file" name="base_pdbfile">
         </div>
+      </div>
     </div>
-    </div>
-
+    
     <!-- PDB -->
     <div class="input-field">
-        <input id="chain" type="text" name="target_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
-        <label for="chain">Load structure from PDB</label>
+      <input id="pdb-id" type="text" name="base_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
+      <label for="chain">Load structure from PDB</label>
     </div>
-
+    
     <!-- AF -->
     <div class="input-field">
-        <input id="chain" type="text" name="target_alphafoldid" class="validate" placeholder="Uniprot ID">
-        <label for="chain">Load prediction from AlphaFold DB</label>
+      <input id="af-id" type="text" name="base_alphafoldid" class="validate" placeholder="Uniprot ID">
+      <label for="chain">Load prediction from AlphaFold DB</label>
     </div>
-
+    
     <!-- Chain -->
     <div class="input-field">
-        <input id="chain" type="text" name="target_chain" class="validate">
-        <label for="chain">Enter chain</label>
+      <input id="chain" type="text" name="base_chain" class="validate">
+      <label for="chain">Enter chain</label>
     </div>
+    
+  </div>
+  
 
+  <div class="col s6">
+    <center>
+      <h5>Target structure (optional)</h5>
+    </center>
+    
+    <!-- Upload -->
+    <div style="width: 100%; display: flex; justify-content: center">
+      <div class="file-field input-field" style="width: 100%">
+        <div class="btn" style="width: 100%">
+          <span>Upload a PDB file</span>
+          <input id="pdb-upl" type="file" name="target_pdbfile">
+        </div>
+      </div>
+    </div>
+    
+    <!-- PDB -->
+    <div class="input-field">
+      <input id="chain" type="text" name="target_pdbid" class="validate" placeholder="PDB ID (without '.pdb' ending, example: '1afo')">
+      <label for="chain">Load structure from PDB</label>
+    </div>
+    
+    <!-- AF -->
+    <div class="input-field">
+      <input id="chain" type="text" name="target_alphafoldid" class="validate" placeholder="Uniprot ID">
+      <label for="chain">Load prediction from AlphaFold DB</label>
+    </div>
+    
+    <!-- Chain -->
+    <div class="input-field">
+      <input id="chain" type="text" name="target_chain" class="validate">
+      <label for="chain">Enter chain</label>
+    </div>
+    
+  </div>
 </div>
-                
 
 
 
 <div id="radio-field" class="input-field col offset-s3 s6" style="margin-top: 3rem !important">
   <span id="radio-title" class="grey-text text-darken-1">Minimization <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalmin" title="Further information" style="float:right;">i</a></span>
 
-      <!-- Modal Structure -->
-      <div id="modalmin" class="modal">
-	<div class="modal-content">
-	  <h4>Minimization</h4>
-	  <p>
-	    The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br><br>
-	    If you select <b> none </b>, coloring the structures by energy or energy difference is possible but does not provide reliable information. <br><br>
-
-	    We continuously pre-minimize structures from the PDB using the commandline described below.
-	    If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
-	    Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
-	  </p>
-	  <h4> AlphaFold and your own models</h4>
-	  <p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be minimized, but the minimization has to be performed with the same energy functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
-	  
-	  <h4> Do it yourself!</h4>
-	  <p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
-	    However, we recommend you to perform the following minimization. It is optimizing also the backbone in a limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be leading to problems for e.g. membrane proteins. </p>
-	  <div class="codebox">
-	    <code>
-	      PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
-	    </code>
-	  </div>
-
-	  <p>
-	    This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
-	  
-	</div>
-	<div class="modal-footer">
-	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	</div>
+  <!-- Modal Structure -->
+  <div id="modalmin" class="modal">
+    <div class="modal-content">
+      <h4>Minimization</h4>
+      <p>
+	The minimization is crucial if you want to analyze the energetic impact of mutations. The better the structure is energetically minimized, the more reliable the results will be. <br><br>
+	If you select <b> none </b>, coloring the structures by energy or energy difference is possible but does not provide reliable information. <br><br>
+	
+	We continuously pre-minimize structures from the PDB using the commandline described below.
+	If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
+	Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
+      </p>
+      <h4> AlphaFold and your own models</h4>
+      <p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be minimized, but the minimization has to be performed with the same energy functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
+      
+      <h4> Do it yourself!</h4>
+      <p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+	However, we recommend you to perform the following minimization. It is optimizing also the backbone in a limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be leading to problems for e.g. membrane proteins. </p>
+      <div class="codebox">
+	<code>
+	  PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+	</code>
       </div>
+      
+      <p>
+	This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.</p>
+      
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
   
   <p>
     <label>
@@ -171,35 +225,29 @@
       <span>quick (1-3 min)</span>
     </label>
   </p>
-  <p>
-    <label>
-      <input type="radio" name="min-selector" value="none" />
-      <span>none<span>
-    </label>
-  </p>
-
+  
 </div>
 <div id="radio-field" class="input-field col offset-s3 s6">
   <span id="radio-title" class="grey-text text-darken-1">RaSP Model <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalrasp" title="Further information" style="float:right;">i</a></span>
   
   <!-- Modal Structure -->
-      <div id="modalrasp" class="modal">
-	<div class="modal-content">
-	  <h4>RaSP model</h4>
-	  <p>
-	   RaSP is a deep-learning-based tool that rapidly estimates
-protein stability changes. With RaSP, Mutation Explorer presents the user with a quick initial estimation of a mutation's (de)stabilizing effect, without their having to wait for the longer full minimization process.  The RaSP tool consists of two linearly linked networks.  A self-supervised 3D convolutional neural network that has learned representations of protein structures is followed by a fully connected neural network that maps these internal representations to Rosetta protein stability changes. RaSP is optimised for accuracy in the range [-1,7] kcal/mol.	   
-	   </p>
-	    <p>
-	    This command will create a RaSP model for each chain of the structure. This can take up to 10 minutes per chain.</p>
-	    <p>Once this option is selected, it will be applied in all subsequent steps accordingly.</p>
-  	</div>
-	<div class="modal-footer">
-	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	</div>
-      </div>
+  <div id="modalrasp" class="modal">
+    <div class="modal-content">
+      <h4>RaSP model</h4>
+      <p>
+	RaSP is a deep-learning-based tool that rapidly estimates
+	protein stability changes. With RaSP, Mutation Explorer presents the user with a quick initial estimation of a mutation's (de)stabilizing effect, without their having to wait for the longer full minimization process.  The RaSP tool consists of two linearly linked networks.  A self-supervised 3D convolutional neural network that has learned representations of protein structures is followed by a fully connected neural network that maps these internal representations to Rosetta protein stability changes. RaSP is optimised for accuracy in the range [-1,7] kcal/mol.	   
+      </p>
+      <p>
+	This command will create a RaSP model for each chain of the structure. This can take up to 10 minutes per chain.</p>
+      <p>Once this option is selected, it will be applied in all subsequent steps accordingly.</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
   
-     <p>
+  <p>
     <label>
       <input type="checkbox" name="rasp-checkbox"  />
       <span>Calculate RaSP model (~10 min per chain)</span>
