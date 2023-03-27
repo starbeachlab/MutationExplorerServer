@@ -587,7 +587,7 @@ def submit():
 
     # prewrite email (is sent seperately)
     if email:
-        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "") 
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
         write_email(outdir + "mail.txt", email, results_link)
 
     # save file
@@ -990,7 +990,7 @@ def vcf():
 
     # prewrite email (is sent seperately)
     if email:
-        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "") 
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
         write_email(outdir + "mail.txt", email, results_link)
 
 
