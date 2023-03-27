@@ -208,16 +208,16 @@
 	    <br/>
 	    <p>The processes between the submission of your VCF file, and the display of an AlphaFold model are complex. Your VCF upload will be processed by the Ensembl Variant Effect Predictor (VEP), running locally on the <span  style="font-variant:small-caps">MutationExplorer</span> server.
 	      If your results are unexpected, we recommend you paste your VCF file into the public VEP website: <a href="https://ensembl.org/Tools/VEP" class="Internet_20_link">https://ensembl.org/Tools/VEP</a>.
-	      This is the fastest way to ensure that your VCF file is properly tab-delimited, contains at least the minimum required columns, and that the raw output of the VEP contains the missense variants you expect.
+	      This is the fastest way to ensure that your VCF file is properly tab-delimited and contains the minimum required columns and headers. The raw output  from the website should also list protein missense variants.
 	    </p>
-	  <p> Even if you see missense variants in the public VEP website, that’s great news. But other difficulties may remain. For example:
+	  <p> While seeing missense variants from the public VEP website is encouraging, other difficulties may remain. For example:
 	    <ul  class="true-list" id="input-list">
-	      <li><span  style="font-variant:small-caps">MutationExplorer</span>can only analyze one protein at a time.  You will need to split your VCF file and make separate runs, if your VCF file generates missense variations for multiple genes.</li>
+	      <li><span  style="font-variant:small-caps">MutationExplorer</span> can only analyze one protein at a time.  You will need to split your VCF file and make separate runs, if your VCF file generates missense variations for multiple genes.</li>
 	      <li>The VEP often returns Ensembl transcript Ids which do not map to Swiss-Prot curated, canonical UniProt transcript IDs.
 		Without a UniProt ID, <span  style="font-variant:small-caps">MutationExplorer</span> cannot retrieve an AlphaFold model.
 		You may manually check cross-references between ENST… transcript IDs and Uniprot IDs at <a href="https://ensembl.org">ensembl.org</a> and <a href="https://uniprot.org">uniprot.org</a>, respectively.</li>
 	      <li>
-		Inputting GRCh37/hg19 genomic positions, which are indistinguishably formatted, will result in wildly incorrect results.  You must first “liftover” such coordinates, by converting your VCF coordinates to BED format, then submitting them to <a href="https://genome.ucsc.edu/cgi-bin/hgLiftOver">https://genome.ucsc.edu/cgi-bin/hgLiftOver</a>  As you use these kinds of tools, remember that <span  style="font-variant:small-caps">MutationExplorer</span> requires GRCh38</li>
+		Inputting GRCh37/hg19 genomic positions, which are indistinguishably formatted, will result in wildly incorrect results.  You must first “liftover” such coordinates, by converting your VCF coordinates to BED format, then submitting them to <a href="https://genome.ucsc.edu/cgi-bin/hgLiftOver">https://genome.ucsc.edu/cgi-bin/hgLiftOver</a>.  As you use these kinds of tools, remember that <span  style="font-variant:small-caps">MutationExplorer</span> requires GRCh38.</li>
 	    </ul>
 	    
         </div>
@@ -348,13 +348,46 @@
         <div class="collapsible-body"><span>
           <p>
             <ul class="true-list" id="input-list"><br>
-            You can adjust the metric that serves as the basis for coloration in the <i>"Color by:"</i> Dropdown menu. By default, the colormap will be from -15 to 15 in a blue-white-red gradient
-            <li style="margin: 10px;">Click on the <span style="font-family:Arial"><b>Change Visualization</b></span> tab in the bottom right of the main window to adjust the color scale and the mutation marker</li>
-            <li style="margin: 10px;">On the left and right side of the color scale, change the numbers and confirm with enter. The color scale will be adjusted upon clicking <span style="font-family:Arial"><b>Apply</b></span> below the scale</li>
-            <li style="margin: 10px;">The mutation marker color and size can be adjusted via the slider and color window. The marker can be turned off by clicking on <span style="font-family:Arial"><b>✓ On</b></span> in the Show Field, setting it to <span style="font-family:Arial"><b>X Off</b></span></li>
-          </ul>
+              You can adjust the metric that serves as the basis for coloration in the <i>"Color by:"</i> Dropdown menu. By default, the colormap will be from -2 to 2 in a blue-white-red gradient
+              <li style="margin: 10px;">Click on the <span style="font-family:Arial"><b>Change Visualization</b></span> tab in the bottom right of the main window to adjust the color scale range and the mutation markers</li>
+              <li style="margin: 10px;">First select for which structure you want to change the range of the color scale by choosing the corresponding file in the Structure drop-down menu. On the left and right side of the color scale, change the numbers and confirm with enter. The color scale will be adjusted upon clicking <span style="font-family:Arial"><b>Apply</b></span> below the scale</li>
+              <li style="margin: 10px;">The mutation marker color and size can be adjusted via the slider and color window. The marker can be turned off by clicking on <span style="font-family:Arial"><b>✓ On</b></span> in the Show Field, setting it to <span style="font-family:Arial"><b>X Off</b></span></li>
+              <li style="margin: 10px">It is possible to hide all mutation spheres at once. Click the <span style="font-family:Arial"><b>Disable all mutation spheres</b></span> button in the Mutation Markers panel. To show all mutation spheres again, click the <span style="font-family:Arial"><b>Enable all mutation spheres</b></span> button</li>
+              <li style="margin: 10px">If you are importing multiple structures into a scene, it may be beneficial to hide a specific structure. Select the structure you want to hide from the Structure drop-down menu. Then click the <span style="font-family:Arial"><b>Hide Structure</b></span> button at the bottom. To make the structure visible again, simply click the <span style="font-family:Arial"><b>Show Structure</b></span> button</li>
+            </ul>
           </p>
         </span></div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+          Rematch clustal sequences to a structure
+        </div>
+        <div class="collapsible-body">
+          <p>
+            <ol>
+              After importing structures and ClustalW files into MutationExplorer, MutationExplorer tries to match all sequences contained in the ClustalW file with the chains of available structures.
+              Immediately after a first match is found, it is applied. 
+              This can lead to false matches, because the MutationExplorer does not search for further possible matches.
+              The result of such false matches may be that when hovering over the sequences in the Alignment View panel, the wrong amino acids are highlighted at the structures, or that mutation sphere markers are placed at wrong amino acids.
+              If this occurs, manual rematching must be performed.
+              <li style="margin: 10px;">Open the <span style="font-family:Arial"><b>Manuel Rematch Structure</b></span> tab at the bottom left.</li>
+              <li style="margin: 10px;">If several ClustalW files have been imported, select in the drop-down menu <i>Clustal File</i> for which ClustalW file the manual rematching should take place.</li>
+              <center><div><img src="static/img/tutorial/clustalFileDropdown.png" width="20%;"></div></center>
+              <li style="margin: 10px;">For each imported structure in the scene there is a block for rematching.</li>
+              <center><div><img src="static/img/tutorial/rematchingBlock.png" width="65%;"></div></center>
+              <li style="margin: 10px;">Now select on the left hand side which sequence from the ClustalW file should be made on a certain structure. You do this in the drop-down menu <i>Chain Lable</i>.</li>
+              <center><div><img src="static/img/tutorial/chainLabelDropdown.png" width="18%;"></div></center>
+              <li style="margin: 10px;">The selected sequence will be displayed below to support the matching.</li>
+              <li style="margin: 10px;">Now select the correct chain within the structure by adjusting the drop-down menus of <i>Entity</i> and <i>Chain</i> on the right hand side. You will see the corresponding sequence below.</li>
+              <center><div><img src="static/img/tutorial/structureDropdown.png" width="30%;"></div></center>
+              <li style="margin: 10px;">Within the displayed sequence on the right side, the longest matching amino acid sequence with the sequence selected in <i>Clustal Chain</i> will be highlighted in green.</li>
+              <li style="margin: 10px;">When the complete sequence on the right side is marked green, manual rematching can be performed.</li>
+              <li style="margin: 10px;">Apply the manual rematching by clicking on <span style="font-family:Arial"><b>Apply Matching</b></span>.</li>
+            </ol>
+            <center><div><img src="static/img/tutorial/manualRematchLabled.jpg" width="90%;"></div></center>
+          </p>
+        </div>
     </li>
 
 </ul>

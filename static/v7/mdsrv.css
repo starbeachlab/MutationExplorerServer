@@ -5522,13 +5522,11 @@
   line-height: 32px;
   text-align: center;
   font-weight: bold;
-  font-size: 150%;
   color: #0393fc;
+  font-size: 80%;
 }
 .conservation-legend > div:first-child {
   padding-left: 50px;
-  font-weight: bold;
-  font-size: 100%;
 }
 .conservation-legend > div:last-child {
   padding-right: 50px;
