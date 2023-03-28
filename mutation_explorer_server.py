@@ -1085,7 +1085,7 @@ def interface_two_structures(tag, inputs):
     longmin = inputs["longmin"]
 
 
-    if minimize:
+    if not minimize:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
         score_structure(tag, outdir, "mut_1", "structure2.pdb")
     else:

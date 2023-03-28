@@ -42,12 +42,22 @@
   <br><br><br>
 <h4>Main steps</h4>
 <p> <b>Either:</b>
+  <ul id="input-list"><li> create an alignment on <a href="https://www.bioinfo.mpg.de/AlignMe//AlignMePW.html">AlignMe webserver</a></li>
+    <li> forward the results to <span style="font-variant:small-caps">MutationExplorer</span></li>
+    <li> select base and target sequence </li>
+    <li> upload base (and optionally target) structure </li>
+    <li> get homology model (or optionally superimposed models)</li></ul>
+  <b>Or:</b>
   <ul id="input-list"><li> upload human SNPs in VCF format</li></ul>
   <b>Or:</b>
   <ul id="input-list">
-    <li> upload structure, </li>
-    <li> define mutations, </li>
+    <li> upload structure </li>
+    <li> define mutations </li></ul>
+  <b>Always:</b>
+  <ul id="input-list">  
     <li> explore: mutate again and again ... </li>
+    <li> mutation forecast using RaSP </li>
+    <li> color by: &nbsp; absolute/differences &nbsp; &nbsp; energy/hydrophobicity/conservation</li>
   </ul>
 </p>
 
@@ -57,7 +67,7 @@
   Structures can be uploaded in three different ways:
   <ul id="input-list">
     <li> PDB ID, </li>
-    <li> AlphaFold ID, </li>
+    <li> AlphaFold ID </li>
     <li> upload local PDB file </li>
   </ul>
 </p>
@@ -67,18 +77,18 @@
 <p>
   Mutations can be defined in three different ways:
   <ul id="input-list">
-    <li> Key or paste into GUI, using a simple syntax: [chain]:[residue number][target mutation], example:
-”A:12G,B:134T". The residue number has to be present in and match the uploaded PDB.</li>
-    <li> Upload alignment in ClustalW format </li>
-    <li> Upload target sequence either by pasting the sequence, uploading a FASTA file or specifying a Uniprot ID </li>
+    <li> key or paste into GUI, using a simple syntax: [chain]:[residue number][target mutation], example:
+”A:12G,B:134T". The residue number has to be present in and match the uploaded PDB</li>
+    <li> upload alignment in ClustalW format </li>
+    <li> upload target sequence either by pasting the sequence, uploading a FASTA file or specifying a Uniprot ID </li>
   </ul>
 </p>
 
 <h4> Mutation syntax </h4>
 <ul id="input-list">
-  <li> A comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
-  <li> Example: 'A:23G,B:123A'</li>
-  <li> This mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the residue with residue ID 123 to alanine.</li> 
+  <li> a comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
+  <li> example: 'A:23G,B:123A'</li>
+  <li> this mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the residue with residue ID 123 to alanine</li> 
 </ul>
 
 
@@ -91,13 +101,13 @@
 <p>
   Actual times depend on the size of the system and may vary significantly.
   <ul id="input-list">
-    <li> Initial basic minimization: 1 min </li>
-    <li> Mutation and basic minimization: 2 min  </li>
-    <li> VCF processing:  5 min  </li>
+    <li> initial basic minimization: 1-3 min </li>
+    <li> per round of mutations: ~2 min  </li>
+    <li> VCF processing (plus minimization):  5 min  </li>
   </ul>
 </p>
 
-<p> Details can be found in the FAQs </p>
+<p> Details can be found in the FAQs. </p>
 
 <br>
 <br>
