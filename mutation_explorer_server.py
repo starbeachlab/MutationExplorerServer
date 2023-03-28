@@ -2067,7 +2067,7 @@ def write_email(fil, user, link):
         out.write('Hello  ' + user + '!\n\n')
         out.write('Your MutationExplorer calculation is done. \n')
         out.write('You can view the results here: \n\n' + link + '\n\n')
-        out.write('Thanks for using MutEx.\n\n')
+        out.write('Thanks for using MutationExplorer.\n\n')
         out.write('Have a nice day!\n\n')
 
 def send_email(fil):
