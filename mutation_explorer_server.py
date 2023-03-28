@@ -2112,6 +2112,7 @@ def send_email(fil):
         print(receiver)
         #print(message)
 
+
         context = ssl.create_default_context()
         receiver_email = receiver
         try:
@@ -2121,6 +2122,7 @@ def send_email(fil):
             server.ehlo()
             server.login(sender_user, password)
             server.sendmail(sender_email, receiver_email, message)
+            os.remove(fil)
         except Exception as e:
             print(e)
         finally:
