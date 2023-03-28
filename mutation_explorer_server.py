@@ -1449,6 +1449,13 @@ def explore(tag, filename = ""):
     ### mutate structure
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
+    email = request.form['email'].strip()
+    # prewrite email (is sent seperately)
+    if email:
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = mutant) 
+        write_email(outdir + "mail.txt", email, results_link)
+
     helper_files_from_mutations( mutations, outdir + parent, outdir + mutant[:-4] + '_resfile.txt', outdir + mutant[:-4] + '.clw', outdir + "info/" + mutant[:-4] + '.txt' ) 
     start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
     
