@@ -1104,30 +1104,39 @@ def interface_two_structures(tag, inputs):
     base_strc = outdir + "mut_0.pdb"
     target_strc = outdir + "mut_1.pdb"
 
+    dev_status( tag, "find base pdb in alignment")
 
     # get clustal ids, chains, sequence ids
     pdb_match, base_noncanonical_residues = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
-    if pdb_match is None:
+    # Nikola: this is never true: if pdb_match is None:
+    if pdb_match == ["",""]:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
 
     if base_noncanonical_residues:
         status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
 
+    dev_status( tag, "get base seq id in clustal")    
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
+        status_update( "no+base+seq+in+alignment")
         return
 
+    dev_status( tag, "find target pdb in alignment")
+
     pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
-    if pdb_match is None:
+    if pdb_match == ["",""]:
+        status_update( "structure not in alignment")
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
 
     if target_noncanonical_residues:
         status_update(tag, "mut_1.pdb containes noncanonical residues, which are ignored")
 
+    dev_status( tag, "get target seq id in clustal")    
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
+        status_update( "no+target+seq+in+alignment")
         return
 
     if base_seq_id == target_seq_id:
@@ -1844,9 +1853,21 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     print("################")
     print("find pdb in alignment")
     print(clustal)
-    print(structure)
+    if os.path.isfile(structure):
+        print(structure)
+    else:
+        print( structure, 'does not exist !!')
+        count = 0
+        while not os.path.isfile(structure):
+            print( 'wait')
+            time.sleep(10)
+            count += 1
+            if count >= 12:
+                print('giving up')
+                exit(1)
     print(chain)
     print(clustal_id)
+
 
     # warum doppelt?
     alignment = read_clustal(clustal) # dict; key: clustal id, value: seq
@@ -1868,7 +1889,7 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     if len(matches) == 0:
         print("nothing found")
         # no matching pair exists
-        return None
+        return ["",""], noncanonical_residues
 
 
     # select (base clustal id, base chain) pair based on provided parameters
