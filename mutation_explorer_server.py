@@ -467,11 +467,16 @@ def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
                             continue
                     f_out.write(line)
 
-        bash_cmd("tsp mv " + outdir + "structure2.pdb " + file_path, tag)
+        bash_cmd("tsp mv " + outdir + "structure2.pdb " + file_path, tag) # why in queue? os.rename
         return True
     return False
 
-
+def filter_chain( inpdb, fchain, outpdb):
+    with open(inpdb, "r") as f_in, open(outpdb, "w") as f_out:
+        for l in f_in:
+            if l[:4] == "ATOM" and chain(l) == fchain:
+                f_out.write(l)
+           
 
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
     # name = "mut_0"
@@ -1084,7 +1089,16 @@ def interface_two_structures(tag, inputs):
     minimize = inputs["minimize"]
     longmin = inputs["longmin"]
 
+    if base_chain != '':
+        status_update( tag, "filter+base+chain")
+        filter_chain( outdir + "structure.pdb", base_chain, outdir + "tmp.pdb")
+        os.rename( outdir+ "tmp.pdb", outdir + "structure.pdb" )
+    if target_chain != '':
+        status_update( tag, "filter+target+chain")
+        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp.pdb")
+        os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
 
+    
     if not minimize:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
         score_structure(tag, outdir, "mut_1", "structure2.pdb")
