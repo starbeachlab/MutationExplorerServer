@@ -8,6 +8,10 @@ from werkzeug.utils import secure_filename
 import shutil
 import datetime
 
+# Mail Stuff
+import smtplib, ssl
+
+
 
 
 class PrefixMiddleware(object):
@@ -556,8 +560,8 @@ def submit():
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
     remove_hets = (hetatom_filter is not None)
 
-    email = False
-    #email = request.form['email'].strip()
+    #email = False
+    email = request.form['email'].strip()
 
     min_type = request.form['min-selector'] # = long | short | none
     minimize = (min_type != 'none')
@@ -583,7 +587,7 @@ def submit():
 
     # prewrite email (is sent seperately)
     if email:
-        results_link = "https://proteinformatics.uni-leipzig.de" + url_for('explore', tag = tag, filename = "") # TODO: link aendern
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
         write_email(outdir + "mail.txt", email, results_link)
 
     # save file
@@ -694,11 +698,11 @@ def add_mutations(tag, mutant, inputs):
     
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
+
     # wait for mutation 
     if wait(mutant, 1, WAIT_MUTATION) == False:
         fatal_error(tag, MUTATION_FAILED)
 
-    send_email(outdir + "mail.txt")
 
 
 
@@ -981,6 +985,14 @@ def vcf():
     min_type = request.form['min-selector'] # = long | short | none
     inputs["minimize"] = (min_type != 'none')
     inputs["longmin"] = (min_type == 'long')
+
+    email = request.form['email'].strip()
+
+    # prewrite email (is sent seperately)
+    if email:
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
+        write_email(outdir + "mail.txt", email, results_link)
+
 
 
     rasp_calculation = False
@@ -1335,6 +1347,8 @@ def get_status(tag, filename):
         if successful:
             status = "done"
             msg = ""
+            print("send mail?")
+            send_email(os.path.join( app.config['USER_DATA_DIR'], tag + "/mail.txt"))
         else:
             status = "error"
             msg = "Rosetta calculation encountered an error"
@@ -1444,6 +1458,13 @@ def explore(tag, filename = ""):
     ### mutate structure
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
+    email = request.form['email'].strip()
+    # prewrite email (is sent seperately)
+    if email:
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = mutant) 
+        write_email(outdir + "mail.txt", email, results_link)
+
     helper_files_from_mutations( mutations, outdir + parent, outdir + mutant[:-4] + '_resfile.txt', outdir + mutant[:-4] + '.clw', outdir + "info/" + mutant[:-4] + '.txt' ) 
     start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
     
@@ -2082,9 +2103,7 @@ def is_pdb( fname):
 
 def write_email(fil, user, link):
     with open(fil, 'w') as out:
-        out.write('From: mutex@proteinformatics.de\n')
-        out.write('Subject: MutationExplorer results \n')
-        out.write('To: ' + user + '\n\n')
+        out.write(user + "\n")
         out.write('Hello  ' + user + '!\n\n')
         out.write('Your MutationExplorer calculation is done. \n')
         out.write('You can view the results here: \n\n' + link + '\n\n')
@@ -2092,8 +2111,48 @@ def write_email(fil, user, link):
         out.write('Have a nice day!\n\n')
 
 def send_email(fil):
-    if(os.path.exists(fil)):
-        os.system('sendmail -t < ' + fil)
+   if(os.path.exists(fil)):
+   #     os.system('sendmail -t < ' + fil)
+        smtp_server = app.config['SMTP_SERVER']
+        port = 587
+        sender_user = app.config['SENDER_LOGIN']
+        sender_email = app.config['SENDER_MAIL']
+        password = app.config['MAIL_PASSWORD']
+        receiver = ""
+        message = "Subject: MutationExplorer results \n\n"
+
+        with open(fil, 'r') as mail:
+           receiver = mail.readline()
+           line = mail.readline()
+           while(line != ''):
+
+                message = message + line
+                line = mail.readline()
+
+
+        print(receiver)
+        #print(message)
+
+
+        context = ssl.create_default_context()
+        receiver_email = receiver
+        try:
+            server = smtplib.SMTP(smtp_server,port)
+            server.ehlo() 
+            server.starttls(context=context) 
+            server.ehlo()
+            server.login(sender_user, password)
+            server.sendmail(sender_email, receiver_email, message)
+            os.remove(fil)
+        except Exception as e:
+            print(e)
+        finally:
+            server.quit() 
+
+
+
+
+
 
 
 def is_in_db( pdb):
