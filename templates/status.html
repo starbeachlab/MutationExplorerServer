@@ -58,7 +58,7 @@
             }
             if(data['done'] == true) {
                 if(data['status'] == 'done') {
-                    window.location.href = "{{url_for('explore', tag = tag, filename = filename)}}"
+                    window.location.href = "{{url_for('explore', tag = tag, filename = filename, connector_string = connector_string )}}"
                 } else {
                     errorMessage("There was an error: \"" + data['message'] + "\"")
                 }

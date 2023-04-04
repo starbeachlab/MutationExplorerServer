@@ -1317,12 +1317,12 @@ def interface(tag):
         mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
         start_thread(interface_one_structure, [tag, mutant, inputs], "interface calc one structure")
     
-        return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+        return redirect(url_for('status', tag = tag, filename = mutant, msg="-", connector_string = connector_string ))
     
 
     start_thread(interface_two_structures, [tag, inputs], "interface calc two structures")
 
-    return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="-"))
+    return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="-", connector_string = connector_string ))
     
 
 
