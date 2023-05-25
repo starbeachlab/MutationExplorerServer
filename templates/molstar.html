@@ -44,10 +44,10 @@
 
     var vw = mdsrv.Viewer.create('port', {});
 
-    var loadViewer = function loadViewer(pdbFiles, clustalFiles, color="energy", min="-2", max="2") {
+    var loadViewer = function loadViewer(params){ //pdbFiles, clustalFiles, color="energy", min="-2", max="2") {
         vw.then(viewer => {
             viewer.clear()
-            viewer.loadMutationExplorer(pdbFiles, clustalFiles, color, min, max)
+            viewer.loadMutationExplorer(params) // pdbFiles, clustalFiles, color, min, max)
         })
     }
 

@@ -157,129 +157,145 @@
   name = "{{filename}}";
   let the_ending = "_diffE.pdb"; // for communication between fct
   if (name == "") {
-    name = "mut_0.pdb";
-    the_ending = "_absE.pdb";
+      name = "mut_0.pdb";
+      the_ending = "_absE.pdb";
   }
   let the_name = name.substr(0,name.length - 4);
   allchains = "{{chains}}"
-
+  
   let two_strcs = ("{{two_structures}}" == "True")
-
-
+  
+  
   // highlight selected structure
   strcs = $(".structures");
   for(i = 0; i < strcs.length; i++) {
       if (strcs[i].text == the_name) {
-      $(strcs[i]).addClass("bld");
-    }
+	  $(strcs[i]).addClass("bld");
+      }
   }
-
+  
   $(document).ready(function(){
       $('select').formSelect();
-
+      
       setDiffOptions();
-
+      
       loadPdb(the_name, the_ending);
-
+      
       dropdownChangeSelection('2');
   });
-
+  
   
   function getURL(fname) {
       var loc = window.location;
       var command = loc.protocol + "//" + loc.host + "{{url_for('download', tag=tag, filename='')}}" + fname;
       return command;
   }
-
-
+  
+  
   function loadPdb(name, coloring) {
-    // fill html elements
-    updateInfoSection( the_name);
-    // input files
-    var c_name = name;
-    if (name == "mut_0" || name == "mut_1") {
-      c_name = name + "_1"
-      if (coloring == "_diffE.pdb" || (!two_strcs && coloring == "_cons.pdb")) {
-        coloring = "_absE.pdb";
-      } else if (coloring == "_diffHyPh.pdb") {
-        coloring = "_HyPh.pdb";
+      // fill html elements
+      updateInfoSection( the_name);
+      // input files
+      var c_name = name;
+      if (name == "mut_0" || name == "mut_1") {
+	  c_name = name + "_1"
+	  if (coloring == "_diffE.pdb" || (!two_strcs && coloring == "_cons.pdb")) {
+              coloring = "_absE.pdb";
+	  } else if (coloring == "_diffHyPh.pdb") {
+              coloring = "_HyPh.pdb";
+	  }
       }
-    }
-    document.getElementById('discol').innerHTML = name + coloring;
-    document.getElementById('fname').value = name; // + ".pdb";
-
-    var pdbFiles = [];
-
-    if(two_strcs && (name == "mut_0" || name == "mut_1")) {
-
-      pdbFiles.push(getURL("mut_0" + coloring))
-      pdbFiles.push(getURL("mut_1" + coloring))
-
-      var clustalFiles = [getURL("alignment.aln")]
-
-      // two strcs
-    } else {
-
-      var pdbFile = getURL(name + coloring);
-
-      pdbFiles.push(getURL(name + coloring))
+      document.getElementById('discol').innerHTML = name + coloring;
+      document.getElementById('fname').value = name; // + ".pdb";
       
-      var clustalFiles = []
-
-      for (i = 0; i < allchains.length; i++) {
-        //console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
-        if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
-        {
-          //console.log("Does not exist")
-        }
-        else 
-        {
-            clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
-        }
+      console.log( "color", coloring)
+      var pdbFiles = [];
+      
+      if(two_strcs && (name == "mut_0" || name == "mut_1")) {
+	  // two structures
+	  
+	  pdbFiles.push(getURL("mut_0" + coloring))
+	  pdbFiles.push(getURL("mut_1" + coloring))
+	  
+	  var clustalFiles = [getURL("alignment.aln")]
+	  
+      } else {
+	  // single structure
+	  
+	  var pdbFile = getURL(name + coloring);
+	  
+	  pdbFiles.push(getURL(name + coloring))
+	  
+	  var clustalFiles = []
+	  
+	  for (i = 0; i < allchains.length; i++) {
+              console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
+              if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
+              {
+		  console.log("Does not exist")
+              }
+              else 
+              {
+		  clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+              }
+	  }
+      } 
+      
+      // TODO: set units
+      unit = ""
+      colorType = "";
+      if (coloring == "_absE.pdb" || coloring == "_diffE.pdb") {
+	  colorType = "energy";
+	  unit = "R.E.U"
+      } else if (coloring == "_HyPh.pdb" || coloring == "_diffHyPh.pdb") {
+	  colorType = "hydrophobicity";
+	  unit = "kcal"
+      } else if (coloring == "_cons.pdb") {
+	  colorType = "conservation";
       }
-    } 
-
-    // TODO: set units
-    unit = ""
-    colorType = "";
-    if (coloring == "_absE.pdb" || coloring == "_diffE.pdb") {
-      colorType = "energy";
-      unit = "R.E.U"
-    } else if (coloring == "_HyPh.pdb" || coloring == "_diffHyPh.pdb") {
-      colorType = "hydrophobicity";
-      unit = "kcal"
-    } else if (coloring == "_cons.pdb") {
-      colorType = "conservation";
-    }
-
-    // wait until loadViewer is defined
-    var interval = setInterval(function() {
-      var loadViewer = document.getElementById('ms').contentWindow.loadViewer
-      if (typeof loadViewer == 'undefined') return;
-      clearInterval(interval);
-
-      // update viewer
-	loadViewer(pdbFiles, clustalFiles, {{connector_string}}, colorType, unit)
-    }, 100);
+      console.log( "color type:", colorType)
+      console.log( "unit:", unit)
+      console.log( "string:","{{connector_string}}")
+      
+      const params = {
+	  structureUrls: pdbFiles,
+	  alignmentUrls: clustalFiles,
+	  matching: "{{connector_string}}",
+	  color: colorType,
+	  spheres: true,
+	  unit: unit,
+	  min: '-2',
+	  max: '2',
+      }
+      
+      // wait until loadViewer is defined
+      var interval = setInterval(function() {
+	  var loadViewer = document.getElementById('ms').contentWindow.loadViewer
+	  if (typeof loadViewer == 'undefined') return;
+	  clearInterval(interval);
+	  
+	  // update viewer
+	  loadViewer(params) // pdbFiles, clustalFiles, \{ #{connector_string \}$}, colorType, unit)
+      }, 100);
   }
   
-
+  
   
   $(".toggle").click(function(e) {
-        l = $(this).parent().next()
-        // if is redundant
-        if (l.children().length > 0) {
-            $(this).toggleClass("rot")
-            l.toggleClass("non")
-        }
+      l = $(this).parent().next()
+      // if is redundant
+      if (l.children().length > 0) {
+          $(this).toggleClass("rot")
+          l.toggleClass("non")
+      }
   })
-
-
+  
+  
   $(".toggle-card").click(function() {
-        $(this).next().toggleClass("non")
+      $(this).next().toggleClass("non")
   })
-
-
+  
+  
   $(".structures").click(function(e) {
       e.preventDefault();
       the_name = $(this).text();

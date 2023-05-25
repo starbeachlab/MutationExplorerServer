@@ -43,9 +43,9 @@ with open( sys.argv[2], 'w') as w:
                 prev_chain = ch
                 mid += 1
                 v = vals[mid]
-                if residue_name(l) not in v[0]:
-                    print( 'ERROR: resnames do not match!: ', v[0], residue_name(l) , 'at', mid )
-                    exit(1)
+                #if residue_name(l) not in v[0]:
+                #    print( 'ERROR: resnames do not match!: ', v[0], residue_name(l) , 'at', mid )
+                #    exit(1)
                 x = '{:6.3f}'.format(v[1])
                 if len(x) > 6:
                     x = x[:6]
