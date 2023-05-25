@@ -1462,12 +1462,13 @@ def load_explore_page(out, tag, filename, connector_string = ""):
 
 
 @app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])
+@app.route('/explore/<tag>/<filename>/', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/', methods=['GET', 'POST'])
 def explore(tag, filename = "", connector_string = ""):
     if request.method == 'GET':
         if connector_string == '':
-            connector_string = "mut_0_1.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1.pdb:mut_0_1_B.clw,mut_0_1,B;"
+            connector_string = "mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;"
         return load_explore_page(app.config['USER_DATA_DIR'], tag, filename, connector_string)
 
 
