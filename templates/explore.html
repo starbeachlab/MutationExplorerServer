@@ -57,6 +57,7 @@
 	    <option value="3">Absolute hydrophobicity</option>
 	    <option value="4" class="diff">Difference in hydrophobicity</option>
 	    <option value="5" class="diff">Sequence conservation</option>
+	    <option value="6" class="diff">Interface binding energy</option>
 	  </select>
 	</div>
 	
@@ -207,7 +208,8 @@
       }
       document.getElementById('discol').innerHTML = name + coloring;
       document.getElementById('fname').value = name; // + ".pdb";
-      
+
+      console.log( all_chains)
       console.log( "color", coloring)
       var pdbFiles = [];
       
@@ -335,6 +337,7 @@
       else if( id == "3"){ the_ending = "_HyPh.pdb"; }
       else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
       else if( id == "5"){ the_ending = "_cons.pdb";}
+      else if( id == "6"){ the_ending = "_IF.pdb";}
       //alert(selectedValue);
       //document.getElementById('discol').innerHTML = the_name + the_ending;
       loadPdb(the_name, the_ending);

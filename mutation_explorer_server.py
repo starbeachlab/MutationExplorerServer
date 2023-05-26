@@ -1381,9 +1381,9 @@ def get_status(tag, filename):
 @app.route('/status/<tag>/<filename>')
 @app.route('/status/<tag>/<filename>/<msg>')
 @app.route('/status/<tag>/<filename>/<msg>')
-@app.route('/status/<tag>/<filename>/<msg>/<connector_string>')
-def status(tag, filename, msg="",connector_string=""):
-    return render_template("status.html", tag = tag, filename = filename, msg=msg, connector_string=connector_string)
+#@app.route('/status/<tag>/<filename>/<msg>/<connector_string>')
+def status(tag, filename, msg=""): #,connector_string=""):
+    return render_template("status.html", tag = tag, filename = filename, msg=msg) #, connector_string=connector_string)
 
 @app.route('/info/<tag>/<filename>')
 @app.route('/info/<tag>/<filename>/<two_structures>')
@@ -1430,7 +1430,7 @@ def build_list(d):
     return s
 
 
-def load_explore_page(out, tag, filename, connector_string = ""):
+def load_explore_page(out, tag, filename)#, connector_string = ""):
     # TODO: rename out (out should contain tag)
     mut_tree = build_mutation_tree(out, tag, "none")
     print('explore::tree', mut_tree)
@@ -1458,18 +1458,18 @@ def load_explore_page(out, tag, filename, connector_string = ""):
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, connector_string = connector_string)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures)#, connector_string = connector_string)
 
 
-@app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])
+#@app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/<filename>/', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/<filename>', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/', methods=['GET', 'POST'])
-def explore(tag, filename = "", connector_string = ""):
+def explore(tag, filename = "") #, connector_string = ""):
     if request.method == 'GET':
-        if connector_string == '':
-            connector_string = "mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;"
-        return load_explore_page(app.config['USER_DATA_DIR'], tag, filename, connector_string)
+        #if connector_string == '':
+        #    connector_string = "mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;"
+        §return load_explore_page(app.config['USER_DATA_DIR'], tag, filename)#, connector_string)
 
 
     ### get form values
@@ -1496,7 +1496,7 @@ def explore(tag, filename = "", connector_string = ""):
     helper_files_from_mutations( mutations, outdir + parent, outdir + mutant[:-4] + '_resfile.txt', outdir + mutant[:-4] + '.clw', outdir + "info/" + mutant[:-4] + '.txt' ) 
     start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
     
-    return redirect(url_for('status', tag = tag, filename = mutant, connector_string = connector_string))
+    return redirect(url_for('status', tag = tag, filename = mutant))#, connector_string = connector_string))
 
 
 
