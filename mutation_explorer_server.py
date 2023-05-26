@@ -1047,7 +1047,7 @@ def interface_one_structure(tag, mutant, inputs):
     align = mutant[:-4] + ".clw"
     mutfile = "info/" + mutant[:-4] + ".txt"
 
-    inputs["connector_string"] = parent + ":" + align + "," + base_clustal_id + "," + base_chain + ";" + mutant + ":" + align + "," + target_clustal_id + "," + target_chain
+    #inputs["connector_string"] = parent + ":" + align + "," + base_clustal_id + "," + base_chain + ";" + mutant + ":" + align + "," + target_clustal_id + "," + target_chain
 
     # wait for mut_0.pdb
     if wait(outdir + parent, 1, WAIT_RELAXATION) == False:
@@ -1104,7 +1104,7 @@ def interface_two_structures(tag, inputs):
     minimize = inputs["minimize"]
     longmin = inputs["longmin"]
 
-    inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
+    #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
     if base_chain != '':
         status_update( tag, "filter+base+chain")
@@ -1322,15 +1322,15 @@ def interface(tag):
     if not target_given:
         mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
         start_thread(interface_one_structure, [tag, mutant, inputs], "interface calc one structure")
-        connector_string = inputs["connector_string"]  # needed for load pdb in explore.html
-        print( 'connector string:', connector_string)
-        return redirect(url_for('status', tag = tag, filename = mutant, msg="", connector_string = connector_string ))
+        #connector_string = inputs["connector_string"]  # needed for load pdb in explore.html
+        #print( 'connector string:', connector_string)
+        return redirect(url_for('status', tag = tag, filename = mutant, msg="")) #, connector_string = connector_string ))
     
 
     start_thread(interface_two_structures, [tag, inputs], "interface calc two structures")
-    connector_string = inputs["connector_string"]  # needed for load pdb in explore.html
-    print( 'connector string:', connector_string)
-    return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="", connector_string = connector_string ))
+    #connector_string = inputs["connector_string"]  # needed for load pdb in explore.html
+    #print( 'connector string:', connector_string)
+    return redirect(url_for('status', tag = tag, filename = "mut_1.pdb", msg="" )) #, connector_string = connector_string ))
     
 
 
@@ -1458,7 +1458,7 @@ def load_explore_page(out, tag, filename)#, connector_string = ""):
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures)#, connector_string = connector_string)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures) #, connector_string = connector_string)
 
 
 #@app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])

@@ -212,6 +212,8 @@
       console.log( all_chains)
       console.log( "color", coloring)
       var pdbFiles = [];
+
+      connectorString = "";
       
       if(two_strcs && (name == "mut_0" || name == "mut_1")) {
 	  // two structures
@@ -231,6 +233,7 @@
 	  var clustalFiles = []
 	  
 	  for (i = 0; i < allchains.length; i++) {
+	      
               console.log("load", getURL(c_name + "_" + allchains[i] + ".clw" ))
               if(UrlExists(getURL(c_name + "_" + allchains[i] + ".clw" )))
               {
@@ -239,6 +242,7 @@
               else 
               {
 		  clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
+		  connectorString += pdbFile + ":" + name + "_" + allchains[i] + ".clw," + name + "," + allchains[i] + ";"
               }
 	  }
       } 
@@ -257,12 +261,12 @@
       }
       console.log( "color type:", colorType)
       console.log( "unit:", unit)
-      console.log( "string:","{{connector_string}}")
+      console.log( "string:", connectorString)
       
       const params = {
 	  structureUrls: pdbFiles,
 	  alignmentUrls: clustalFiles,
-	  matching: "{{connector_string}}",
+	  matching: connectorString, //  "mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;"
 	  color: colorType,
 	  spheres: true,
 	  unit: unit,
