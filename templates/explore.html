@@ -242,7 +242,7 @@
               else 
               {
 		  clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw" ));
-		  connectorString += pdbFile + ":" + name + "_" + allchains[i] + ".clw," + name + "," + allchains[i] + ";"
+		  connectorString += name + coloring + ":" + name + "_" + allchains[i] + ".clw," + name + "," + allchains[i] + ";"
               }
 	  }
       } 
@@ -258,6 +258,10 @@
 	  unit = "kcal"
       } else if (coloring == "_cons.pdb") {
 	  colorType = "conservation";
+	  unit = "(none)"
+      } else if (coloring == "_IF.pdb" || coloring == "_diffIF.pdb") {
+	  colorType = "energy"
+	  unit = "R.E.U."
       }
       console.log( "color type:", colorType)
       console.log( "unit:", unit)
