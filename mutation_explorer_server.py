@@ -1402,7 +1402,12 @@ def info(tag, filename, two_structures=""):
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
                 mutations += ',' + lines[i].strip()
-
+    ediff = '-'
+    if filename.count('_') > 1:
+        with open( path + filename[:-2] + ".txt") as r:
+            lines = r.readlines()
+            ediff = str( float(lines[-1]) - float(energy))
+                
     name_file = "/name.log"
     if two_structures != "":
         name_file = "/name2.log"
@@ -1414,7 +1419,7 @@ def info(tag, filename, two_structures=""):
     name = name_file.read()
     print(name)
 
-    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name)
+    return render_template("info.html", tag = tag, parent=parent, mutations = mutations,  energy=energy, name = name, diff = ediff)
 
 
 def build_list(d):
