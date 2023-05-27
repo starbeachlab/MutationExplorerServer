@@ -225,6 +225,12 @@
 	  pdbFiles.push(getURL("mut_1" + coloring))
 	  
 	  var clustalFiles = [getURL("alignment.aln")]
+
+	  if( allchains.length != 2){
+	      // print errror message!
+	  }
+	  connectorString = "mut_0" + coloring + ":alignment.aln,mut_0," + allchains[0] + ";mut_1" + coloring + ":alignment.aln,mut_1," + allchains[1] + ";"  
+	  
 	  
       } else {
 	  // single structure
