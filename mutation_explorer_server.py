@@ -1406,7 +1406,7 @@ def info(tag, filename, two_structures=""):
     if filename.count('_') > 1:
         with open( path + filename[:-2] + ".txt") as r:
             lines = r.readlines()
-            ediff = str( round( float(lines[-1]) - float(energy) ), 2)
+            ediff = str( round( float(lines[-1]) - float(energy), 2) )
                 
     name_file = "/name.log"
     if two_structures != "":
