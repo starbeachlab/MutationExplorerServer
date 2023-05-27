@@ -58,6 +58,7 @@
 	    <option value="4" class="diff">Difference in hydrophobicity</option>
 	    <option value="5" class="diff">Sequence conservation</option>
 	    <option value="6" class="diff">Interface binding energy</option>
+	    <option value="7"> Differences interface energy</option>
 	  </select>
 	</div>
 	
@@ -204,6 +205,8 @@
               coloring = "_absE.pdb";
 	  } else if (coloring == "_diffHyPh.pdb") {
               coloring = "_HyPh.pdb";
+	  } else if (coloring == "_diffIF.pdb") {
+	      coloring = "_IF.pdb";
 	  }
       }
       document.getElementById('discol').innerHTML = name + coloring;
@@ -346,6 +349,7 @@
       else if( id == "4"){ the_ending = "_diffHyPh.pdb"; }
       else if( id == "5"){ the_ending = "_cons.pdb";}
       else if( id == "6"){ the_ending = "_IF.pdb";}
+      else if( id == "7"){ the_ending = "_diffIF.pdb";}
       //alert(selectedValue);
       //document.getElementById('discol').innerHTML = the_name + the_ending;
       loadPdb(the_name, the_ending);
@@ -364,6 +368,8 @@
       } else if(the_ending == "_diffHyPh.pdb")  {
         //$("#selecter").val('3');
         dropdownChangeSelection('3');
+      } else if( the_ending == "_diffIF.pdb") {
+	  dropdownChangeSelection('6');
       }
 
       // style changes have to be made after .formSelect() (called in dropdownChangeSelection()), otherwise materialize overrides them >:(
