@@ -1397,7 +1397,7 @@ def info(tag, filename, two_structures=""):
     with open( path + filename + ".txt") as r:
         lines = r.readlines()
         parent = lines[0].strip()
-        energy = lines[-1].strip()
+        energy = str(round(float(lines[-1].strip()),2))
         if len(lines) > 2:
             mutations += lines[1].strip()
             for i in range(2,len(lines)-1):
@@ -1406,7 +1406,7 @@ def info(tag, filename, two_structures=""):
     if filename.count('_') > 1:
         with open( path + filename[:-2] + ".txt") as r:
             lines = r.readlines()
-            ediff = str( float(lines[-1]) - float(energy))
+            ediff = str( round( float(lines[-1]) - float(energy) ), 2)
                 
     name_file = "/name.log"
     if two_structures != "":
