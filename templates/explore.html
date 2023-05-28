@@ -168,7 +168,9 @@
   allchains = "{{chains}}"
   
   let two_strcs = ("{{two_structures}}" == "True")
-  
+  if( two_strcs ){
+      the_ending = "_cons.pdb";
+  }
   
   // highlight selected structure
   strcs = $(".structures");
