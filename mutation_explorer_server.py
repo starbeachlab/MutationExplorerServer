@@ -721,6 +721,10 @@ def mutate(tag,msg=""):
 
         # get chains, resid-ranges from uploaded structure
         chains_range = get_chains_and_range( outdir + "structure.pdb")
+
+        with open( outdir + 'chains.txt', 'w') as w:
+            w.write( chains_range + '\n')
+            
         chains = ''
         for w in chains_range.split(",")[0:-1]:
             w = w.strip()
