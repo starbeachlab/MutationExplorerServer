@@ -397,6 +397,10 @@ def file_processing( tag, structure, out_file_name, logfile):
     cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
     
+    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+    print(cmd)
+    bash_cmd(cmd, tag)
+    
 
 
 

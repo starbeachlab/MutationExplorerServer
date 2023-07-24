@@ -52,3 +52,5 @@ with open( sys.argv[4] , 'w' ) as w,  open( sys.argv[3] ) as r:
                     if len(x) > 6:
                         x = x[:6]                
                 w.write( l[:60] + str(x) + l[66:] )
+            else:
+                w.write(l) # ?
