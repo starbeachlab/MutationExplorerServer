@@ -1,65 +1,37 @@
+from datetime import datetime
+​
+start_import = datetime.now()
+​
 #Load packages
 from pyrosetta import *
 import numpy as np
 import argparse
+import sys
 init()
+​
+start = datetime.now()
 ​
 #Parse the commandline input
 parser = argparse.ArgumentParser(description='Calculating per residue interface binding energies')
-parser.add_argument('chains', type=str,
-                    help='List of chains in format ABC')
 parser.add_argument('input', type=str,
                     help='Path to the input pdb')
 parser.add_argument('output', type=str,
                     help='Path to the output pdb')
 args = parser.parse_args()
-chains = args.chains
 input_path = args.input
 output_path = args.output
 ​
 #Parse PDB file to Rosetta pose
 pose = pyrosetta.pose_from_pdb(input_path)
 ​
+#Get list of chians 
+chains = []
+for chain_num in np.array(pyrosetta.rosetta.core.pose.get_chains(pose)).tolist():
+    chain_id = pyrosetta.rosetta.core.pose.get_chain_from_chain_id(chain_num, pose)
+    chains.append(chain_id)
+​
 #loading score function
 scorefxn = get_fa_scorefxn()
-​
-#Ordering the chains and removing unselected ones
-​
-from rosetta.protocols.rosetta_scripts import *
-chain_set = f"""
-<ROSETTASCRIPTS>
-  <SCOREFXNS>
-    <ScoreFunction name="ref2015" weights="ref2015">
-    </ScoreFunction>
-  </SCOREFXNS>
-​
-  <TASKOPERATIONS>
-  </TASKOPERATIONS>
-​
-  <RESIDUE_SELECTORS>
-  </RESIDUE_SELECTORS>
-  <TASKOPERATIONS>
-  </TASKOPERATIONS>
-​
-  <FILTERS>
-  </FILTERS>
-​
-  <MOVERS>
-    <SwitchChainOrder name="chains_set" chain_order="{chains}"/>
-  </MOVERS>
-  <APPLY_TO_POSE>
-  </APPLY_TO_POSE>
-  <PROTOCOLS>
-    <Add mover_name="chains_set"/>
-  </PROTOCOLS>
-  <OUTPUT />
-</ROSETTASCRIPTS>
-"""
-xml = XmlObjects.create_from_string(chain_set)
-protocol = xml.get_mover("ParsedProtocol")
-if not os.getenv("DEBUG"):
-    protocol.apply(pose)
-​
     
 #Getting a list of the last residue in every chain
 chain_end_res = pyrosetta.rosetta.core.pose.chain_end_res(pose)
@@ -93,7 +65,7 @@ else:
     for c in range(0, len(chains)):
         #specifying interface. For chains='ABC' iterations will be: 'A_BC', 'B_AC', 'C_AB',
         #where the left side of the interface is 
-        interface = chains[c] + '_' + chains[:c] + chains[(c+1):]
+        interface = chains[c] + '_' + ''.join(chains[:c]) + ''.join(chains[(c+1):])
 ​
         #loading InterfaceAnalyzer 
         iam = InterfaceAnalyzerMover(interface)
@@ -122,3 +94,11 @@ for res in range(1,len(pose.sequence())+1):
         
 #save pdb file
 pose.dump_pdb(output_path)
+​
+end = datetime.now()
+​
+print('Run time with import: ', end-start_import)
+print('Run time without import: ', end-start)#Load packages
+
+
+
