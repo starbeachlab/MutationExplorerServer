@@ -215,13 +215,25 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
-
-    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
+    
+    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
+    calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb")
     file_processing( tag, structure, out_file_name, logfile)
     print("File processing")
 
 
+def calc_interface( tag, in_file, out_file):
+    #chains =  get_chains(in_file)
+
+    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.py  " + in_file + " " + out_file
+    print(cmd)
+    bash_cmd(cmd, tag)
+
+    status = "Interface+calculation+for+" + out_file + "+with+chains+" + chains + "+done"
+    status_update(tag, status)
+    
+    
 
 def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
