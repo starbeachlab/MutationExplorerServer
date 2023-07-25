@@ -215,13 +215,25 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
     cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
-
-    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     print("MV Done")
+    
+    calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
+    calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb")
     file_processing( tag, structure, out_file_name, logfile)
     print("File processing")
 
 
+def calc_interface( tag, in_file, out_file):
+    #chains =  get_chains(in_file)
+
+    cmd = "tsp bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file
+    print(cmd)
+    bash_cmd(cmd, tag)
+
+    status = "Interface+calculation+for+" + in_file + "+out+" + out_file + "+done"
+    status_update(tag, status)
+    
+    
 
 def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
@@ -385,6 +397,10 @@ def file_processing( tag, structure, out_file_name, logfile):
     cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
     
+    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+    print(cmd)
+    bash_cmd(cmd, tag)
+    
 
 
 
@@ -545,6 +561,11 @@ def score_structure(tag, outdir, name, structure):
     # calc_rasp(tag, structure, name, logfile, path_to_store)
     # see fixbb / relax_initial_structure
 
+    cmd = "tsp bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
+    bash_cmd( cmd, tag)
+    
+    status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
+    
     file_processing(tag, structure, name, logfile)
 
 
@@ -721,6 +742,10 @@ def mutate(tag,msg=""):
 
         # get chains, resid-ranges from uploaded structure
         chains_range = get_chains_and_range( outdir + "structure.pdb")
+
+        with open( outdir + 'chains.txt', 'w') as w:
+            w.write( chains_range + '\n')
+            
         chains = ''
         for w in chains_range.split(",")[0:-1]:
             w = w.strip()
