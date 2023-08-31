@@ -12,7 +12,23 @@ import datetime
 import smtplib, ssl
 
 
- 
+
+# fatal error messages
+NO_MUTATIONS = "No valid mutations were defined"
+RELAXATION_FAILED = "Relaxation of initial structure failed"
+MUTATION_FAILED = "Mutation failed"
+STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
+
+
+# wait times before error is returned (in seconds)
+# could be useful to adjust for minimization option
+WAIT_RELAXATION = 900
+WAIT_MUTATION = 900
+WAIT_VCF = 900
+WAIT_SUPERIMPOSE = 900
+TASKS = 2
+
+
 
 class PrefixMiddleware(object):
 
@@ -38,22 +54,11 @@ app = Flask( __name__ )
 app.config.from_pyfile( cfg_file )
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/mutation_explorer')
 
+## Setting the slots for tsp
+cmd = "tsp -S " + str(TASKS)
+print(cmd)
+subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
 
-
-
-# fatal error messages
-NO_MUTATIONS = "No valid mutations were defined"
-RELAXATION_FAILED = "Relaxation of initial structure failed"
-MUTATION_FAILED = "Mutation failed"
-STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
-
-
-# wait times before error is returned (in seconds)
-# could be useful to adjust for minimization option
-WAIT_RELAXATION = 900
-WAIT_MUTATION = 900
-WAIT_VCF = 900
-WAIT_SUPERIMPOSE = 900
 
 
 
@@ -63,12 +68,28 @@ def bash_cmd(cmd, tag):
     out = app.config['USER_DATA_DIR'] + tag + "/"
 
     logfile = "log.txt"
+    idfile = "id.txt"
     log = open( out + logfile, 'a')
+    id = open( out + idfile, 'a')
 
+
+    line = ""
+    # Read line by line.
+    with open(out + idfile, "r") as file:
+        for line in file:
+            pass
+    print("ID: " + line.strip())
+    #p = subprocess.check_output(cmd.split())
+    #log.write(str(p) + "\n")
+
+    if any(char.isdigit() for char in str(line)):
+        cmd = "tsp -D " + line.strip() + " " + cmd
+    else:
+        cmd = "tsp " + cmd
+    print(cmd)
     log.write(cmd + "\n")
-    p = subprocess.check_output(cmd.split())
-    log.write(str(p) + "\n")
-
+    pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
+    id.write(pid)
     log.close()
 
 
@@ -85,7 +106,7 @@ def status_update(tag, status, check_rasp=""):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
     status_path = outdir + "status.log"
 
-    cmd = "tsp bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
+    cmd = "bash " + app.config['SCRIPTS_PATH'] + "write-status.sh " + status + " " + status_path
     if check_rasp != "":
         cmd = cmd + " check_rasp " + check_rasp
 
@@ -199,7 +220,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
 
     # call rosetta
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
+    cmd = "" + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
     if longmin == True:
         cmd += " -ex1 -ex2  "
     bash_cmd(cmd, tag)
@@ -210,10 +231,10 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
 
     if(path_to_store != ""):
-        cmd = "tsp cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
         bash_cmd(cmd, tag)
 
-    cmd = "tsp mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
+    cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
     print("MV Done")
     
@@ -226,7 +247,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 def calc_interface( tag, in_file, out_file):
     #chains =  get_chains(in_file)
 
-    cmd = "tsp bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file
+    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file
     print(cmd)
     bash_cmd(cmd, tag)
 
@@ -256,13 +277,13 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 status_update(tag, status)
 
 
-                cmd = "tsp " + "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+                cmd =  "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
                 print(cmd)
                 bash_cmd(cmd, tag)
            
 
                 if(path_to_store != ""):
-                    cmd = "tsp cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
+                    cmd = "cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
                     print(cmd)
                     bash_cmd(cmd, tag)
         
@@ -277,7 +298,7 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
     si = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_superimpose.py alignment: '
 
     tmp = align_structure[:-4] + '_tmp.pdb'
-    cmd = "tsp " + si + align_structure + ' ' + align_chain + ' ' + template_structure + ' ' + template_chain + ' ' + alignment + ' ' + tmp
+    cmd =  si + align_structure + ' ' + align_chain + ' ' + template_structure + ' ' + template_chain + ' ' + alignment + ' ' + tmp
     bash_cmd(cmd, tag)
 
     # wait for superimposed structure
@@ -291,7 +312,7 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
 def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
     cons = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_conservation.py '
 
-    cmd = "tsp " + cons + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + structure[:-4] + '_cons.pdb' 
+    cmd =  cons + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + structure[:-4] + '_cons.pdb'
     bash_cmd(cmd, tag)
 
     
@@ -365,24 +386,24 @@ def file_processing( tag, structure, out_file_name, logfile):
     if out_file_name[-4:] == '.pdb':
         out_file_name = out_file_name[:-4]
     
-    cmd = "tsp " + bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
+    cmd = bfac + out + out_file_name + '.pdb ' + out + out_file_name + '_absE.pdb'
     bash_cmd(cmd, tag)
 
     if "mut" in structure:
-        cmd = "tsp " + ediff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffE.pdb' 
+        cmd = ediff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffE.pdb'
         bash_cmd(cmd, tag)
 
-    cmd = "tsp " + hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
+    cmd = hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
     bash_cmd(cmd, tag)
 
-    cmd = "tsp " + hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name?
+    cmd = hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name?
     bash_cmd(cmd, tag)
     
     if "mut" in structure:
-        cmd = "tsp " + hdiff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffHyPh.pdb'
+        cmd = hdiff + out + structure + ' ' + out + out_file_name + '.pdb ' + out + out_file_name + '_diffHyPh.pdb'
         bash_cmd(cmd, tag)
 
-        cmd = "tsp " + mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
+        cmd = mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
         bash_cmd(cmd, tag)
 
         start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
@@ -391,15 +412,15 @@ def file_processing( tag, structure, out_file_name, logfile):
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
 
-    cmd = "tsp touch " + out + "fin/" + out_file_name + ".pdb"  
+    cmd = "touch " + out + "fin/" + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
 
-    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
+    cmd =   app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
     
-    cmd = "tsp " +  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
-    print(cmd)
-    bash_cmd(cmd, tag)
+#    cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+#    print(cmd)
+#    bash_cmd(cmd, tag)
     
 
 
@@ -487,7 +508,7 @@ def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
                             continue
                     f_out.write(line)
 
-        bash_cmd("tsp mv " + outdir + "structure2.pdb " + file_path, tag) # why in queue? os.rename
+        bash_cmd("mv " + outdir + "structure2.pdb " + file_path, tag) # why in queue? os.rename
         return True
     return False
 
@@ -549,19 +570,19 @@ def score_structure(tag, outdir, name, structure):
 
     status_update(tag, "Start+scoring+for+" + name)
 
-    cmd = "tsp " + app.config['ROSETTA_PATH'] + 'score_jd2.static.linuxgccrelease -in:file:s ' + outdir + structure + ' -nstruct 1 -out:pdb -out:prefix ' + outdir
+    cmd =  app.config['ROSETTA_PATH'] + 'score_jd2.static.linuxgccrelease -in:file:s ' + outdir + structure + ' -nstruct 1 -out:pdb -out:prefix ' + outdir
     bash_cmd(cmd, tag)
 
     status_update(tag, "scoring+for+" + name + "+done")
 
-    cmd = "tsp mv " + outdir + structure[:-4] + '_0001.pdb ' + outdir + name + '.pdb'
+    cmd = "mv " + outdir + structure[:-4] + '_0001.pdb ' + outdir + name + '.pdb'
     bash_cmd(cmd, tag)
 
     # TODO: rasp 
     # calc_rasp(tag, structure, name, logfile, path_to_store)
     # see fixbb / relax_initial_structure
 
-    cmd = "tsp bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
+    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
     bash_cmd( cmd, tag)
     
     status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
@@ -912,7 +933,7 @@ def vcf_calculation(tag, inputs):
     print(rasp_calculation)
 
     # call run_vcf 
-    cmd = "tsp " + app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir +" " + vcf_file
+    cmd =  app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir +" " + vcf_file
     bash_cmd(cmd, tag)
     print(outdir +  vcf_file[:-4] + '_missense.csv')
     # wait for missense file
@@ -1601,6 +1622,7 @@ def rasp( tag, model, chain = ""):
 
 
 if __name__ == "__main__":
+
     app.run()
 
     
