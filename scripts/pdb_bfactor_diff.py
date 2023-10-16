@@ -17,7 +17,7 @@ def residue_name( line ):
 if len(sys.argv) < 4:
     print('USAGE:',sys.argv[0],'in:ORIG.pdb in:MUTANT.pdb out:DIFF.pdb')
     print( 'the script works with per residue bfactors')
-    exit(1)
+    exit(0)
 
 orig_bfactors = []
 
