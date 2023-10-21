@@ -777,9 +777,9 @@ def mutate(tag,msg=""):
         # check if pdb in DB
         status = ""
         if msg=="found":
-            status="Your PDB was found in our DB, no minimization will be performed."
+            status="PDB entry " + tag + " has already been minimized in our database. No additional minimization will be performed."
         elif msg == "notfound":
-            status = "Your PDB was not found in our DB, minimization will be performed."
+            status = "PDB entry " + tag + " was not previously minimized in our database. Minimization will be performed."
             
         return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
 
