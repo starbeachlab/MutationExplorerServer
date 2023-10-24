@@ -327,6 +327,8 @@ def mutant_calc_conservation(tag, structure, logfile):
     # find mutated chain
     chains = pdb2seq(structure)
 
+    print( "mutant_calc_conservation, chains: ", chains)
+    
     for c in chains:
         chain_alignment = structure[:-4] + '_' + c + '.clw'
 
@@ -340,6 +342,7 @@ def mutant_calc_conservation(tag, structure, logfile):
             print("seq id not found")
             continue
 
+        print( "mutant_calc_conservation:", c, sid )
         calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
 
 
