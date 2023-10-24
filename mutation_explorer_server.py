@@ -418,9 +418,9 @@ def file_processing( tag, structure, out_file_name, logfile):
     cmd =   app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
     
-#    cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
-#    print(cmd)
-#    bash_cmd(cmd, tag)
+    #cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+    #print(cmd)
+    #bash_cmd(cmd, tag)
     
 
 
@@ -748,7 +748,7 @@ def add_mutations(tag, mutant, inputs):
 
     # wait for mutation 
     if wait(mutant, 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED)
+        fatal_error(tag, MUTATION_FAILED + " (1)")
 
 
 
@@ -774,12 +774,16 @@ def mutate(tag,msg=""):
                 chains += w[0]
         print( 'chains: ', chains)
 
+        structure = ""
+        with open( outdir + 'name.log') as r:
+            structure = r.readline().strip()
+
         # check if pdb in DB
         status = ""
         if msg=="found":
-            status="PDB entry " + tag + " has already been minimized in our database. No additional minimization will be performed."
+            status="PDB entry " + structure + " has already been minimized in our database. No additional minimization will be performed."
         elif msg == "notfound":
-            status = "PDB entry " + tag + " was not previously minimized in our database. Minimization will be performed."
+            status = "PDB entry " + structure + " was not previously minimized in our database. Minimization will be performed."
             
         return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
 
@@ -903,11 +907,8 @@ def mutate(tag,msg=""):
 
 
     ### start calculations
-
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    start_thread(add_mutations, [tag, mutant, inputs], "add_muts") 
-    
-
+    start_thread(add_mutations, [tag, mutant, inputs], "add_muts")     
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
 
 
@@ -990,7 +991,7 @@ def vcf_calculation(tag, inputs):
 
             print("path rasp: " + path)
             calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
-            file_processing( tag, "structure.pdb", "mut_0", "log.txt" )
+            #file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) #rene: warum war das 2x hier?
             file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
         print( 'fixbb started for initial upload\n')
     else:
@@ -1007,7 +1008,7 @@ def vcf_calculation(tag, inputs):
 
     # check if mutation successful
     if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED)
+        fatal_error(tag, MUTATION_FAILED + " (2)")
 
 
 
@@ -1119,7 +1120,7 @@ def interface_one_structure(tag, mutant, inputs):
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED)
+        fatal_error(tag, MUTATION_FAILED + " (3)")
 
 
 
