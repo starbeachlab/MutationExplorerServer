@@ -2106,9 +2106,11 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
             
 def wait( filename, step, maxw):
     # TODO: wait sollte nur in seperaten Threads aufgerufen werden, sonst muss der user auch waiten
+    print( 'wait: ' , filename, step, maxw)
     for i in range(0, maxw):
         time.sleep(step)
         if os.path.isfile(filename):
+            print('found',i)
             return True
     return False
         
