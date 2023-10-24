@@ -251,6 +251,7 @@ def calc_interface( tag, in_file, out_file):
     print(cmd)
     bash_cmd(cmd, tag)
 
+    # should only be true once it is done!
     status = "Interface+calculation+for+" + in_file + "+out+" + out_file + "+done"
     status_update(tag, status)
     
@@ -392,9 +393,10 @@ def file_processing( tag, structure, out_file_name, logfile):
 
         start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
 
-        cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
-        print(cmd)
-        bash_cmd(cmd, tag)
+        if wait( structure[:-4] + '_IF.pdb', 1, WAIT_MUTATION) and wait( out + out_file_name + "_IF.pdb", 1, WAIT_MUTATION):
+            cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+            print(cmd)
+            bash_cmd(cmd, tag)
     
     
     
