@@ -350,7 +350,8 @@ def mutant_calc_conservation(tag, structure, logfile):
         print( "mutant_calc_conservation:", c, sid )
         calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
         # cp structure + "cons.pdb" into structure
-        shutil.copy( cons, structure )
+        if wait( cons, 1, WAIT_SUPERIMPOSE):
+            shutil.copy( cons, structure )
             
     # mv tmp back to structure, restore original state
     os.rename( tmp, structure) 
