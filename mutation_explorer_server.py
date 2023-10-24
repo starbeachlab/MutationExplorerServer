@@ -224,7 +224,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     if longmin == True:
         cmd += " -ex1 -ex2  "
     bash_cmd(cmd, tag)
-    print("rosetta done")	
+    print("rosetta done")       
 
     status = "fixbb+for+" + out_file_name + "+done"
     status_update(tag, status)
@@ -328,6 +328,11 @@ def mutant_calc_conservation(tag, structure, logfile):
     chains = pdb2seq(structure)
 
     print( "mutant_calc_conservation, chains: ", chains)
+
+    cons = structure[:-4] + "_cons.pdb"
+    # cp structure into tmp
+    tmp = structure[:-4] + ".tmp"
+    shutil.copy( structure, tmp)
     
     for c in chains:
         chain_alignment = structure[:-4] + '_' + c + '.clw'
@@ -344,8 +349,11 @@ def mutant_calc_conservation(tag, structure, logfile):
 
         print( "mutant_calc_conservation:", c, sid )
         calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
-
-
+        # cp structure + "cons.pdb" into structure
+        shutil.copy( cons, structure )
+            
+    # mv tmp back to structure, restore original state
+    os.rename( tmp, structure) 
 
 
 def file_processing( tag, structure, out_file_name, logfile):
