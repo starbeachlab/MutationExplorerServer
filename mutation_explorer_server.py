@@ -327,48 +327,20 @@ def mutant_calc_conservation(tag, structure, logfile):
     # find mutated chain
     chains = pdb2seq(structure)
 
-    alignment = ""
-    pdb_chain = ""
-    seq_id = ""
-
     for c in chains:
         chain_alignment = structure[:-4] + '_' + c + '.clw'
 
         if not os.path.isfile(chain_alignment):
             continue
 
-        # check if chain is mutated; otherwise continue to next chain
         cid = structure[:-4].split("/")[-1]
-        muts, noncanonical_residues = mutations_from_alignment(chain_alignment, structure, base_clustal_id=cid, base_chain=c)
-
-        if len(muts) == 0:
-            print("no mutations on chain")
-            continue
-
-
-        #pdb_match = find_pdb_in_alignment(chain_alignment, structure, chain=c, clustal_id=structure[:-4])
-        #if pdb_match is None:
-        #continue
-        #cid, chain = pdb_match
 
         sid = get_seq_id(chain_alignment, cid)
         if sid is None:
             print("seq id not found")
             continue
 
-        alignment = chain_alignment
-        pdb_chain = c
-        seq_id = sid
-
-        print("break")
-
-        break
-
-    if alignment == "":
-        # no viable alignment found
-        return
-
-    calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile)
+        calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
 
 
 
