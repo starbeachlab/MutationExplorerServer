@@ -252,7 +252,7 @@ def calc_interface( tag, in_file, out_file):
     bash_cmd(cmd, tag)
 
     # should only be true once it is done!
-    status = "Interface+calculation+for+" + in_file + "+out+" + out_file + "+done"
+    status = "Interface+calculation+for+" + in_file.split('/')[-1] + "+out+" + out_file.split('/')[-1] + "+done"
     status_update(tag, status)
     
     
@@ -543,7 +543,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
             print( "calc interface from relax_initial_structure")
-            calc_interface( tag, structure, structure[:-4] + "_IF.pdb")
+            calc_interface( tag, outdir + structure, outdir + structure[:-4] + "_IF.pdb")
 
             file_processing( tag, structure, name,  log_file)
 
