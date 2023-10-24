@@ -396,7 +396,7 @@ def file_processing( tag, structure, out_file_name, logfile):
     cmd = hydro + out +  out_file_name + '.pdb ' + out +  out_file_name + '_HyPh.pdb'
     bash_cmd(cmd, tag)
 
-    cmd = hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name?
+    cmd = hydro + out + structure + ' ' + out + structure[:-4] + '_HyPh.pdb' # TODO: wieso structure[:-4] statt out_file_name? # rene: gute frage, 
     bash_cmd(cmd, tag)
     
     if "mut" in structure:
@@ -407,6 +407,11 @@ def file_processing( tag, structure, out_file_name, logfile):
         bash_cmd(cmd, tag)
 
         start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
+
+        cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+        print(cmd)
+        bash_cmd(cmd, tag)
+    
     
     
     if not os.path.exists(out + "fin/"):
@@ -415,12 +420,8 @@ def file_processing( tag, structure, out_file_name, logfile):
     cmd = "touch " + out + "fin/" + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
 
-    cmd =   app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
+    cmd =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
-    
-    #cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
-    #print(cmd)
-    #bash_cmd(cmd, tag)
     
 
 
@@ -555,6 +556,8 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
+            print( "calc interface from relax_initial_structure")
+            calc_interface( tag, structure, structure[:-4] + "_IF.pdb")
 
             file_processing( tag, structure, name,  log_file)
 

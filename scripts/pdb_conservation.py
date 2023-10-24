@@ -117,7 +117,7 @@ with open(out_file, "w") as w:
                     print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
                     exit(1)
                 w.write( l[:60] + "{:6.2f}".format( factor * vals[eidi] ) + l[66:] + "\n" )
-            elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
-                w.write( l[:60] + "{:6.2f}".format( 0.0 ) + l[66:] + "\n" )
+            #elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
+            #    w.write( l[:60] + "{:6.2f}".format( factor ) + l[66:] + "\n" )
             else:
                 w.write( l + "\n")
