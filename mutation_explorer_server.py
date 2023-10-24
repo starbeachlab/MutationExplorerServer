@@ -543,7 +543,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
             print( "calc interface from relax_initial_structure")
-            calc_interface( tag, outdir + structure, outdir + structure[:-4] + "_IF.pdb")
+            calc_interface( tag, outdir + structure, outdir + name[:-4] + "_IF.pdb")
 
             file_processing( tag, structure, name,  log_file)
 
