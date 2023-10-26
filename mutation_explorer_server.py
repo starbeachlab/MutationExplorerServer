@@ -1580,11 +1580,13 @@ def download(tag, filename):
             for f in os.listdir('.'):
                 if ".pdb" in f:
                     cmd.append(f)
-                if ".clw" in f:
+                elif ".clw" in f:
                     cmd.append(f)
-                if ".csv" in f:
+                elif ".csv" in f:
                     cmd.append(f)
-                if ".aln" in f:
+                elif ".aln" in f:
+                    cmd.append(f)
+                elif ".log" in f:
                     cmd.append(f)
             p = subprocess.check_output(cmd)
 
