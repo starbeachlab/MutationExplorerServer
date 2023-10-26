@@ -1586,7 +1586,7 @@ def download(tag, filename):
                     cmd.append(f)
                 elif ".aln" in f:
                     cmd.append(f)
-                elif ".log" in f:
+                elif "log.txt" in f:
                     cmd.append(f)
             p = subprocess.check_output(cmd)
 
