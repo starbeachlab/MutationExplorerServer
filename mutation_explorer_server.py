@@ -91,6 +91,7 @@ def bash_cmd(cmd, tag):
     pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
     id.write(pid)
     log.close()
+    return pid
 
 
 def fatal_error(tag, msg):
@@ -155,6 +156,12 @@ def start_thread(function, args, name):
     t = threading.Thread(target=function, name=name, args=args)
     t.deamon = True
     t.start()
+
+
+
+
+
+
 
 
 def build_tree(node, links):
@@ -300,11 +307,16 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
 
     tmp = align_structure[:-4] + '_tmp.pdb'
     cmd =  si + align_structure + ' ' + align_chain + ' ' + template_structure + ' ' + template_chain + ' ' + alignment + ' ' + tmp
-    bash_cmd(cmd, tag)
+    pid = bash_cmd(cmd, tag)
 
     # wait for superimposed structure
-    if not wait(tmp, 1, WAIT_SUPERIMPOSE):
+   # if not wait(tmp, 1, WAIT_SUPERIMPOSE):
+    #return
+    if(not waitID(id)):
+        error_message = "Superimposing failed!."
+        fatal_error(tag, error_message)
         return
+
 
     os.rename(tmp, align_structure)
 
@@ -314,15 +326,22 @@ def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
     cons = "python3 " + app.config['SCRIPTS_PATH'] + 'pdb_conservation.py '
 
     cmd =  cons + structure + ' ' + pdb_chain + ' ' + alignment + ' ' + str(seq_id) + ' 0.2 ' + structure[:-4] + '_cons.pdb'
-    bash_cmd(cmd, tag)
-
+    pid = bash_cmd(cmd, tag)
+    return pid
     
 
-def mutant_calc_conservation(tag, structure, logfile):
+def mutant_calc_conservation(tag, structure, logfile, id):
 
     # wait for mutant structure
-    if(not wait(structure, 1, WAIT_MUTATION)):
+    print("ID Again " + id)
+    if(not waitID(id)):
+        error_message = "Conservation calculation failed due to previous errors."
+        fatal_error(tag, error_message)
         return
+
+
+   # if(not wait(structure, 1, WAIT_MUTATION)):
+   #     return
 
 
     # find mutated chain
@@ -349,10 +368,13 @@ def mutant_calc_conservation(tag, structure, logfile):
             continue
 
         print( "mutant_calc_conservation:", c, sid )
-        calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
+        pid = calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
         # cp structure + "cons.pdb" into structure
-        if wait( cons, 1, WAIT_SUPERIMPOSE):
-            shutil.copy( cons, structure )
+        if waitID(pid):
+            print("start waiting for conserved file")
+            shutil.copy(cons, structure)
+     #   if wait( cons, 1, WAIT_SUPERIMPOSE):
+     #       shutil.copy( cons, structure )
             
     # mv tmp back to structure, restore original state
     os.rename( tmp, structure) 
@@ -389,9 +411,10 @@ def file_processing( tag, structure, out_file_name, logfile):
         bash_cmd(cmd, tag)
 
         cmd = mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
-        bash_cmd(cmd, tag)
+        id = bash_cmd(cmd, tag)
+     #   print("Last id: " + id)
 
-        start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile], "mutant conservation")
+        start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile, id], "mutant conservation")
 
         #if wait( out + structure[:-4] + '_IF.pdb', 1, WAIT_MUTATION) and wait( out + out_file_name + "_IF.pdb", 1, WAIT_MUTATION):
         cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
@@ -692,9 +715,11 @@ def add_mutations(tag, mutant, inputs):
     
     print( 'wait for parent to exist\n')
     ### wait for mut_0.pdb to exist
-    if wait( outdir + parent, 1, WAIT_RELAXATION) == False:
-        fatal_error(tag, RELAXATION_FAILED)
 
+    pid = getLastID(outdir)
+
+    if waitID(pid):
+        fatal_error(tag, RELAXATION_FAILED)
     
     # get all mutations
     i = 0
@@ -924,12 +949,14 @@ def vcf_calculation(tag, inputs):
 
     # call run_vcf 
     cmd =  app.config['SCRIPTS_PATH'] + "run_vcf.sh " + outdir +" " + vcf_file
-    bash_cmd(cmd, tag)
+    pid = bash_cmd(cmd, tag)
     print(outdir +  vcf_file[:-4] + '_missense.csv')
     # wait for missense file
-    if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
-        return render_template("vcf.html", error = "No missense was found.")
-    print("test")
+    if(waitID(pid)) == False:
+        return render_template("vcf.html", error="No missense was found.")
+   # if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
+   #     return render_template("vcf.html", error = "No missense was found.")
+   # print("test")
     # get mutations
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
@@ -973,6 +1000,8 @@ def vcf_calculation(tag, inputs):
 
             print("Store " + path)
             start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
+
+
         else:
             shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
             rose = app.config['ROSEMINT_PATH']
@@ -981,14 +1010,20 @@ def vcf_calculation(tag, inputs):
             print("path rasp: " + path)
             calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
             #file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) #rene: warum war das 2x hier?
+            calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb")
             file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
         print( 'fixbb started for initial upload\n')
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
 
-    # wait for relaxation
-    if wait( outdir + 'mut_0.pdb', 1, WAIT_RELAXATION) == False:
+    pid = getLastID(outdir)
+
+    if not waitID(pid):
         fatal_error(tag, RELAXATION_FAILED)
+
+    # wait for relaxation
+    #if wait( outdir + 'mut_0.pdb', 1, WAIT_RELAXATION) == False:
+    #    fatal_error(tag, RELAXATION_FAILED)
 
     # mutate
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
@@ -996,9 +1031,12 @@ def vcf_calculation(tag, inputs):
 
 
     # check if mutation successful
-    if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED + " (2)")
+   # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
+   #     fatal_error(tag, MUTATION_FAILED + " (2)")
+    pid = getLastID(outdir)
 
+    if not waitID(pid):
+        fatal_error(tag, MUTATION_FAILED + " (2)")
 
 
 
@@ -2103,6 +2141,26 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
     return mutations, noncanonical_residues
 
+def waitID(id ):
+    print('inside wait: ', id)
+    state = True
+
+    while(state):
+        cmd = 'tsp -s ' + id
+       # print(cmd)
+        pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
+        #print(pid)
+        if("finished" in pid):
+            return state
+        if(not ("queued" in pid or "running" in pid)):
+            return False
+
+
+
+
+
+
+
 
                     
             
@@ -2291,3 +2349,11 @@ def add_conservation( ali ):
         
         newali += '\n\n'
     return newali
+
+
+def getLastID(outdir):
+    with open(outdir+"id.txt") as f:
+        for line in f:
+            pass
+        pid = line
+    return pid
