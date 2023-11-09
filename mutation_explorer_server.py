@@ -691,14 +691,14 @@ def submit():
 
 def add_mutations(tag, mutant, inputs):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
-    
+
     mutations = inputs["mutations"]
     if len(mutations) == 1 and mutations[0] == '':
         print(__name__, 'reset')
         mutations = []
 
     #mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    print( 'mutate: ' + mutant + '\n') 
+    print( 'mutate: ' + mutant + '\n')
     print(mutant)
     parent =   "mut_0.pdb"
     resfile =  mutant[:-4] + "_resfile.txt"
@@ -712,15 +712,15 @@ def add_mutations(tag, mutant, inputs):
     else:
         print( 'mutations defined')
     """
-    
+
     print( 'wait for parent to exist\n')
     ### wait for mut_0.pdb to exist
 
     pid = getLastID(outdir)
 
-    if waitID(pid):
+    if not waitID(pid):
         fatal_error(tag, RELAXATION_FAILED)
-    
+
     # get all mutations
     i = 0
     for clustal_file, chainC in zip(inputs["clustal_files"], inputs["chainCs"]):
@@ -733,7 +733,7 @@ def add_mutations(tag, mutant, inputs):
         if fasta_file != "" and chainF != "":
             secure_str(chainF)
             chainF = chainF[0]
-            head, target = seq_from_fasta( fasta_file) 
+            head, target = seq_from_fasta( fasta_file)
             add_mutations_from_sequence( mutations, target, chainF, "fa" + str(i % 3), outdir+parent)
     for seq_input, chainS in zip(inputs["seq_inputs"], inputs["chainSs"]):
         i += 1
@@ -756,13 +756,16 @@ def add_mutations(tag, mutant, inputs):
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
         fatal_error(tag, NO_MUTATIONS)
-    
+
     fixbb(tag, parent, resfile, mutant, "log.txt")
 
+    pid = getLastID(outdir)
 
-    # wait for mutation 
-    if wait(mutant, 1, WAIT_MUTATION) == False:
+    if not waitID(pid):
         fatal_error(tag, MUTATION_FAILED + " (1)")
+    # wait for mutation
+    #if wait(mutant, 1, WAIT_MUTATION) == False:
+    #    fatal_error(tag, MUTATION_FAILED + " (1)")
 
 
 
@@ -1124,8 +1127,14 @@ def interface_one_structure(tag, mutant, inputs):
     #inputs["connector_string"] = parent + ":" + align + "," + base_clustal_id + "," + base_chain + ";" + mutant + ":" + align + "," + target_clustal_id + "," + target_chain
 
     # wait for mut_0.pdb
-    if wait(outdir + parent, 1, WAIT_RELAXATION) == False:
+    pid = getLastID(outdir)
+
+    if not waitID(pid):
         fatal_error(tag, RELAXATION_FAILED)
+
+    # wait for mut_0.pdb
+    #if wait(outdir + parent, 1, WAIT_RELAXATION) == False:
+    #    fatal_error(tag, RELAXATION_FAILED)
 
 
     mutations, noncanonical_residues = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
@@ -1149,6 +1158,11 @@ def interface_one_structure(tag, mutant, inputs):
     if wait(mutant, 1, WAIT_MUTATION) == False:
         fatal_error(tag, MUTATION_FAILED + " (3)")
 
+    # check mutation success
+    pid = getLastID(outdir)
+
+    if not waitID(pid):
+        fatal_error(tag, MUTATION_FAILED + " (3)")
 
 
 
@@ -1198,13 +1212,23 @@ def interface_two_structures(tag, inputs):
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
 
-        if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
+        pid = getLastID(outdir)
+
+        if not waitID(pid):
             fatal_error(tag, RELAXATION_FAILED)
 
+        #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
+        #    fatal_error(tag, RELAXATION_FAILED)
+
         relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
-    
-        if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
+
+        pid = getLastID(outdir)
+
+        if not waitID(pid):
             fatal_error(tag, RELAXATION_FAILED)
+
+        #if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
+        #    fatal_error(tag, RELAXATION_FAILED)
 
     base_strc = outdir + "mut_0.pdb"
     target_strc = outdir + "mut_1.pdb"
@@ -2141,8 +2165,8 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
     return mutations, noncanonical_residues
 
-def waitID(id ):
-    print('inside wait: ', id)
+def waitID(id):
+    print('wait for process: ', id)
     state = True
 
     while(state):
