@@ -1477,8 +1477,9 @@ def get_status(tag, filename):
 
 
 @app.route('/status/<tag>/<filename>')
+@app.route('/status/<tag>/<filename>/')
 @app.route('/status/<tag>/<filename>/<msg>')
-@app.route('/status/<tag>/<filename>/<msg>')
+#@app.route('/status/<tag>/<filename>/<msg>')
 #@app.route('/status/<tag>/<filename>/<msg>/<connector_string>')
 def status(tag, filename, msg=""): #,connector_string=""):
     return render_template("status.html", tag = tag, filename = filename, msg=msg) #, connector_string=connector_string)
@@ -1648,8 +1649,8 @@ def download(tag, filename):
                     cmd.append(f)
                 elif ".aln" in f:
                     cmd.append(f)
-                elif "log.txt" in f:
-                    cmd.append(f)
+                #elif "log.txt" in f:
+                    #cmd.append(f)
             p = subprocess.check_output(cmd)
 
     return send_from_directory(path,filename)
