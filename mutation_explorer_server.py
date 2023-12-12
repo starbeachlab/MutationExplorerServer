@@ -15,7 +15,7 @@ import smtplib, ssl
 
 # fatal error messages
 NO_MUTATIONS = "No valid mutations were defined"
-RELAXATION_FAILED = "Relaxation of initial structure failed"
+RELAXATION_FAILED = "Relaxation of initial structure failed. Check your input PDB. Calpha only traces can not be handled. RaSP requires side-chains to be present."
 MUTATION_FAILED = "Mutation failed"
 STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
 
@@ -70,7 +70,7 @@ def bash_cmd(cmd, tag):
     logfile = "log.txt"
     idfile = "id.txt"
     log = open( out + logfile, 'a')
-    id = open( out + idfile, 'a')
+    wid = open( out + idfile, 'a')
 
 
     line = ""
@@ -89,8 +89,10 @@ def bash_cmd(cmd, tag):
     print(cmd)
     log.write(cmd + "\n")
     pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
-    id.write(pid)
+    print( 'new process id:', pid)
+    wid.write(pid)
     log.close()
+    wid.close()
     return pid
 
 
@@ -330,11 +332,13 @@ def calc_conservation(tag, structure, alignment, pdb_chain, seq_id, logfile):
     return pid
     
 
-def mutant_calc_conservation(tag, structure, logfile, id):
-
+def mutant_calc_conservation(tag, structure, logfile, my_id):
+    with open( logfile, 'a') as w:
+        print('mutant_calc_conservation:', tag, structure, my_id, file=w)
+        
     # wait for mutant structure
-    print("ID Again " + id)
-    if(not waitID(id)):
+    print("ID Again " + my_id)
+    if(not waitID(my_id)):
         error_message = "Conservation calculation failed due to previous errors."
         fatal_error(tag, error_message)
         return
@@ -411,10 +415,10 @@ def file_processing( tag, structure, out_file_name, logfile):
         bash_cmd(cmd, tag)
 
         cmd = mutti + out + structure + " " + out + out_file_name + '.pdb ' + out + out_file_name + '_aa.pdb'
-        id = bash_cmd(cmd, tag)
-     #   print("Last id: " + id)
+        my_id = bash_cmd(cmd, tag)
+        print("Last id: " + my_id)
 
-        start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile, id], "mutant conservation")
+        start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile, my_id], "mutant conservation")
 
         #if wait( out + structure[:-4] + '_IF.pdb', 1, WAIT_MUTATION) and wait( out + out_file_name + "_IF.pdb", 1, WAIT_MUTATION):
         cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
@@ -499,6 +503,7 @@ def save_pdb_file(file_path, upload, pdb, af):
                     break
                 w.write(l)
             os.rename( file_path[:-4] + '.tmp', file_path )
+            #order_pdb_resids( file_path[:-4] + '.tmp', file_path )
 
     return original_name, error, error_message, msg
 
@@ -957,9 +962,9 @@ def vcf_calculation(tag, inputs):
     # wait for missense file
     if(waitID(pid)) == False:
         return render_template("vcf.html", error="No missense was found.")
-   # if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
-   #     return render_template("vcf.html", error = "No missense was found.")
-   # print("test")
+    # if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
+    #     return render_template("vcf.html", error = "No missense was found.")
+    # print("test")
     # get mutations
     alphafold,mutations = mutations_from_vcf( outdir + vcf_file[:-4] + '_missense.csv')
     print( 'alphafold:', alphafold)
@@ -1555,6 +1560,18 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
         chains = get_chains(outdir + filename)
     else:
         chains = get_chains( outdir + parent)
+    
+    chains_range = ''
+    try:
+        with open( outdir + 'chains.txt') as r:
+            chains_range = r.read()
+            chains_range = chains_range[:-1]
+            print('chain_range ', chains_range)
+    except FileNotFoundError:
+        print('File for chain ranges not found.')
+    except Exception as e:
+        print('An error occurred while trying to read the chain ranges file.')
+
     #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
 
@@ -1562,7 +1579,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures) #, connector_string = connector_string)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, chains_range = chains_range) #, connector_string = connector_string)
 
 
 #@app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])
@@ -2166,12 +2183,12 @@ def mutations_from_alignment(clustal, base_structure, base_clustal_id="", target
 
     return mutations, noncanonical_residues
 
-def waitID(id):
-    print('wait for process: ', id)
+def waitID(myid):
+    print('wait for process: ', myid)
     state = True
 
     while(state):
-        cmd = 'tsp -s ' + id
+        cmd = 'tsp -s ' + myid
        # print(cmd)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
         #print(pid)
@@ -2224,15 +2241,20 @@ def get_chains_and_range( fname):
                 c = chain(l)
                 r = resid(l)
                 if c not in chains.keys():
-                    chains[c] = [r,r]
+                    chains[c] = [[r,r]]
                 else:
-                    chains[c][1] = r
+                    prev = chains[c][-1][1]
+                    # case: numbering jumps backward or there is gap
+                    if prev > r or r > prev + 1:
+                        chains[c].append( [r,r] )
+                    elif r == prev + 1:
+                        chains[c][-1][1] = r
     chainstr = ""
     for c,v in chains.items():
-        chainstr += c + ': ' + str(v[0]) + '-' + str(v[1]) + ', '
+        for x in v:
+            chainstr += c + ': ' + str(x[0]) + '-' + str(x[1]) + ', '
     #print( chainstr)
     return chainstr
-    
 
 def get_energy( fname):
     print( __name__, 'get', fname)
