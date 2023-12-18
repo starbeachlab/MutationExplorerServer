@@ -316,7 +316,7 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
     # wait for superimposed structure
    # if not wait(tmp, 1, WAIT_SUPERIMPOSE):
     #return
-    if(not waitID(id)):
+    if(not waitID(pid)):
         error_message = "Superimposing failed!."
         fatal_error(tag, error_message)
         return
@@ -338,10 +338,10 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
     with open( logfile, 'a') as w:
         print('mutant_calc_conservation:', tag, structure, my_id, file=w)
         
-    # wait for mutant structure
+    # wait for mutant structure  ### why in here? 
     print("ID Again " + my_id)
     if(not waitID(my_id)):
-        error_message = "Conservation calculation failed due to previous errors."
+        error_message = "Conservation calculation failed due to previous errors. Most likely the RaSP or Rosetta interface score calculation failed. RaSP would fail on PDBs containing no side-chain atoms."
         fatal_error(tag, error_message)
         return
 
@@ -649,8 +649,6 @@ def submit():
     
     print(rasp_calculation)
 
-
-
     # prewrite email (is sent seperately)
     if email:
         results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
@@ -696,6 +694,8 @@ def submit():
     return redirect(url_for('mutate', tag = tag, msg=msg))
 
 
+
+### never called ??
 def add_mutations(tag, mutant, inputs):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
@@ -726,7 +726,7 @@ def add_mutations(tag, mutant, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, RELAXATION_FAILED)
+        fatal_error(tag, RELAXATION_FAILED + " from add_mutations()")
 
     # get all mutations
     i = 0
@@ -1010,8 +1010,8 @@ def vcf_calculation(tag, inputs):
 
             print("Store " + path)
             start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
-
-
+            error_msg = "Minimization of initial structure using Rosettas fixbb failed. Check your input PDB."
+            print( 'fixbb started for initial upload\n')
         else:
             shutil.copyfile( outdir + "structure.pdb", outdir + "mut_0.pdb")
             rose = app.config['ROSEMINT_PATH']
@@ -1022,7 +1022,7 @@ def vcf_calculation(tag, inputs):
             #file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) #rene: warum war das 2x hier?
             calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb")
             file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
-        print( 'fixbb started for initial upload\n')
+            error_msg = "Deriving energies and writing them into a PDB for visualization failed."
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
 
@@ -1041,8 +1041,8 @@ def vcf_calculation(tag, inputs):
 
 
     # check if mutation successful
-   # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
-   #     fatal_error(tag, MUTATION_FAILED + " (2)")
+    # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
+    #     fatal_error(tag, MUTATION_FAILED + " (2)")
     pid = getLastID(outdir)
 
     if not waitID(pid):
@@ -1120,8 +1120,10 @@ def interface_one_structure(tag, mutant, inputs):
     if minimize:
         # relax provided structure
         relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+        error_msg="Relaxation of initial structure failed. Check PDB."
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
+        error_msg="Scoring of initial structure failed. Check PDB."
 
 
     ### get mutations 
@@ -1137,7 +1139,7 @@ def interface_one_structure(tag, mutant, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, RELAXATION_FAILED)
+        fatal_error(tag, error_msg)
 
     # wait for mut_0.pdb
     #if wait(outdir + parent, 1, WAIT_RELAXATION) == False:
@@ -1147,7 +1149,7 @@ def interface_one_structure(tag, mutant, inputs):
     mutations, noncanonical_residues = mutations_from_alignment(clustal, outdir + parent, base_clustal_id=base_clustal_id, target_clustal_id=target_clustal_id, base_chain=chain)
 
     if len(mutations) == 0:
-        fatal_error(tag, NO_MUTATIONS)
+        fatal_error(tag, "NO MUTATIONS could be extracted from alignment. Identical sequences or no aligned positions?")
 
     if noncanonical_residues:
         status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
@@ -1222,7 +1224,7 @@ def interface_two_structures(tag, inputs):
         pid = getLastID(outdir)
 
         if not waitID(pid):
-            fatal_error(tag, RELAXATION_FAILED)
+            fatal_error(tag, "Relaxation of base structure failed. Does the selected chain has ATOMs in the PDB?")
 
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
@@ -1232,7 +1234,7 @@ def interface_two_structures(tag, inputs):
         pid = getLastID(outdir)
 
         if not waitID(pid):
-            fatal_error(tag, RELAXATION_FAILED)
+            fatal_error(tag, "Relaxation of target structure failed. Does the selected chain has ATOMs in the PDB?")
 
         #if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
@@ -1543,6 +1545,7 @@ def build_list(d):
 
 def load_explore_page(out, tag, filename):  #, connector_string = ""):
     # TODO: rename out (out should contain tag)
+    print('load_explore_page', tag, filename)
     mut_tree = build_mutation_tree(out, tag, "none")
     print('explore::tree', mut_tree)
     structures = "<ul>" + build_list(mut_tree) + "</ul>"
@@ -1551,6 +1554,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     mutations = ""
     if filename == "":
         filename = "mut_0.pdb"
+        print( 'filename now:', filename)
     with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
         parent = r.readline().strip()
         energy = r.readline().strip()
@@ -2070,13 +2074,13 @@ def find_pdb_in_alignment(clustal, structure, chain="", clustal_id=""):
     if os.path.isfile(structure):
         print(structure)
     else:
-        print( structure, 'does not exist !!')
+        print( structure, 'does not yet exist, waiting ..')
         count = 0
         while not os.path.isfile(structure):
             print( 'wait')
-            time.sleep(10)
+            time.sleep(5)
             count += 1
-            if count >= 12:
+            if count >= 18:
                 print('giving up')
                 exit(1)
     print(chain)
@@ -2230,7 +2234,7 @@ def waitID(myid):
     state = True
 
     while(state):
-        cmd = 'tsp -s ' + myid
+        cmd = 'tsp -s ' + str(myid)
        # print(cmd)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
         #print(pid)
