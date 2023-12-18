@@ -29,7 +29,10 @@ with open( sys.argv[1] ) as r:
         elif ind > -1 and len(cols) == nr  and l[0] != '#' and l[:4] != 'pose' and l[:7] != 'weights':
             vals.append( [ cols[0] , float( l.split()[ind]) ] )
 print( len(lines), 'atoms')
-print( len(vals), 'residues')
+print( len(vals), 'per residue energy values')
+if len(vals) == 0:
+    print( "ERROR: no rosetta energy values found! bail out.")
+    exit(1)
 prev_chain = 'XXX'
 prev = -99999
 mid = -1

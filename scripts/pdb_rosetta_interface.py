@@ -1,6 +1,16 @@
-from datetime import datetime
+"""
 
-start_import = datetime.now()
+pdb_rosetta_interface.py is a script that claculates differences in the energy score between bound and unbound states of the complex. Said scores are then written to the b-factor column of the output .pdb file.
+
+Author: Aleksandra Panfilova
+
+Date of last major changes: 11 Dec 2023
+
+"""
+
+# from datetime import datetime
+
+# start_import = datetime.now()
 
 #Load packages
 from pyrosetta import *
@@ -20,6 +30,22 @@ parser.add_argument('output', type=str,
 args = parser.parse_args()
 input_path = args.input
 output_path = args.output
+
+#Function running the InrefaceAnalyzerMover 
+def IAM(interface, scorefxn, pose):
+    iam = InterfaceAnalyzerMover(interface)
+    iam.set_scorefunction(scorefxn)
+    iam.set_pack_input(True) #repack the input pose: True
+    iam.set_pack_separated(True) #repack the exposed interfaces when calculating binding energy: True
+    iam.set_pack_rounds(5) #do 5 rounds of packing (default 1)
+    
+    #Run IAM 3 times, and get median score for every position
+    per_res_dG_sample = np.zeros(shape=(3, len(pose.sequence())))
+    for r in range(3):
+        iam.apply(pose)
+        per_res_dG_sample[r, :] = np.array(iam.get_all_per_residue_data().dG) #gets dG values per residue (see Mover documentation)
+    per_res_dG_array = np.median(per_res_dG_sample, axis=0) #get median scores out of 3
+    return per_res_dG_array
 
 #Parse PDB file to Rosetta pose
 pose = pyrosetta.pose_from_pdb(input_path)
@@ -42,40 +68,22 @@ chain_end_res_list.insert(0, 0)
 
 #Running the InterfaceAnalyzerMover and assembling a list of dG_binding values
 from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
+
 if len(chains) == 2:
-    #Interface example: 'A_B'
-    interface = chains[0] + '_' + chains[1]
-    iam = InterfaceAnalyzerMover(interface)
-    iam.set_scorefunction(scorefxn)
-    #repack the exposed interfaces when calculating binding energy: True
-    iam.set_pack_separated(True)
-    iam.apply(pose)
-    #adds averaged interface info to the PDB.
-    #doesn't make sense for multichain (different for every iteration)
-    iam.add_score_info_to_pose(pose)
-    #gets all types of scores (see IAMover documentation)
-    per_res = iam.get_all_per_residue_data()
-    #extracts dG_binding score and changes type to list.
-    #now we have a list of N scores, where N is total residue number
-    per_res_dG = np.array(per_res.dG).tolist()
+    interface = chains[0] + '_' + chains[1] #Interface example: 'A_B'
+    per_res_dG = IAM(interface, scorefxn, pose).tolist() #extracts dG_binding score and changes type to list. now we have a list of N scores, where N is total residue number
+    
 else:
     #creates a list of zeroes to be later filled with numbers for every chain separately
     #same Mover, but iterates through chains
     per_res_dG = [0] * len(pose.sequence())
     for c in range(0, len(chains)):
         #specifying interface. For chains='ABC' iterations will be: 'A_BC', 'B_AC', 'C_AB',
-        #where the left side of the interface is 
+        #where the left side of the interface is the chain for which scores are saved
         interface = chains[c] + '_' + ''.join(chains[:c]) + ''.join(chains[(c+1):])
 
-        #loading InterfaceAnalyzer 
-        iam = InterfaceAnalyzerMover(interface)
-        iam.set_scorefunction(scorefxn)
-        iam.set_pack_separated(True)
-        iam.apply(pose)
-
         #Get per residue numbers and assembles a list with values from different iterations
-        per_res = iam.get_all_per_residue_data()
-        per_res_list = np.array(per_res.dG).tolist()
+        per_res_list = IAM(interface, scorefxn, pose).tolist()
         #get indexes for the main (left) chain in this iteration
         chain_start = chain_end_res_list[c]
         chain_end = (chain_end_res_list[c+1])
@@ -95,10 +103,7 @@ for res in range(1,len(pose.sequence())+1):
 #save pdb file
 pose.dump_pdb(output_path)
 
-end = datetime.now()
+# end = datetime.now()
 
-print('Run time with import: ', end-start_import)
-print('Run time without import: ', end-start)#Load packages
-
-
-
+# print('Run time with import: ', end-start_import)
+# print('Run time without import: ', end-start)

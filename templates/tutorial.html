@@ -94,6 +94,28 @@
             <p>
               This commandline will create 20 models, from which you should select the one with the lowest energy. Each PDB contains a line starting with 'pose'. In this line you want the last value, which is the total energy.
             </p>
+
+	    <b>ROSIE server</b>
+
+	    <p>
+	      There is a way to perform the structure minimization without Rosetta installation: using the ROSIE 2 server (https://r2.graylab.jhu.edu/). It requires that you have a GitHub account with your academic email address linked and verified. Once you are logged in, you can select ‘Rosetta’ from Rosie apps list. There, you need to upload your PDB structure and paste the following into the ‘Rosetta flags file’ field:
+	    </p>
+	    <div class="codebox">
+	      <code>
+		  -in:file:s input.pdb<br>
+		  -in:file:fullatom<br>
+		  -constrain_relax_to_start_coords<br>
+		  -relax:ramp_constraints false<br>
+		  -nstruct 6<br>
+		  -out:suffix _Relaxed<br>		  
+		  #rosie type serial<br>
+		  #rosie tasks 6
+	      </code>
+	    </div>
+	    <p>
+	      The job will run for about 2-4 hours, depending on the protein size. Once it is done, you can go to ‘job files’ and find ‘score_Relaxed.sc’. You can open it on the website, if you do so, you need to select ‘raw’ in the ‘view as’ options. In the ‘total score’ column, find the row with the lowest energy score and look up the name in the ‘description’ column. Then download the ‘input_relaxed’ .pdb file with the respective number. This is the file you are going to use as an input to the MutationExplorer.
+	    </p>
+	    
             <p>
               <b>Database of pre-minimized structures from the Protein Databank (PDB)</b><br><br>
               Since the minimization is essential for correctly highlighting the energetic impact of mutations, but  takes no small amount of time to perform, we calculated a database of pre-minimized structures from the PDB. Currently our database  contains 45,000 models. You will be notified if your PDB ID was found in our database or has to be calculated.<br>

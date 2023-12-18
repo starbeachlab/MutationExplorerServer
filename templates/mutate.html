@@ -653,13 +653,16 @@
 	}
 
 	function mutationChainCheck(){
-		var mutations = $("#mutations-input").val().replace(/s/g, "").split(",");
+		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
+		console.log('mutations ', mutations);
 
 		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
+		console.log('chains_range ', chains);
 		var ranges = [];
 		for (c of chains) {
 			ranges.push(c.split(/[:-]/));
 		}
+		console.log('ranges ', ranges);
 
 		for (m of mutations) {
 			if (!checkMutation(m, ranges)) {
