@@ -442,7 +442,7 @@
     }
 
     function mutationChainCheck() {
-		var mutations = $("#mutations-input").val().replace(/s/g, "").split(",");
+		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
 
 		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
 		var ranges = [];
