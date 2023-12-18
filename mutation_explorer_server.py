@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import shutil
 import datetime
 
+from scripts import resort_clustal
+
 # Mail Stuff
 import smtplib, ssl
 
@@ -1581,6 +1583,46 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print(out + "mut_1.pdb")
     return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, chains_range = chains_range) #, connector_string = connector_string)
 
+@app.route('/chain_resids_sorted', methods=['POST'])
+def chain_resids_sorted():
+    out = app.config['USER_DATA_DIR']
+
+    data = request.get_json()
+    chain = data['chain']
+    pdb = data['pdbFile']
+    tag = data['tag']
+    # extraxt clustal file name without suffix
+    clustal = data['clustalUrl'].split('/')[-1].split('.')[0]
+
+    pdb_file = f'{out}/{tag}/{pdb}.pdb'
+    clustal_file_old = f'{out}/{tag}/{clustal}.clw'
+    clustal_file_new = f'{out}/{tag}/{clustal}_reordered.clw'
+
+    # checks if for this chain a reordered clustal file already exists
+    if os.path.exists(clustal_file_new):
+        print(f'Reordered clustal file already exists for chain {chain}')
+        return jsonify({'done': 'done'})
+
+    # checks if the resids for this chain are sorted
+    sorted = resort_clustal.chain_resids_sorted(chain, pdb_file)
+
+    if sorted is None:
+        # error during check
+        print(f'An error occurred during the pdb file sort check and subsequent file reordering.')
+        print('Copying the original file')
+        shutil.copyfile(clustal_file_old, clustal_file_new)
+    elif sorted:
+        # sorted
+        print(f'Chain {chain} is sorted.')
+        print('Copying clustal file')
+        shutil.copyfile(clustal_file_old, clustal_file_new)
+    else:
+        # not sorted
+        print(f'Chain {chain} is not sorted.')
+        print('Reordering clustal file')
+        resort_clustal.reorder_clustal(chain, pdb_file, clustal_file_old, clustal_file_new)
+
+    return jsonify({'done': 'done'})
 
 #@app.route('/explore/<tag>/<filename>/<connector_string>', methods=['GET', 'POST'])
 @app.route('/explore/<tag>/<filename>/', methods=['GET', 'POST'])

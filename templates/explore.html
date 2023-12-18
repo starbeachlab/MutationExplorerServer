@@ -215,7 +215,7 @@
     }
 
 
-    function loadPdb(name, coloring) {
+    async function loadPdb(name, coloring) {
         // fill html elements
         updateInfoSection(the_name);
         // input files
@@ -264,13 +264,18 @@
 
             for (i = 0; i < allchains.length; i++) {
 
-                console.log("load", getURL(c_name + "_" + allchains[i] + ".clw"))
-                if (UrlExists(getURL(c_name + "_" + allchains[i] + ".clw"))) {
+                var clustalUrl = getURL(c_name + "_" + allchains[i] + ".clw")
+                var clustalUrlReordered = getURL(c_name + '_' + allchains[i] + '_reordered.clw')
+
+                await checkChainRedidsSorted(allchains[i], name, '{{tag}}', clustalUrl)
+
+                console.log("load clustalUrl ", clustalUrlReordered)
+                if (UrlExists(clustalUrlReordered)) {
                     console.log("Does not exist")
                 }
                 else {
-                    clustalFiles.push(getURL(c_name + "_" + allchains[i] + ".clw"));
-                    connectorString += name + coloring + ":" + name + "_" + allchains[i] + ".clw," + name + "," + allchains[i] + ";"
+                    clustalFiles.push(clustalUrlReordered);
+                    connectorString += name + coloring + ":" + name + "_" + allchains[i] + "_reordered.clw," + name + "," + allchains[i] + ";"
                 }
             }
         }
@@ -317,7 +322,19 @@
         }, 100);
     }
 
-
+    async function checkChainRedidsSorted(chain, pdbFile, tag, clustalUrl) {
+        await fetch('/mutation_explorer/chain_resids_sorted', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify({ chain: chain, pdbFile: pdbFile, tag: tag, clustalUrl: clustalUrl })
+        })
+        .then(response => response.json())
+        .then(data => {
+        })
+        .catch(error => {
+            console.log('Error');
+        })
+    }
 
     $(".toggle").click(function (e) {
         l = $(this).parent().next()
