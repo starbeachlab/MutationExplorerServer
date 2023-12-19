@@ -460,6 +460,7 @@ def save_pdb_file(file_path, upload, pdb, af):
     error_message = ""
     msg = "x"
 
+    print( 'save pdb file:', file_path, pdb, af)
     if upload.filename != "":
         original_name = upload.filename
         upload.save(file_path)
@@ -473,6 +474,7 @@ def save_pdb_file(file_path, upload, pdb, af):
         else:
             msg="notfound"
             download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+        print('pdb in db:', msg)
     elif af != "":
         af_id = get_alphafold_id(af)
         original_name = af_id
@@ -491,7 +493,7 @@ def save_pdb_file(file_path, upload, pdb, af):
 
     if not is_pdb( file_path):
         error = True
-        error_message = "It was not possible to upload the structure you provided."
+        error_message = "It was not possible to upload the structure you provided, or the PDB was empty. This may also indicate that it was a C-alpha only modell, which cannot be handled by MutationExplorer currently."
         #return render_template("submit.html", error = "It was not possible to upload the structure you provided.")
 
     # extract first model in PDB (NMR structures)  ### REPLACE THIS WITH CLEANUP SCRIPT! 
@@ -634,7 +636,6 @@ def submit():
     longmin = (min_type == 'long')
 
 
-
     ### processing
 
     outdir, tag = create_user_dir()
@@ -658,8 +659,21 @@ def submit():
     file_path = outdir + "structure.pdb"    
     original_name, unsuccessful, error_message, msg = save_pdb_file(file_path, upload, pdb, af)
     if unsuccessful:
+        print( error_message)
         return render_template("submit.html", error = error_message)
 
+    protype = protein_type( file_path)
+    print( 'protein type:',protype)
+    if protype == "void":
+        error_message = "The PDB you have provided seems to contain no protein."
+        return render_template( "submit.html", error = error_message)
+    elif protype =="calpha":
+        error_message = "The PDB you have provided contains C-alpha atoms only. We currently cannot handle these."
+        return render_template( "submit.html", error = error_message)
+    elif protype == "backbone" and rasp_checkbox == "on":
+        error_message = "The PDB you have provided contains the protein backbone only. RaSP requires side-chains to be present. Either upload a full atom modell or do not use RaSP."
+        return render_template( "submit.html", error =  error_message)
+    
     # filter (remove) chains, heteroatoms
     filtered = filter_structure(tag, outdir, file_path, chain_filter, remove_hets)
 
@@ -1793,6 +1807,8 @@ def resid( line):
 def residue_name( line ):
     return line[17:20]
 
+def atom_name( line):
+    return line[12:16].strip()
 
 def chain( line ):
     return line[21]
@@ -2042,6 +2058,8 @@ def pdb2seq( pdb, noncanon_warning=False):
     if noncanon_warning:
         return chains, noncanonical_residues
     return chains
+
+
 
 
 
@@ -2450,3 +2468,24 @@ def getLastID(outdir):
             pass
         pid = line
     return pid
+
+
+
+def protein_type( file_path):
+    bb = ['C','CA','N','O']
+    atom_names = []
+    with open( file_path) as r:
+        for l in r:
+            if l[:4] != "ATOM":continue
+            name = atom_name( l)
+            if name not in atom_names and ('C' in name or 'N' in name or 'O' in name):
+                atom_names.append(name) # ignore H, S, ...
+    print( 'heavy atoms:', atom_names)
+    nr = len(atom_names)
+    if nr == 0:
+        return "void"
+    if nr == 1 and atom_names[0] == 'CA':
+        return "calpha"
+    if nr == len(bb) and sorted( bb) == sorted( atom_names):
+        return "backbone"
+    return "fullatom"
