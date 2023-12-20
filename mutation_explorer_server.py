@@ -9,6 +9,7 @@ import shutil
 import datetime
 
 from scripts import resort_clustal
+from scripts import check_pdb
 
 # Mail Stuff
 import smtplib, ssl
@@ -661,6 +662,15 @@ def submit():
     if unsuccessful:
         print( error_message)
         return render_template("submit.html", error = error_message)
+    
+    # check pdb for HIS protonation
+    if check_pdb.check_his_replacement(file_path):
+        error_message = 'The PDB you have provided seems to contain HSE/HSD/HSP instead of HIS. Please replace HSE/HSD/HSP with HIS and try again.'
+        return render_template('submit.html', error = error_message)
+    # check pdb for missing chain id
+    if check_pdb.check_chain_id_missing(file_path):
+        error_message ='The pDB you have provided seems to be missing some chain ids. Please make sure all entries have a chain id.'
+        return render_template('submit.html', error = error_message)    
 
     protype = protein_type( file_path)
     print( 'protein type:',protype)
