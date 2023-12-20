@@ -59,10 +59,10 @@
                         <option value="1">Absolute energy</option>
                         <option value="2" id="ediff" class="diff">Energy difference to parent</option>
                         <option value="3">Absolute hydrophobicity</option>
-                        <option value="4" class="diff">Difference in hydrophobicity</option>
+                        <option value="4" class="diff">Hydrophobicity difference to parent</option>
                         <option value="5" class="diff">Sequence conservation</option>
-                        <option value="6" class="diff">Interface binding energy</option>
-                        <option value="7"> Differences interface energy</option>
+                        <option value="6" class="diff">Absolute interface binding energy</option>
+                        <option value="7">Interface binding energy difference to parent</option>
                     </select>
                 </div>
 
@@ -293,7 +293,7 @@
             colorType = "conservation";
             unit = "(none)"
         } else if (coloring == "_IF.pdb" || coloring == "_diffIF.pdb") {
-            colorType = "energy"
+            colorType = "interface-score";
             unit = "R.E.U."
         }
         console.log("color type:", colorType)
