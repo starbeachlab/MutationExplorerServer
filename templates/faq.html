@@ -163,6 +163,19 @@
 
     <li>
         <div class="collapsible-header grey lighten-4">
+            How do I know which positions are possible for manually defining mutations?
+        </div>
+        <div class="collapsible-body">
+            <span>
+                In the <em>Manual mutation definition</em> tab you can find a button <em>available PDB chains</em>.
+                A window will open in which you will find all possible chains and their ranges on which mutations are
+                possible.
+            </span>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
             How do I use an alignment to define mutations?
         </div>
         <div class="collapsible-body"><span>
@@ -179,7 +192,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-5">
+        <div class="collapsible-header grey lighten-4">
             Is it possible to mutate peptides?
         </div>
         <div class="collapsible-body"><span>
@@ -196,7 +209,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-4">
+        <div class="collapsible-header grey lighten-5">
             Is it possible to mutate transmembrane proteins?
         </div>
         <div class="collapsible-body"><span>
@@ -206,7 +219,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-5">
+        <div class="collapsible-header grey lighten-4">
             What about nonstandard amino acids, lipids, ions?
         </div>
         <div class="collapsible-body"><span>
@@ -223,7 +236,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-4">
+        <div class="collapsible-header grey lighten-5">
             How do you mutate a mutant (perform multiple rounds of mutations)?
         </div>
         <div class="collapsible-body"><span>
@@ -242,6 +255,19 @@
             </span></div>
     </li>
 
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            Is it possible to mutate the same residue multiple times?
+        </div>
+        <div class="collapsible-body">
+            <span>
+                Yes, it is possible to mutate one and the same amino acid several times in succession.
+                However, it still leads to errors from time to time.
+                If you encounter an error, you can send us your job id with your error by e-mail.
+            </span>
+        </div>
+    </li>
+
 </ul>
 
 <h5>Explorer</h5>
@@ -255,16 +281,22 @@
                 From the <strong>Color by</strong> drop-down in the <em>Select</em> area (top left in the result page),
                 you can choose the following colorings:
                 <ul class="true-list">
-                    <li>absolute rosetta energy</li>
-                    <li>energy difference with parent</li>
-                    <li>absolute hydrophobicity</li>
-                    <li>hydrophobicity difference with parent</li>
+                    <li>Absolute rosetta energy</li>
+                    <li>Energy difference to parent</li>
+                    <li>Absolute hydrophobicity</li>
+                    <li>Hydrophobicity difference to parent</li>
+                    <li>Absolute interface score energy</li>
+                    <li>Interface score energy difference to parent</li>
+                    <li>Conservation</li>
                 </ul>
                 For energy values, the color scale ranges from blue (negative values) over white (zero) to red (positive
                 values).
                 Restated, red represents increased energy from mutation(s), blue represents decreased energy, and white
-                conveys no energetic change.
-                For hydrophobicity coloring, red indicates a hydrophobic residue, blue hydrophilic.
+                conveys no energetic change. <br>
+                For hydrophobicity coloring, the color scale ranges from blue (negative) over white (zero) to yellow
+                (positive).
+                Yellow indicates a hydrophobic residue, blue hydrophilic. <br>
+                The color scales are shown in detail below in the tab "What are the values of the color scale?".
             </span></div>
     </li>
 
@@ -278,9 +310,11 @@
                 root.
                 You can select any listed file to mutate it.
                 <ul class="true-list">
-                    <li><samp>mut_0_1.pdb</samp> is the first mutation of the original protein.</li>
-                    <li><samp>mut_0_1_1.pdb</samp> would be a further mutation of the first mutant.</li>
-                    <li><samp>mut_0_2.pdb</samp> is the second independent mutation of the original protein.</li>
+                    <li><samp>mut_0_1</samp> is the first mutation of the original protein.</li>
+                    <li><samp>mut_0_1_1</samp> would be a further mutation of the first mutant (<samp>mut_0_1</samp>).
+                    </li>
+                    <li><samp>mut_0_2</samp> is the second independent mutation of the original protein
+                        <samp>mut_0</samp>.</li>
                 </ul>
             </span></div>
     </li>
@@ -382,11 +416,11 @@
 
     <li>
         <div class="collapsible-header grey lighten-4">
-            What are the values of the color scale?
+            What are the values of the color scales?
         </div>
         <div class="collapsible-body">
             <span>
-                <strong>Energy and hydrophobicity</strong>
+                <strong>Energy and hydrophobicity</strong><br>
 
                 The default color scale ranges from <var>-2</var> over <var>0</var> to <var>+2</var>.
                 You can change the intervals for the color scale in the <strong>Change Visualization</strong> tab.
@@ -445,9 +479,11 @@
         </div>
         <div class="collapsible-body">
             <span>
-                You can open the RaSP window for a specific amino acid with <samp>Ctrl + right click</samp> or by switching on the RaSP selection mode.
+                You can open the RaSP window for a specific amino acid with <samp>Ctrl + right click</samp> or by
+                switching on the RaSP selection mode.
                 This can be done by activating the button in the top left hand corner of the viewer.
-                When the selection mode is on, you can just select an amino acid with a <samp>right click</samp> and the window will open.
+                When the selection mode is on, you can just select an amino acid with a <samp>right click</samp> and the
+                window will open.
                 <ul class="true-list">
                     <li>red - off</li>
                     <li>green - on</li>
