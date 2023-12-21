@@ -1,5 +1,5 @@
 import os
-from . import io
+from . import inout
 
 # amino acid class for reordering sequences
 class AminoAcid:
@@ -84,7 +84,7 @@ def before_after(amino_acid_list):
     return positions
 
 def chain_resids_sorted(chain, pdb_file):
-    all_lines = io.read_file_lines(pdb_file)
+    all_lines = inout.read_file_lines(pdb_file)
 
     if all_lines is None:
         print('An error occurred during the reading of the file for the residue sort check.')
@@ -99,7 +99,7 @@ def chain_resids_sorted(chain, pdb_file):
         return True
 
 def sort_resids(chain, pdb_file):
-    all_lines = io.read_file_lines(pdb_file)
+    all_lines = inout.read_file_lines(pdb_file)
 
     if all_lines is None:
         print('An error occurred during the reading of the file for the residue sorting.')
@@ -129,8 +129,8 @@ def reorder_string(original_string, mapping_dict):
 def reorder_clustal(chain, pdb_file, clustal_file, clustal_file_reordered):
     position_mapping = sort_resids(chain, pdb_file)
 
-    clustal = io.read_clustal(clustal_file)
-    conservation = io.read_clustal_conservation(clustal_file)
+    clustal = inout.read_clustal(clustal_file)
+    conservation = inout.read_clustal_conservation(clustal_file)
 
     chain_names = list(clustal.keys())
 
@@ -141,6 +141,6 @@ def reorder_clustal(chain, pdb_file, clustal_file, clustal_file_reordered):
     seq2_reordered = reorder_string(seq2, position_mapping)
     conservation_reordered = reorder_string(conservation, position_mapping)
 
-    io.write_clustal(seq1_reordered, seq2_reordered, chain_names[0], chain_names[1], clustal_file_reordered, conservation_reordered)
+    inout.write_clustal(seq1_reordered, seq2_reordered, chain_names[0], chain_names[1], clustal_file_reordered, conservation_reordered)
     
 

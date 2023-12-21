@@ -9,6 +9,7 @@ import shutil
 import datetime
 
 from scripts import resort_clustal
+from scripts import check_pdb
 
 # Mail Stuff
 import smtplib, ssl
@@ -661,6 +662,15 @@ def submit():
     if unsuccessful:
         print( error_message)
         return render_template("submit.html", error = error_message)
+    
+    # check pdb for HIS protonation
+    if check_pdb.check_his_replacement(file_path):
+        error_message = 'The PDB you have provided seems to contain HSE/HSD/HSP instead of HIS. Please replace HSE/HSD/HSP with HIS and try again.'
+        return render_template('submit.html', error = error_message)
+    # check pdb for missing chain id
+    if check_pdb.check_chain_id_missing(file_path):
+        error_message ='The pDB you have provided seems to be missing some chain ids. Please make sure all entries have a chain id.'
+        return render_template('submit.html', error = error_message)    
 
     protype = protein_type( file_path)
     print( 'protein type:',protype)
@@ -783,7 +793,7 @@ def add_mutations(tag, mutant, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (1)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb)")
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
@@ -1060,7 +1070,7 @@ def vcf_calculation(tag, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (2)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb in vcf pipeline)")
 
 
 
@@ -1179,7 +1189,7 @@ def interface_one_structure(tag, mutant, inputs):
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED + " (3)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb in AlignMe interface using single PDB)")
 
     # check mutation success
     pid = getLastID(outdir)
@@ -2253,7 +2263,7 @@ def waitID(myid):
 
     while(state):
         cmd = 'tsp -s ' + str(myid)
-       # print(cmd)
+        # print(cmd)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
         #print(pid)
         if("finished" in pid):
