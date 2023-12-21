@@ -183,9 +183,11 @@
     let the_name = name.substr(0, name.length - 4);
     allchains = "{{chains}}"
 
-    let two_strcs = ("{{two_structures}}" == "True")
+    let two_strcs = ("{{two_structures}}" !== "")
     if (two_strcs) {
-        the_ending = "_cons.pdb";
+    the_ending = "_cons.pdb";
+    tmp = "{{two_structures}}"
+    aln_ids = tmp.split(";")
     }
 
     // highlight selected structure
@@ -246,11 +248,12 @@
             pdbFiles.push(getURL("mut_1" + coloring))
 
             var clustalFiles = [getURL("alignment.aln")]
-
+		    
+		    
             if (allchains.length != 2) {
                 // print errror message!
             }
-            connectorString = "mut_0" + coloring + ":alignment.aln,mut_0," + allchains[0] + ";mut_1" + coloring + ":alignment.aln,mut_1," + allchains[1] + ";"
+            connectorString = "mut_0" + coloring + ":alignment.aln," + aln_ids[0] + "," + allchains[0] + ";mut_1" + coloring + ":alignment.aln," + aln_ids[1] + "," + allchains[1] + ";"
 
 
         } else {

@@ -4,7 +4,7 @@ pdb_rosetta_interface.py is a script that claculates differences in the energy s
 
 Author: Aleksandra Panfilova
 
-Date of last major changes: 11 Dec 2023
+Date of last major changes: 20 Dec 2023
 
 """
 
@@ -19,7 +19,7 @@ import argparse
 import sys
 init()
 
-start = datetime.now()
+#start = datetime.now()
 
 #Parse the commandline input
 parser = argparse.ArgumentParser(description='Calculating per residue interface binding energies')
@@ -39,16 +39,22 @@ def IAM(interface, scorefxn, pose):
     iam.set_pack_separated(True) #repack the exposed interfaces when calculating binding energy: True
     iam.set_pack_rounds(5) #do 5 rounds of packing (default 1)
     
-    #Run IAM 3 times, and get median score for every position
-    per_res_dG_sample = np.zeros(shape=(3, len(pose.sequence())))
-    for r in range(3):
+    if len(interface) > 6:
         iam.apply(pose)
-        per_res_dG_sample[r, :] = np.array(iam.get_all_per_residue_data().dG) #gets dG values per residue (see Mover documentation)
-    per_res_dG_array = np.median(per_res_dG_sample, axis=0) #get median scores out of 3
+        per_res_dG_array = np.array(iam.get_all_per_residue_data().dG)
+    else:
+        #Run IAM 3 times, and get median score for every position
+        per_res_dG_sample = np.zeros(shape=(3, len(pose.sequence())))
+        for r in range(3):
+            iam.apply(pose)
+            per_res_dG_sample[r, :] = np.array(iam.get_all_per_residue_data().dG) #gets dG values per residue (see Mover documentation)
+        per_res_dG_array = np.median(per_res_dG_sample, axis=0) #get median scores out of 3
     return per_res_dG_array
 
 #Parse PDB file to Rosetta pose
-pose = pyrosetta.pose_from_pdb(input_path)
+from pyrosetta.toolbox import cleanATOM
+cleanATOM(input_path, out_file='cleaned.pdb', ext="")
+pose = pyrosetta.pose_from_pdb('cleaned.pdb')
 
 #Get list of chians 
 chains = []
@@ -69,7 +75,10 @@ chain_end_res_list.insert(0, 0)
 #Running the InterfaceAnalyzerMover and assembling a list of dG_binding values
 from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
 
-if len(chains) == 2:
+if len(chains) == 1:
+    per_res_dG = np.zeros(len(pose.sequence())).tolist()
+    
+elif len(chains) == 2:
     interface = chains[0] + '_' + chains[1] #Interface example: 'A_B'
     per_res_dG = IAM(interface, scorefxn, pose).tolist() #extracts dG_binding score and changes type to list. now we have a list of N scores, where N is total residue number
     
