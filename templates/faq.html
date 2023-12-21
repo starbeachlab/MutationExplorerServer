@@ -163,6 +163,19 @@
 
     <li>
         <div class="collapsible-header grey lighten-4">
+            How do I know which positions are possible for manually defining mutations?
+        </div>
+        <div class="collapsible-body">
+            <span>
+                In the <em>Manual mutation definition</em> tab you can find a button <em>available PDB chains</em>.
+                A window will open in which you will find all possible chains and their ranges on which mutations are
+                possible.
+            </span>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
             How do I use an alignment to define mutations?
         </div>
         <div class="collapsible-body"><span>
@@ -179,7 +192,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-5">
+        <div class="collapsible-header grey lighten-4">
             Is it possible to mutate peptides?
         </div>
         <div class="collapsible-body"><span>
@@ -196,7 +209,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-4">
+        <div class="collapsible-header grey lighten-5">
             Is it possible to mutate transmembrane proteins?
         </div>
         <div class="collapsible-body"><span>
@@ -206,7 +219,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-5">
+        <div class="collapsible-header grey lighten-4">
             What about nonstandard amino acids, lipids, ions?
         </div>
         <div class="collapsible-body"><span>
@@ -223,7 +236,7 @@
     </li>
 
     <li>
-        <div class="collapsible-header grey lighten-4">
+        <div class="collapsible-header grey lighten-5">
             How do you mutate a mutant (perform multiple rounds of mutations)?
         </div>
         <div class="collapsible-body"><span>
@@ -242,6 +255,19 @@
             </span></div>
     </li>
 
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            Is it possible to mutate the same residue multiple times?
+        </div>
+        <div class="collapsible-body">
+            <span>
+                Yes, it is possible to mutate one and the same amino acid several times in succession.
+                However, it still leads to errors from time to time.
+                If you encounter an error, you can send us your job id with your error by e-mail.
+            </span>
+        </div>
+    </li>
+
 </ul>
 
 <h5>Explorer</h5>
@@ -255,16 +281,22 @@
                 From the <strong>Color by</strong> drop-down in the <em>Select</em> area (top left in the result page),
                 you can choose the following colorings:
                 <ul class="true-list">
-                    <li>absolute rosetta energy</li>
-                    <li>energy difference with parent</li>
-                    <li>absolute hydrophobicity</li>
-                    <li>hydrophobicity difference with parent</li>
+                    <li>Absolute rosetta energy</li>
+                    <li>Energy difference to parent</li>
+                    <li>Absolute hydrophobicity</li>
+                    <li>Hydrophobicity difference to parent</li>
+                    <li>Absolute interface score energy</li>
+                    <li>Interface score energy difference to parent</li>
+                    <li>Conservation</li>
                 </ul>
                 For energy values, the color scale ranges from blue (negative values) over white (zero) to red (positive
                 values).
                 Restated, red represents increased energy from mutation(s), blue represents decreased energy, and white
-                conveys no energetic change.
-                For hydrophobicity coloring, red indicates a hydrophobic residue, blue hydrophilic.
+                conveys no energetic change. <br>
+                For hydrophobicity coloring, the color scale ranges from blue (negative) over white (zero) to yellow
+                (positive).
+                Yellow indicates a hydrophobic residue, blue hydrophilic. <br>
+                The color scales are shown in detail below in the tab "What are the values of the color scale?".
             </span></div>
     </li>
 
@@ -278,9 +310,11 @@
                 root.
                 You can select any listed file to mutate it.
                 <ul class="true-list">
-                    <li><samp>mut_0_1.pdb</samp> is the first mutation of the original protein.</li>
-                    <li><samp>mut_0_1_1.pdb</samp> would be a further mutation of the first mutant.</li>
-                    <li><samp>mut_0_2.pdb</samp> is the second independent mutation of the original protein.</li>
+                    <li><samp>mut_0_1</samp> is the first mutation of the original protein.</li>
+                    <li><samp>mut_0_1_1</samp> would be a further mutation of the first mutant (<samp>mut_0_1</samp>).
+                    </li>
+                    <li><samp>mut_0_2</samp> is the second independent mutation of the original protein
+                        <samp>mut_0</samp>.</li>
                 </ul>
             </span></div>
     </li>
@@ -314,33 +348,38 @@
         <div class="collapsible-header grey lighten-4">
             How can I change the representation of the structures?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <span>
                 Currently, we only offer a cartoon representation for the structures.
                 We want to include more representations in the future.
-            </span></div>
+            </span>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             I don’t see an alignment?
         </div>
-        <div class="collapsible-body"><span>
-                Most likely, you have defined mutations by uploading a target sequence or an alignment that does not
-                exactly match one PDB chain.
-                At least one sequence must be a complete subsequence of a PDB chain.
-                If this is not the case, no alignment is displayed.
-                You can check the sequences at any time in the <strong>Manual Rematch Structue</strong> tab at the
-                bottom of the viewer.
-                There, the sequences are displayed and the longest common subsequence is highlighted in light green.
-            </span></div>
+        <div class="collapsible-body">
+            <span>
+                If you do not see an alignment at the bottom, this may be due to two possible sources of error.
+                At least one sequence in the clustal file must be identical or part of the sequence of a chain in the
+                uploaded structure.
+                The clustal sequences are checked against the sequences in the structure so that they can be displayed.
+                The second source of error could be that our internal matching did not work properly.
+                If you do not see an alignment, please send us an e-mail with your job ID so that we can solve the
+                problem.
+            </span>
+        </div>
     </li>
 
-    <li>
+    <!-- <li>
         <div class="collapsible-header grey lighten-4">
             What do I do if the wrong structure is highlighted when hovering over the sequence in the Alignment View
             tab?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <span>
                 The structures and the sequences are matched automatically in the beginning.
                 Therefore it can occur, that the wrong sequence in the clustal file is matched to the structure.
                 You can fix this by manually rematching the sequence in the <strong>Manual Rematch Structre</strong>
@@ -356,52 +395,101 @@
                 <br><br>
                 You can find a more detailed description on how to manually rematch a clustal sequence to a chain within
                 a structure on the tutorial page under <strong>Rematch clustal sequences to a structure</strong>.
-            </span></div>
-    </li>
+            </span>
+        </div>
+    </li> -->
 
-    <li>
+    <!-- <li>
         <div class="collapsible-header grey lighten-5">
             What do I do if the mutation sphere is located on a wrong amino acid?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <span>
                 This can occur if the automatic matching of the clustal sequence is matched to the wrong structure
                 chain.
                 This can be fixed by rematching the sequences manually.
                 Read the FAQ section: "What do I do if the wrong structure is highlightes when hovering over the
                 sequence in the <strong>Alignment View</strong> tab?".
-            </span></div>
-    </li>
+            </span>
+        </div>
+    </li> -->
 
     <li>
         <div class="collapsible-header grey lighten-4">
-            What are the values of the color scale?
+            What are the values of the color scales?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <span>
+                <strong>Energy and hydrophobicity</strong><br>
+
                 The default color scale ranges from <var>-2</var> over <var>0</var> to <var>+2</var>.
                 You can change the intervals for the color scale in the <strong>Change Visualization</strong> tab.
                 <br><br>
-                We provide three different scales for protein coloring. 
-                For the first two, white is always zero. 
-                <center><div><img src="static/img/faq/scaleBWR.png" width="60%;"></div></center>
-                <center><div><img src="static/img/faq/scaleBWY.png" width="60%;"></div></center>
-                The third color scale is to show the conservation between two amino acid sequences:
+                <center>
+                    <div>
+                        <figure>
+                            <img src="static/img/faq/scaleBWR.png" width="60%;">
+                            <figcaption>Energy color scale</figcaption>
+                        </figure>
+                    </div>
+                </center>
+                <center>
+                    <figure>
+                        <div><img src="static/img/faq/scaleBWY.png" width="60%;"></div>
+                        <figcaption>Hydrophobicity color scale</figcaption>
+                    </figure>
+                </center>
+
+                <strong>Interface score</strong>
+
+                <center>
+                    <div><img src="static/img/faq/scale_interface_score.png" width="60%;"></div>
+                </center>
+
+                <strong>Conservation</strong>
+
                 <ul class="true-list">
                     <li>red - gap</li>
                     <li>dark blue - a mutation between amino acid groups</li>
                     <li>light blue - a mutation withing an amino acid group</li>
                     <li>white - no mutation/identical</li>
                 </ul>
-                <center><div><img src="static/img/faq/scaleCons.png" width="60%;"></div></center>
-            </span></div>
+                <center>
+                    <div><img src="static/img/faq/scaleCons.png" width="60%;"></div>
+                </center>
+            </span>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             Can I change the interval of the color scale?
         </div>
-        <div class="collapsible-body"><span>
-                You can change the intervals for the color scale on the <strong>Change visualization</strong> tab.
-            </span></div>
+        <div class="collapsible-body">
+            <span>
+                You can change the intervals for the color scale (energy and hydrophobicity) in the <strong>Change
+                    visualization</strong> tab.
+            </span>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            How can I open the RaSP prediction window?
+        </div>
+        <div class="collapsible-body">
+            <span>
+                You can open the RaSP window for a specific amino acid with <samp>Ctrl + right click</samp> or by
+                switching on the RaSP selection mode.
+                This can be done by activating the button in the top left hand corner of the viewer.
+                When the selection mode is on, you can just select an amino acid with a <samp>right click</samp> and the
+                window will open.
+                <ul class="true-list">
+                    <li>red - off</li>
+                    <li>green - on</li>
+                </ul>
+            </span>
+        </div>
     </li>
 
 </ul>
