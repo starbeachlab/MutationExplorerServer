@@ -1606,6 +1606,10 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print( __name__, filename , tag, chains)
 
     two_structures = os.path.isfile(out + tag + "/mut_1.pdb")
+    # assuming that this is only true when coming from AlignMe ...
+    if two_structures:
+        chains += get_chains( out + tag + "/mut_1.pdb")
+        two_structures = get_alignment_ids( out + tag + "/alignment.aln")
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
@@ -2499,3 +2503,19 @@ def protein_type( file_path):
     if nr == len(bb) and sorted( bb) == sorted( atom_names):
         return "backbone"
     return "fullatom"
+
+def get_alignment_ids( filename):
+    with open( filename) as r:
+        r.readline()
+        ids = []
+        for l in r:
+            l = l.strip()
+            if len(l) == 0:
+                continue
+            c = l.split()
+            if c[0] not in ids:
+                ids.append( c[0] )
+        idstr = ids[0]
+        for i in range(1,len(ids)):
+            idstr += ';' + ids[i]
+        return idstr
