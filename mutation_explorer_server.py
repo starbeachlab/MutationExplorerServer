@@ -2505,6 +2505,7 @@ def protein_type( file_path):
     return "fullatom"
 
 def get_alignment_ids( filename):
+    idstr = ""
     with open( filename) as r:
         r.readline()
         ids = []
@@ -2513,9 +2514,11 @@ def get_alignment_ids( filename):
             if len(l) == 0:
                 continue
             c = l.split()
-            if c[0] not in ids:
+            if len(c) == 2 and c[0] not in ids:
                 ids.append( c[0] )
-        idstr = ids[0]
+        if len(ids) > 0:
+            idstr = ids[0]
         for i in range(1,len(ids)):
             idstr += ';' + ids[i]
-        return idstr
+            
+    return idstr

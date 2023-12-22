@@ -9,3 +9,4 @@ static/old/
 app.cfg
 *.log
 _*_
+*.bak
