@@ -230,21 +230,21 @@
 
 					<br>
 
-					<!--
-	  	<div class="row">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainF1"></div>
-			</div>
-			<div class="col s6">
-				<div class="file-field input-field" style="width: 100%">
-					<div class="btn" style="width: 100%">
-						<span>Upload a FASTA file</span>
-						<input type="file" name="fasta1">
-					</div>
-				</div>
-			</div>
-	  	</div>
-	-->
+					<!-- 
+					<div class="row">
+						<div class="col s3">
+							<div class="input-field chain-select-field" sel="chainF1"></div>
+						</div>
+						<div class="col s6">
+							<div class="file-field input-field" style="width: 100%">
+								<div class="btn" style="width: 100%">
+									<span>Upload a FASTA file</span>
+									<input type="file" name="fasta1">
+								</div>
+							</div>
+						</div>
+					</div> -->
+
 
 					<div class="row">
 						<div class="col s3">
@@ -349,7 +349,7 @@
 								<div class="input-field chain-select-field" sel="chainF2">
 									<!--<select id="chainF2"></select>-->
 									<!--<input id="chainF2" type="text" name="chainF2" class="validate" >
-		<label for="chainF2">PDB Chain</label>-->
+									<label for="chainF2">PDB Chain</label>-->
 								</div>
 							</div>
 							<div class="col s6">
@@ -365,15 +365,12 @@
 						<div class="row additional fasta2">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainF3">
-									<!--<select id="chainF3">
-		  <option value="" disabled selected>PDB chain</option>
-		</select> -->
+									<!-- <select id="chainF3">
+										<option value="" disabled selected>PDB chain</option>
+									</select> -->
 
-									<!--
-		<input id="chainF3" type="text" name="chainF3" class="validate" >
-		<label for="chainF3">PDB Chain</label>-->
-
-
+									<!-- <input id="chainF3" type="text" name="chainF3" class="validate">
+									<label for="chainF3">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s6">
@@ -400,10 +397,9 @@
 						<div class="row">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainS1">
-									<!--
-		<input id="chainS1" type="text" name="chainS1" class="validate" >
-		<label for="chainS1">PDB Chain</label> -->
-									<!--<select id="chainS1"></select>-->
+									<!-- <input id="chainS1" type="text" name="chainS1" class="validate">
+									<label for="chainS1">PDB Chain</label> -->
+									<!--<select id="chainS1"></select> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -418,9 +414,8 @@
 						<div class="row additional pseq1">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainS2">
-									<!--
-					<input id="chainS2" type="text" name="chainS2" class="validate" >
-					<label for="chainS2">PDB Chain</label>-->
+									<!-- <input id="chainS2" type="text" name="chainS2" class="validate">
+									<label for="chainS2">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -435,9 +430,8 @@
 						<div class="row additional pseq2">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainS3">
-									<!--
-					<input id="chainS3" type="text" name="chainS3" class="validate" >
-					<label for="chainS3">PDB Chain</label>-->
+									<!-- <input id="chainS3" type="text" name="chainS3" class="validate">
+									<label for="chainS3">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -463,9 +457,8 @@
 						<div class="row">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainU1">
-									<!--
-					<input id="chainU1" type="text" name="chainU1" class="validate" >
-					<label for="chainU1">PDB Chain</label>-->
+									<!-- <input id="chainU1" type="text" name="chainU1" class="validate">
+									<label for="chainU1">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -480,9 +473,8 @@
 						<div class="row additional up1">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainU2">
-									<!--
-					<input id="chainU2" type="text" name="chainU2" class="validate" >
-					<label for="chainU2">PDB Chain</label>-->
+									<!-- <input id="chainU2" type="text" name="chainU2" class="validate">
+									<label for="chainU2">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -497,9 +489,8 @@
 						<div class="row additional up2">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainU3">
-									<!--
-					<input id="chainU3" type="text" name="chainU3" class="validate" >
-					<label for="chainU3">PDB Chain</label>-->
+									<!-- <input id="chainU3" type="text" name="chainU3" class="validate">
+									<label for="chainU3">PDB Chain</label> -->
 								</div>
 							</div>
 							<div class="col s9">
@@ -526,13 +517,9 @@
 		</ul>
 		<br>
 
-
 		<div id="status-info">
 			<h5 style="color:blue;">{{status}}</h5>
 		</div>
-
-
-
 
 		<div class="col offset-s3 s6 center-align">
 			<input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
@@ -573,7 +560,6 @@
 
 <script>
 
-
 	var aligns = 0;
 	var fastas = 0;
 	var seqs = 0;
@@ -605,8 +591,6 @@
 	//addOpt('chainS1');
 
 	initUploads();
-
-
 
 	function addAlignments() {
 		aligns += 1;
@@ -653,7 +637,6 @@
 			$($(uploads[i]).find("input")).on("change", showFilename)
 		}
 	}
-
 
 	function chainSelect() {
 
@@ -742,6 +725,5 @@
 	});
 
 </script>
-
 
 {% endblock %}
