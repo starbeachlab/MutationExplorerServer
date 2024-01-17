@@ -9,3 +9,7 @@ static/old/
 app.cfg
 *.log
 _*_
+data/
+rosemint/
+examples/
+rasp-batch/
