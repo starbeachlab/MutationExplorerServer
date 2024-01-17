@@ -184,7 +184,7 @@
     allchains = "{{chains}}"
 
     let two_strcs = ("{{two_structures}}" !== "")
-    if (two_strcs) {
+  if (two_strcs) {
     the_ending = "_cons.pdb";
     tmp = "{{two_structures}}"
     aln_ids = tmp.split(";")
@@ -204,8 +204,11 @@
         setDiffOptions();
 
         loadPdb(the_name, the_ending);
-
-        dropdownChangeSelection('2');
+	if (the_ending == "_cons.pdb"){
+	    dropdownChangeSelection('5');
+	} else {
+            dropdownChangeSelection('2');
+	}
     });
 
 	document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
