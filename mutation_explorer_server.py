@@ -793,7 +793,7 @@ def add_mutations(tag, mutant, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (1)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb)")
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
@@ -1070,7 +1070,7 @@ def vcf_calculation(tag, inputs):
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (2)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb in vcf pipeline)")
 
 
 
@@ -1189,7 +1189,7 @@ def interface_one_structure(tag, mutant, inputs):
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
-        fatal_error(tag, MUTATION_FAILED + " (3)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb in AlignMe interface using single PDB)")
 
     # check mutation success
     pid = getLastID(outdir)
@@ -1606,6 +1606,10 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print( __name__, filename , tag, chains)
 
     two_structures = os.path.isfile(out + tag + "/mut_1.pdb")
+    # assuming that this is only true when coming from AlignMe ...
+    if two_structures:
+        chains += get_chains( out + tag + "/mut_1.pdb")
+        two_structures = get_alignment_ids( out + tag + "/alignment.aln")
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
@@ -2263,7 +2267,7 @@ def waitID(myid):
 
     while(state):
         cmd = 'tsp -s ' + str(myid)
-       # print(cmd)
+        # print(cmd)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
         #print(pid)
         if("finished" in pid):
@@ -2499,3 +2503,22 @@ def protein_type( file_path):
     if nr == len(bb) and sorted( bb) == sorted( atom_names):
         return "backbone"
     return "fullatom"
+
+def get_alignment_ids( filename):
+    idstr = ""
+    with open( filename) as r:
+        r.readline()
+        ids = []
+        for l in r:
+            l = l.strip()
+            if len(l) == 0:
+                continue
+            c = l.split()
+            if len(c) == 2 and c[0] not in ids:
+                ids.append( c[0] )
+        if len(ids) > 0:
+            idstr = ids[0]
+        for i in range(1,len(ids)):
+            idstr += ';' + ids[i]
+            
+    return idstr

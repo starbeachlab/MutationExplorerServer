@@ -13,3 +13,4 @@ data/
 rosemint/
 examples/
 rasp-batch/
+*.bak
