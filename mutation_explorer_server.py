@@ -213,7 +213,7 @@ def name_mutation(out, base_structure, tag):
     return strc + "_" + str(max(nums) + 1)  + ".pdb"
 
 
-def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store=""):
+def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store="", ifscore=""):
     # TODO: remove logfile
 
 
@@ -251,15 +251,14 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     print("MV Done")
     
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
-    calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb")
-    file_processing( tag, structure, out_file_name, logfile)
+    if ifscore != "":
+        calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb", ifscore)
+    file_processing( tag, structure, out_file_name, logfile, ifscore)
     print("File processing")
 
 
-def calc_interface( tag, in_file, out_file):
-    #chains =  get_chains(in_file)
-
-    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file
+def calc_interface( tag, in_file, out_file, parameter):
+    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file + " " + parameter
     print(cmd)
     bash_cmd(cmd, tag)
 
@@ -267,7 +266,12 @@ def calc_interface( tag, in_file, out_file):
     status = "Interface+calculation+for+" + in_file.split('/')[-1] + "+out+" + out_file.split('/')[-1] + "+done"
     status_update(tag, status)
     
-    
+def calc_interface_initial_structure(tag, outdir, minimize, ifscore=""):
+    if ifscore != "":
+        if minimize == "True":
+            calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0_IF.pdb", ifscore)
+        else:
+            calc_interface(tag, outdir + "mut_0.pdb", outdir + "mut_0_IF.pdb", ifscore)
 
 def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
     out = app.config['USER_DATA_DIR'] + tag + "/"
@@ -387,7 +391,7 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
     os.rename( tmp, structure) 
 
 
-def file_processing( tag, structure, out_file_name, logfile):
+def file_processing( tag, structure, out_file_name, logfile, ifscore=""):
     # rename output file #### WRITE ENERGIES INSTEAD !!!!!
     bfac =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_to_bfactor.py "
     ediff = app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_diff.py "
@@ -423,12 +427,11 @@ def file_processing( tag, structure, out_file_name, logfile):
 
         start_thread(mutant_calc_conservation, [tag, out + out_file_name + '.pdb', logfile, my_id], "mutant conservation")
 
-        #if wait( out + structure[:-4] + '_IF.pdb', 1, WAIT_MUTATION) and wait( out + out_file_name + "_IF.pdb", 1, WAIT_MUTATION):
-        cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + '_IF.pdb ' + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
-        print(cmd)
-        bash_cmd(cmd, tag)
-    
-    
+        if ifscore != "":
+            #if wait( out + structure[:-4] + '_IF.pdb', 1, WAIT_MUTATION) and wait( out + out_file_name + "_IF.pdb", 1, WAIT_MUTATION):
+            cmd =  app.config['SCRIPTS_PATH'] + "pdb_bfactor_diff.py " + out + structure[:-4] + "_IF.pdb " + out + out_file_name + "_IF.pdb " + out + out_file_name + "_diffIF.pdb"
+            print(cmd)
+            bash_cmd(cmd, tag)
     
     if not os.path.exists(out + "fin/"):
         os.mkdir(out + "fin/")
@@ -438,9 +441,6 @@ def file_processing( tag, structure, out_file_name, logfile):
 
     cmd =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
-    
-
-
 
 def create_user_dir():
     # generate tag
@@ -452,8 +452,6 @@ def create_user_dir():
     os.mkdir(outdir)
 
     return outdir, tag
-
-
 
 def save_pdb_file(file_path, upload, pdb, af):
     original_name = ""
@@ -538,8 +536,7 @@ def filter_chain( inpdb, fchain, outpdb):
             if l[:4] == "ATOM" and chain(l) == fchain:
                 f_out.write(l)
            
-
-def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure):
+def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
     
@@ -575,8 +572,11 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
-            print( "calc interface from relax_initial_structure")
-            calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb")
+
+            # interface score for initial structure is going to be calculated later
+            # because the selection for the chains was not done yet
+            # print( "calc interface from relax_initial_structure")
+            # calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb")
 
             file_processing( tag, structure, name,  log_file)
 
@@ -584,8 +584,6 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             print("Fixbb since filtering")
             start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
             msg =  "notfound"
-
-            
 
 def score_structure(tag, outdir, name, structure):
     logfile = "log.txt"
@@ -604,14 +602,11 @@ def score_structure(tag, outdir, name, structure):
     # calc_rasp(tag, structure, name, logfile, path_to_store)
     # see fixbb / relax_initial_structure
 
-    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
-    bash_cmd( cmd, tag)
-    
-    status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
+    # cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
+    # bash_cmd( cmd, tag)
+    # status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
     
     file_processing(tag, structure, name, logfile)
-
-
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit(): 
@@ -715,12 +710,9 @@ def submit():
 
     print('fixbb started for initial upload\n')
 
-    return redirect(url_for('mutate', tag = tag, msg=msg))
+    return redirect(url_for('mutate', tag = tag, msg=msg, minimize=minimize))
 
-
-
-### never called ??
-def add_mutations(tag, mutant, inputs):
+def add_mutations(tag, mutant, inputs, ifscore=""):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
     mutations = inputs["mutations"]
@@ -788,7 +780,7 @@ def add_mutations(tag, mutant, inputs):
     else:
         fatal_error(tag, NO_MUTATIONS)
 
-    fixbb(tag, parent, resfile, mutant, "log.txt")
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
 
     pid = getLastID(outdir)
 
@@ -798,13 +790,9 @@ def add_mutations(tag, mutant, inputs):
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
 
-
-
-
-
 @app.route('/mutate/<tag>', methods=['GET', 'POST'])
-@app.route('/mutate/<tag>/<msg>', methods=['GET', 'POST'])
-def mutate(tag,msg=""):
+@app.route('/mutate/<tag>/<msg>/<minimize>', methods=['GET', 'POST'])
+def mutate(tag,msg="",minimize="True"):
 
     if request.method == 'GET':
         outdir = app.config['USER_DATA_DIR'] + tag + "/"
@@ -895,6 +883,34 @@ def mutate(tag,msg=""):
         request.form.get('chainU3'),
     ]
 
+    # get type of interface score calculation
+    if_score_option = request.form["ifscore"] # = none | manual | all
+    if_score = ""
+
+    if if_score_option == "none":
+        if_score = ""
+    elif if_score_option == "all":
+        if_score = "all"
+    else:
+        # manual calculation
+        # get information which chains are on the left and right side
+        left = ''
+        right = ''
+        chains_range = open_chains_range_file(outdir)
+        chains = get_chain_letters(chains_range)
+
+        for c in chains:
+            chain = "chain_"+c
+            chain_choice = request.form["chain_"+c] # left | right
+            if chain_choice == "left":
+                left += c
+            else:
+                right += c
+        if_score = left + "_" + right
+
+    # calculate the interface score for the initial structure 
+    # could not be done earlier because above selection was not known
+    calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
 
     # get all mutations
     i = 0
@@ -956,10 +972,8 @@ def mutate(tag,msg=""):
 
     ### start calculations
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
-    start_thread(add_mutations, [tag, mutant, inputs], "add_muts")     
+    start_thread(add_mutations, [tag, mutant, inputs, if_score], "add_muts")     
     return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
-
-
 
 def vcf_calculation(tag, inputs):
 
@@ -1044,7 +1058,8 @@ def vcf_calculation(tag, inputs):
             print("path rasp: " + path)
             calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
             #file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) #rene: warum war das 2x hier?
-            calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb")
+            # TODO Michelle
+            # calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb")
             file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
             error_msg = "Deriving energies and writing them into a PDB for visualization failed."
     else:
@@ -1566,7 +1581,6 @@ def build_list(d):
 
     return s
 
-
 def load_explore_page(out, tag, filename):  #, connector_string = ""):
     # TODO: rename out (out should contain tag)
     print('load_explore_page', tag, filename)
@@ -1591,16 +1605,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     else:
         chains = get_chains( outdir + parent)
     
-    chains_range = ''
-    try:
-        with open( outdir + 'chains.txt') as r:
-            chains_range = r.read()
-            chains_range = chains_range[:-1]
-            print('chain_range ', chains_range)
-    except FileNotFoundError:
-        print('File for chain ranges not found.')
-    except Exception as e:
-        print('An error occurred while trying to read the chain ranges file.')
+    chains_range = open_chains_range_file(outdir)
 
     #energy = get_energy (outdir + filename)
     print( __name__, filename , tag, chains)
@@ -2333,6 +2338,31 @@ def get_chains_and_range( fname):
             chainstr += c + ': ' + str(x[0]) + '-' + str(x[1]) + ', '
     #print( chainstr)
     return chainstr
+
+def open_chains_range_file(outdir):
+    chains_range = ''
+    try:
+        with open( outdir + "chains.txt") as r:
+            chains_range = r.read()
+            chains_range = chains_range[:-1]
+            print("chain_range ", chains_range)
+    except FileNotFoundError:
+        print("File for chain ranges not found.")
+    except Exception as e:
+        print("An error occurred while trying to read the chain ranges file.")
+        
+    return chains_range
+
+def get_chain_letters(raw_ranges):
+    ranges = raw_ranges.split(",")
+    letters = []
+    for r in ranges:
+        if len(r.strip()) == 0:
+            continue
+        letter = r.strip()[0]
+        if letter not in letters:
+            letters.append(letter)
+    return letters
 
 def get_energy( fname):
     print( __name__, 'get', fname)

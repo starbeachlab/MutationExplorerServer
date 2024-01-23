@@ -6,6 +6,19 @@
 	.file-field {
 		display: flex;
 	}
+
+	.disabled {
+		display: none;
+	}
+
+	.interface-score-selection th {
+		text-align: center;
+	}
+
+	.interface-score-selection span {
+		font-size: 1rem;
+	}
+
 </style>
 {% endblock %}
 
@@ -521,6 +534,40 @@
 			<h5 style="color:blue;">{{status}}</h5>
 		</div>
 
+		<br>
+
+		<ul class="collapsible s12">
+			<li>
+				<div class="collapsible-header grey lighten-3">
+					<h5 class="center-align"> Interface Score Definition </h5>
+				</div>
+				<div class="collapsible-body">
+					<div> Do you want to calculate the interface score? </div>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_no' name='ifscore' value="none" checked >
+							<span for="ifscore_no">No calculation</span><br>
+						</label>
+					</p>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_manual' name='ifscore' value="manual">
+							<span for="ifscore_manual">Define manual calculation</span><br>
+						</label>
+					</p>
+					<div class="interface-score-selection disabled" id="interface_score_checkbox">
+
+					</div>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_all' name='ifscore' value="all">
+						<span for="ifscore_all">Complete calculation</span><br>
+						</label>
+					</p>					
+					
+				</div>
+		</ul>
+
 		<div class="col offset-s3 s6 center-align">
 			<input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
 		</div>
@@ -591,6 +638,10 @@
 	//addOpt('chainS1');
 
 	initUploads();
+
+	function getChainLetters() {
+		return [...new Set("{{chains}}".split(""))];
+	}
 
 	function addAlignments() {
 		aligns += 1;
@@ -664,6 +715,50 @@
 
 		$('select').formSelect();
 	}
+
+	function buildInterfaceScoreCheckboxes() {
+		var chains = getChainLetters();
+		var checkboxes = '';
+
+		checkboxes += `
+			<table> 
+				<thead> 
+					<tr> 
+						<th> Left </th> 
+						<th> Chain </th>
+						<th> Right </th> 
+					</tr> 
+				</thead>
+				<tbody>`;
+
+		for (c of chains) {
+			checkboxes += `
+				<tr>
+					<th> <label> <input type='radio' id='left_chain_${c}' name='chain_${c}' value="left" checked > <span /> </label> </th>
+					<th> <label> <span>${c}</span> </label> </th>
+					<th> <label> <input type='radio' id='right_chain_${c}' name='chain_${c}' value="right"> <span /> </label> </th>
+				</tr>
+			`;
+		}
+
+		checkboxes += `</tbody>`;
+
+		document.getElementById('interface_score_checkbox').innerHTML += checkboxes;
+	}
+
+	buildInterfaceScoreCheckboxes();
+
+	var ifCheckboxes = document.querySelectorAll('input[type=radio][name=ifscore]');
+	ifCheckboxes.forEach(checkbox => {
+		checkbox.addEventListener('change', () => {
+			table = document.querySelector('#interface_score_checkbox');
+			if (checkbox.checked && checkbox.id === 'ifscore_manual') {
+				table.classList.remove('disabled');
+			} else {
+				table.classList.add('disabled');
+			}
+		});
+	});
 
 	function mutationChainCheck() {
 		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
