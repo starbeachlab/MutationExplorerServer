@@ -558,6 +558,7 @@
 					<div class="interface-score-selection disabled" id="interface_score_checkbox">
 
 					</div>
+					<div id="interface_score_error" style="color: red;"></div>
 					<p>
 						<label>
 							<input type='radio' id='ifscore_all' name='ifscore' value="all">
@@ -760,6 +761,33 @@
 		});
 	});
 
+	function getRadioButtonsChecked() {
+		var chains = getChainLetters();
+
+		left = [];
+		right = [];
+
+		for (c of chains) {
+			if (document.getElementById(`left_chain_${c}`).checked) {
+				left.push(c);
+			} else {
+				right.push(c);
+			}
+		}
+
+		return [left, right];
+	};
+
+	function interfaceScoreValid() {
+		manual = document.getElementById("ifscore_manual").checked;
+		assignment = getRadioButtonsChecked();
+		
+		if ((assignment[0].length == 0 || assignment[1].length == 0) && manual) {
+			return false;
+		}
+		return true;
+	};
+
 	function mutationChainCheck() {
 		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
 		console.log('mutations ', mutations);
@@ -816,6 +844,13 @@
 			console.log("incorrect mutation position (chain or residue)");
 			$("#mutations-input").addClass("invalid");
 			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
+		} else if (!interfaceScoreValid()) {
+			console.log('interfaceScoreValid ', interfaceScoreValid())
+			e.preventDefault();
+			console.log("incorrect interface score selection");
+			$("#interface_score_checkbox").addClass("invalid");
+			$("#interface_score_error").html(`Invalid interface score selection. Left or right side must not be empty.
+				If there is only one chain available, please select 'No calculation' or 'Complete calculation.`);
 		}
 	});
 
