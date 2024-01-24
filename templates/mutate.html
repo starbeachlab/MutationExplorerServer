@@ -18,12 +18,8 @@
 	.interface-score-selection span {
 		font-size: 1rem;
 	}
-
 </style>
 {% endblock %}
-
-
-
 
 {% block content %}
 
@@ -66,24 +62,7 @@
 						</div>
 					</div>
 
-					<button data-target="modal1" class="btn-small modal-trigger grey lighten-1"
-						title="Further information" style="float:right;">info</button>
-					<!-- Modal Structure -->
-					<div id="modal1" class="modal">
-						<div class="modal-content">
-							<h4>Mutate current model</h4>
-							<p>You can mutate the model that you uploaded in previous step using the syntax:<br> CHAIN
-								':'
-								PDB-RESIDUE-ID AA-TYPE<br>Separate multiple mutations with commas.<br>Example:
-								'A:12G,B:123A'<br>This
-								would mutate residue with the PDB residue ID 12 in chain A to glycine and residue with
-								the ID 123 in
-								chain B to alanine. </p>
-						</div>
-						<div class="modal-footer">
-							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-						</div>
-					</div>
+					<div id="manual_mutation_info"></div>
 
 					<br>
 					<br>
@@ -92,100 +71,7 @@
 						style="float:left;">one letter code</button>
 					<div id="modalCode" class="modal">
 						<div class="modal-content left-align">
-							<h4> Amino acid one letter code </h4>
-
-							<table>
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>One letter code</th>
-									</tr>
-								</thead>
-
-								<tbody>
-									<tr>
-										<th>Alanine</th>
-										<th>A</th>
-									</tr>
-									<tr>
-										<th>Arginine</th>
-										<th>R</th>
-									</tr>
-									<tr>
-										<th>Asparagine</th>
-										<th>N</th>
-									</tr>
-									<tr>
-										<th>Aspartic Acid</th>
-										<th>D</th>
-									</tr>
-									<tr>
-										<th>Cysteine</th>
-										<th>C</th>
-									</tr>
-									<tr>
-										<th>Gluatmic Acid</th>
-										<th>E</th>
-									</tr>
-									<tr>
-										<th>Glutamine</th>
-										<th>Q</th>
-									</tr>
-									<tr>
-										<th>Glycine</th>
-										<th>G</th>
-									</tr>
-									<tr>
-										<th>Histidine</th>
-										<th>H</th>
-									</tr>
-									<tr>
-										<th>Isoleucin</th>
-										<th>I</th>
-									</tr>
-									<tr>
-										<th>Leucine</th>
-										<th>L</th>
-									</tr>
-									<tr>
-										<th>Lysine</th>
-										<th>K</th>
-									</tr>
-									<tr>
-										<th>Methionine</th>
-										<th>M</th>
-									</tr>
-									<tr>
-										<th>Phenylalanine</th>
-										<th>F</th>
-									</tr>
-									<tr>
-										<th>Proline</th>
-										<th>P</th>
-									</tr>
-									<tr>
-										<th>Serine</th>
-										<th>S</th>
-									</tr>
-									<tr>
-										<th>Threonine</th>
-										<th>T</th>
-									</tr>
-									<tr>
-										<th>Tryptophan</th>
-										<th>W</th>
-									</tr>
-									<tr>
-										<th>Tyrosine</th>
-										<th>Y</th>
-									</tr>
-									<tr>
-										<th>Valine</th>
-										<th>V</th>
-									</tr>
-								</tbody>
-							</table>
-
+							<div id="letter_code_info"></div>
 						</div>
 						<div class="modal-footer">
 							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
@@ -210,7 +96,6 @@
 				</div>
 			</li>
 
-
 			<!-- SEQUENCE ALIGNMENT -->
 
 			<li>
@@ -218,28 +103,7 @@
 					<h5 class="center-align"> Sequence alignment </h5>
 				</div>
 				<div class="collapsible-body">
-					<h4> <button data-target="modal2" class="btn-small modal-trigger grey lighten-1"
-							title="Further information" style="float:right;">info</button> </h4>
-					<!-- Modal Structure -->
-					<div id="modal2" class="modal">
-						<div class="modal-content">
-							<h4>Define mutations by sequence alignment</h4>
-							<p>You can mutate the model that you uploaded in previous step using a sequence alignment in
-								ClustalW
-								format.<br>
-								One of the sequences in the alignment has to match exactly one sequence in the PDB that
-								you uploaded in
-								previous step.<br>
-								Since one alignment is associated with one chain, you can upload up to three
-								alignments.<br>
-								If you need to mutate more than three chains, you can upload target sequences for the
-								other chains or
-								define mutations manually. </p>
-						</div>
-						<div class="modal-footer">
-							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-						</div>
-					</div>
+					<div id="sequence_alignment_info"></div>
 
 					<br>
 
@@ -311,8 +175,6 @@
 
 			</li>
 
-
-
 			<!-- TARGET SEQUENCE -->
 
 			<li>
@@ -321,25 +183,9 @@
 				</div>
 
 				<div class="collapsible-body">
-					<h4> <button data-target="modal3" class="btn-small modal-trigger grey lighten-1"
-							title="Further information" style="float:right;">info</button> </h4>
-					<!-- Modal Structure -->
-					<div id="modal3" class="modal">
-						<div class="modal-content">
-							<h4>Define mutations by target sequence</h4>
-							<p>You can mutate the model that you uploaded in previous step using a target sequence in
-								FASTA
-								format.<br>
-							</p>
-						</div>
-						<div class="modal-footer">
-							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-						</div>
-					</div>
 
-
+					<div id="target_sequence_info"></div>
 					<br>
-
 
 					<!-- 1) FASTA uploads -->
 					<div>
@@ -543,23 +389,12 @@
 				</div>
 				<div class="collapsible-body">
 
-					<button data-target="modalIFscore" class="btn-small modal-trigger grey lighten-1"
-						title="Further information" style="float:right;">info</button>
-					<div id="modalIFscore" class="modal">
-						<div class="modal-content">
-							<div id="interface_score_info">
-								{% include "text/interface_score.html" %}
-							</div>
-						</div>
-						<div class="modal-footer">
-							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-						</div>
-					</div>
+					<div id="ifscore_info"></div>
 
 					<div> Do you want to calculate the interface score? </div>
 					<p>
 						<label>
-							<input type='radio' id='ifscore_no' name='ifscore' value="none" checked >
+							<input type='radio' id='ifscore_no' name='ifscore' value="none" checked>
 							<span for="ifscore_no">No calculation</span><br>
 						</label>
 					</p>
@@ -576,10 +411,10 @@
 					<p>
 						<label>
 							<input type='radio' id='ifscore_all' name='ifscore' value="all">
-						<span for="ifscore_all">Complete calculation</span><br>
+							<span for="ifscore_all">Complete calculation</span><br>
 						</label>
-					</p>					
-					
+					</p>
+
 				</div>
 		</ul>
 
@@ -630,6 +465,34 @@
 	document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
 
 	chainSelect();
+
+	function fillInfoBox(target, textHtml) {
+		var infoBox = `
+			<button data-target="${target}" class="btn-small modal-trigger grey lighten-1"
+						title="Further information" style="float:right;">info</button>
+			<div id="${target}" class="modal">
+			<div class="modal-content">
+					${textHtml}
+				</div>
+				<div class="modal-footer">
+					<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+				</div>
+			</div>
+		`;
+
+		return infoBox;
+	}
+
+	document.getElementById('ifscore_info').innerHTML = fillInfoBox('ifscoreModal', `{% include "text/interface_score.html" %}`);
+	document.getElementById('manual_mutation_info').innerHTML = fillInfoBox('manualMutationModal', `{% include "text/manual_mutation.html" %}`);
+	document.getElementById('sequence_alignment_info').innerHTML = fillInfoBox('seqAlginModal', `{% include "text/sequence_alignment.html" %}`);
+	document.getElementById('target_sequence_info').innerHTML = fillInfoBox('targetSeqModal', `{% include "text/target_sequence.html" %}`);
+
+	function fillDiv(textHtml) {
+		return textHtml;
+	};
+
+	document.getElementById('letter_code_info').innerHTML = fillDiv(`{% include "text/letter_code.html" %}`);
 
 	function addOpt(target) {
 		if (!target) {
@@ -795,7 +658,7 @@
 	function interfaceScoreValid() {
 		manual = document.getElementById("ifscore_manual").checked;
 		assignment = getRadioButtonsChecked();
-		
+
 		if ((assignment[0].length == 0 || assignment[1].length == 0) && manual) {
 			return false;
 		}
