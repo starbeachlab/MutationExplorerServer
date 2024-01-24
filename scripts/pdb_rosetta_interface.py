@@ -19,6 +19,8 @@ import argparse
 import sys
 init()
 
+print('###### Interface Score Script ######')
+
 start = datetime.now()
 
 #Parse the commandline input
