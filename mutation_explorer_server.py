@@ -985,7 +985,11 @@ def vcf_calculation(tag, inputs):
     longmin = inputs["longmin"]
     outdir = os.path.join( app.config['USER_DATA_DIR'], tag + "/")
     rasp_calculation = inputs["rasp_calculation"]
+
     ifscore_calculation = inputs['ifscore_calculation']
+    ifscore = ''
+    if ifscore_calculation:
+        ifscore = 'all'
 
     # rasp.status
     if rasp_calculation:
@@ -1048,7 +1052,7 @@ def vcf_calculation(tag, inputs):
             path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
             print("Store " + path)
-            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path ], "minimisation")
+            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path, ifscore], "minimisation")
             error_msg = "Minimization of initial structure using Rosettas fixbb failed. Check your input PDB."
             print( 'fixbb started for initial upload\n')
         else:
@@ -1064,7 +1068,7 @@ def vcf_calculation(tag, inputs):
             file_processing( tag, "structure.pdb", "mut_0", "log.txt", 'all') # TODO: fehler ?
             error_msg = "Deriving energies and writing them into a PDB for visualization failed."
     else:
-        score_structure(tag, outdir, "mut_0", "structure.pdb")
+        score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
 
     pid = getLastID(outdir)
 
@@ -1077,8 +1081,7 @@ def vcf_calculation(tag, inputs):
 
     # mutate
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
-    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt"], "mutti") # thread isnt needed anymore
-
+    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt", ifscore], "mutti") # thread isnt needed anymore
 
     # check if mutation successful
     # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
@@ -1088,14 +1091,11 @@ def vcf_calculation(tag, inputs):
     if not waitID(pid):
         fatal_error(tag, MUTATION_FAILED + " (fixbb in vcf pipeline)")
 
-
-
 @app.route('/vcf', methods=['GET', 'POST'])
 def vcf():
     if request.method == 'GET':
         return render_template("vcf.html", error = "")
   
-
     ### get form values
 
     outdir, tag = create_user_dir()
@@ -1122,8 +1122,6 @@ def vcf():
         results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
         write_email(outdir + "mail.txt", email, results_link)
 
-
-
     rasp_calculation = False
     rasp_checkbox = request.form.get('rasp-checkbox') # on none
     inputs["rasp_calculation"] = (rasp_checkbox == 'on')
@@ -1136,8 +1134,6 @@ def vcf():
     start_thread(vcf_calculation, [tag, inputs], "vcf calc")
 
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
-
-
 
 def interface_one_structure(tag, mutant, inputs):
     # TODO: rasp_calculation (option to not do rasp calculation)
