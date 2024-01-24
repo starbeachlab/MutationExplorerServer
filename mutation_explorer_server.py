@@ -985,6 +985,7 @@ def vcf_calculation(tag, inputs):
     longmin = inputs["longmin"]
     outdir = os.path.join( app.config['USER_DATA_DIR'], tag + "/")
     rasp_calculation = inputs["rasp_calculation"]
+    ifscore_calculation = inputs['ifscore_calculation']
 
     # rasp.status
     if rasp_calculation:
@@ -1058,9 +1059,9 @@ def vcf_calculation(tag, inputs):
             print("path rasp: " + path)
             calc_rasp(tag, "structure.pdb", "mut_0", "log.txt", path )
             #file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) #rene: warum war das 2x hier?
-            # TODO Michelle
-            # calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb")
-            file_processing( tag, "structure.pdb", "mut_0", "log.txt" ) # TODO: fehler ?
+            if ifscore_calculation:
+                calc_interface(tag, outdir + "structure.pdb", outdir + "mut_0" + "_IF.pdb", 'all')
+            file_processing( tag, "structure.pdb", "mut_0", "log.txt", 'all') # TODO: fehler ?
             error_msg = "Deriving energies and writing them into a PDB for visualization failed."
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
@@ -1127,11 +1128,12 @@ def vcf():
     rasp_checkbox = request.form.get('rasp-checkbox') # on none
     inputs["rasp_calculation"] = (rasp_checkbox == 'on')
 
+    ifscore_checkbox = request.form.get('ifscore_checkbox')
+    inputs['ifscore_calculation'] = (ifscore_checkbox == 'on')
 
     ### start calculation
 
     start_thread(vcf_calculation, [tag, inputs], "vcf calc")
-    
 
     return redirect(url_for('status', tag = tag, filename = "mut_0_1.pdb"))
 

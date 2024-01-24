@@ -154,6 +154,29 @@
         </p>
     </div>
 
+    <div id="radio-field" class="input-field col offset-s3 s6">
+        <span id="radio-title" class="grey-text text-darken-1">Interface Score <a
+                class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalIFscore"
+                title="Further information" style="float:right;">i</a></span>
+
+        <div id="modalIFscore" class="modal">
+            <div class="modal-content">
+
+                {% include "text/interface_score.html" %}
+
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+            </div>
+        </div>
+
+        <p>
+            <label>
+                <input type="checkbox" name="ifscore_checkbox" />
+                <span>Calculate Interface score</span>
+            </label>
+        </p>
+    </div>
 
     <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
 
