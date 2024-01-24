@@ -542,6 +542,20 @@
 					<h5 class="center-align"> Interface Score Definition </h5>
 				</div>
 				<div class="collapsible-body">
+
+					<button data-target="modalIFscore" class="btn-small modal-trigger grey lighten-1"
+						title="Further information" style="float:right;">info</button>
+					<div id="modalIFscore" class="modal">
+						<div class="modal-content">
+							<div id="interface_score_info">
+								{% include "text/interface_score.html" %}
+							</div>
+						</div>
+						<div class="modal-footer">
+							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+						</div>
+					</div>
+
 					<div> Do you want to calculate the interface score? </div>
 					<p>
 						<label>
