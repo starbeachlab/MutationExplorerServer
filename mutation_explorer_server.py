@@ -1158,14 +1158,18 @@ def interface_one_structure(tag, mutant, inputs):
     minimize = inputs["minimize"]
     longmin = inputs["longmin"]
 
+    ifscore_calculation = inputs['ifscore_calculation']
+    ifscore = ''
+    if ifscore_calculation:
+        ifscore = 'all'
+
     if minimize:
         # relax provided structure
-        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb", ifscore)
         error_msg="Relaxation of initial structure failed. Check PDB."
     else:
-        score_structure(tag, outdir, "mut_0", "structure.pdb")
+        score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
         error_msg="Scoring of initial structure failed. Check PDB."
-
 
     ### get mutations 
 
@@ -1202,7 +1206,7 @@ def interface_one_structure(tag, mutant, inputs):
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
 
     # start mutation calculation
-    fixbb(tag, parent, resfile, mutant, "log.txt")
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
@@ -1213,8 +1217,6 @@ def interface_one_structure(tag, mutant, inputs):
 
     if not waitID(pid):
         fatal_error(tag, MUTATION_FAILED + " (3)")
-
-
 
 def interface_two_structures(tag, inputs):
     # TODO: errors
@@ -1242,6 +1244,11 @@ def interface_two_structures(tag, inputs):
     minimize = inputs["minimize"]
     longmin = inputs["longmin"]
 
+    ifscore_calculation = inputs['ifscore_calculation']
+    ifscore = ''
+    if ifscore_calculation:
+        ifscore = 'all'
+
     #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
     if base_chain != '':
@@ -1252,15 +1259,14 @@ def interface_two_structures(tag, inputs):
         status_update( tag, "filter+target+chain")
         filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp.pdb")
         os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
-
     
     if not minimize:
-        score_structure(tag, outdir, "mut_0", "structure.pdb")
-        score_structure(tag, outdir, "mut_1", "structure2.pdb")
+        score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
+        score_structure(tag, outdir, "mut_1", "structure2.pdb", ifscore)
     else:
         # relax provided structure                                                                                                                                                                 
         # minimize structures
-        relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb")
+        relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb", ifscore)
 
         pid = getLastID(outdir)
 
@@ -1270,7 +1276,7 @@ def interface_two_structures(tag, inputs):
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
 
-        relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb")
+        relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb", ifscore)
 
         pid = getLastID(outdir)
 
@@ -1337,9 +1343,6 @@ def interface_two_structures(tag, inputs):
     calc_conservation(tag, target_strc, clustal, target_chain, target_seq_id, "log.txt")
 
     dev_status(tag, "finished calculation")
-
-
-
 
 @app.route('/interface_post', methods=["GET", "POST"])
 def interface_post():
@@ -1412,6 +1415,8 @@ def interface(tag):
     rasp_checkbox = request.form.get('rasp-checkbox') # = on | none
     inputs["rasp_calculation"] = (rasp_checkbox == 'on')
 
+    ifscore_checkbox = request.form.get('ifscore_checkbox')
+    inputs['ifscore_calculation'] = (ifscore_checkbox == 'on')
 
     ### processing
 
