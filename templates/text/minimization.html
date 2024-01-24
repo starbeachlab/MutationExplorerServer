@@ -1,0 +1,43 @@
+<h4>Minimization</h4>
+<p>
+    The minimization is crucial if you want to analyze the energetic impact of mutations. The better the
+    structure
+    is energetically minimized, the more reliable the results will be. <br><br>
+    If you select <b> none </b>, coloring the structures by energy or energy difference is possible but
+    does not
+    provide reliable information. <br><br>
+
+    We continuously pre-minimize structures from the PDB using the commandline described below.
+    If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
+    Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one
+    should take a
+    few minutes, depending on the size of the protein. The long one may take some hours for large
+    proteins.
+</p>
+
+<h4> AlphaFold and your own models</h4>
+<p>These are not pre-minimized and you should follow the steps below. The AlphaFold models should be
+    minimized,
+    but the minimization has to be performed with the same energy functions than we use in the <span
+        class="mut-ex">MutationExplorer</span>, namely Rosetta. </p>
+
+<h4> Do it yourself!</h4>
+<p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+    However, we recommend you to perform the following minimization. It is optimizing also the backbone
+    in a
+    limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be
+    leading
+    to problems for e.g. membrane proteins. </p>
+    
+<div class="codebox">
+    <code>
+	  PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+	</code>
+</div>
+
+<p>
+    This commandline will create 20 models, from which you should select the one with the lowest energy.
+    Each PDB
+    contains a line starting with 'pose'. In this line you want the last value, which is the total
+    energy.
+</p>
