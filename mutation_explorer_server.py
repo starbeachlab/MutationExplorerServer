@@ -258,7 +258,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
 
 def calc_interface( tag, in_file, out_file, parameter):
-    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh  " + in_file + " " + out_file + " " + parameter
+    cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh " + in_file + " " + out_file + " " + parameter
     print(cmd)
     bash_cmd(cmd, tag)
 
@@ -585,7 +585,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
             msg =  "notfound"
 
-def score_structure(tag, outdir, name, structure):
+def score_structure(tag, outdir, name, structure, ifscore=''):
     logfile = "log.txt"
 
     status_update(tag, "Start+scoring+for+" + name)
@@ -602,11 +602,12 @@ def score_structure(tag, outdir, name, structure):
     # calc_rasp(tag, structure, name, logfile, path_to_store)
     # see fixbb / relax_initial_structure
 
-    # cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
-    # bash_cmd( cmd, tag)
-    # status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
+    if ifscore != '':
+        cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
+        bash_cmd( cmd, tag)
+        status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
     
-    file_processing(tag, structure, name, logfile)
+    file_processing(tag, structure, name, logfile, ifscore)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit(): 
