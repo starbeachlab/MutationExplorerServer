@@ -106,10 +106,11 @@
 
                 <div>
                     <div class="input-field">
-                        <input id="mutations-input" type="text" name="mutations" class="validate" placeholder="X:123L,A:45G" required>
+                        <input id="mutations-input" type="text" name="mutations" class="validate"
+                            placeholder="X:123L,A:45G" required>
                         <label for="mutations">Enter mutations</label>
                     </div>
-					<div id="mutations-syntax-error" style="color: red;"></div>
+                    <div id="mutations-syntax-error" style="color: red;"></div>
 
                     <div>
                         <input id="fname" name="fname" type="hidden"> <!--to communicate filename-->
@@ -184,10 +185,10 @@
     allchains = "{{chains}}"
 
     let two_strcs = ("{{two_structures}}" !== "")
-  if (two_strcs) {
-    the_ending = "_cons.pdb";
-    tmp = "{{two_structures}}"
-    aln_ids = tmp.split(";")
+    if (two_strcs) {
+        the_ending = "_cons.pdb";
+        tmp = "{{two_structures}}"
+        aln_ids = tmp.split(";")
     }
 
     // highlight selected structure
@@ -204,14 +205,14 @@
         setDiffOptions();
 
         loadPdb(the_name, the_ending);
-	if (the_ending == "_cons.pdb"){
-	    dropdownChangeSelection('5');
-	} else {
+        if (the_ending == "_cons.pdb") {
+            dropdownChangeSelection('5');
+        } else {
             dropdownChangeSelection('2');
-	}
+        }
     });
 
-	document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
+    document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
 
     function getURL(fname) {
         var loc = window.location;
@@ -251,8 +252,8 @@
             pdbFiles.push(getURL("mut_1" + coloring))
 
             var clustalFiles = [getURL("alignment.aln")]
-		    
-		    
+
+
             if (allchains.length != 2) {
                 // print errror message!
             }
@@ -331,15 +332,15 @@
     async function checkChainRedidsSorted(chain, pdbFile, tag, clustalUrl) {
         await fetch('/mutation_explorer/chain_resids_sorted', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chain: chain, pdbFile: pdbFile, tag: tag, clustalUrl: clustalUrl })
         })
-        .then(response => response.json())
-        .then(data => {
-        })
-        .catch(error => {
-            console.log('Error');
-        })
+            .then(response => response.json())
+            .then(data => {
+            })
+            .catch(error => {
+                console.log('Error');
+            })
     }
 
     $(".toggle").click(function (e) {
@@ -465,62 +466,62 @@
     }
 
     function mutationChainCheck() {
-		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
-                console.log('mutations ', mutations);
+        var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
+        console.log('mutations ', mutations);
 
-		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
+        var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
         console.log(chains);
-		var ranges = [];
-		for (c of chains) {
-			ranges.push(c.split(/[:-]/));
-		}
+        var ranges = [];
+        for (c of chains) {
+            ranges.push(c.split(/[:-]/));
+        }
         console.log('ranges');
 
-		for (m of mutations) {
-			if (!checkMutation(m, ranges)) {
-				return false
-			}
-		}
+        for (m of mutations) {
+            if (!checkMutation(m, ranges)) {
+                return false
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	function checkMutation(mutation, ranges) {
-		var chain = mutation[0];
-		var position = parseInt(mutation.replace(/^\D+/g, ''));
-		for (r of ranges) {
-			if (r[0] == chain) {
-				var start = parseInt(r[1]);
-				var end = parseInt(r[2]);
-				if (start <= position && position <= end) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    function checkMutation(mutation, ranges) {
+        var chain = mutation[0];
+        var position = parseInt(mutation.replace(/^\D+/g, ''));
+        for (r of ranges) {
+            if (r[0] == chain) {
+                var start = parseInt(r[1]);
+                var end = parseInt(r[2]);
+                if (start <= position && position <= end) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	function mutationSyntaxCorrect() {
-		muts = $("#mutations-input").val().replace(/ /g, "");
-		if (!muts) {
-			return true;
-		}
-		return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
-	}
+    function mutationSyntaxCorrect() {
+        muts = $("#mutations-input").val().replace(/ /g, "");
+        if (!muts) {
+            return true;
+        }
+        return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
+    }
 
-	$("#submitForm").on('submit', function (e) {
-		if (!mutationSyntaxCorrect()) {
-			e.preventDefault();
-			console.log("incorrect mutation syntax");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
-		} else if (!mutationChainCheck()) {
-			e.preventDefault();
-			console.log("incorrect mutation position (chain or residue)");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-		}
-	});
+    $("#submitForm").on('submit', function (e) {
+        if (!mutationSyntaxCorrect()) {
+            e.preventDefault();
+            console.log("incorrect mutation syntax");
+            $("#mutations-input").addClass("invalid");
+            $("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
+        } else if (!mutationChainCheck()) {
+            e.preventDefault();
+            console.log("incorrect mutation position (chain or residue)");
+            $("#mutations-input").addClass("invalid");
+            $("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
+        }
+    });
 
 
 
