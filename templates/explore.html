@@ -52,23 +52,11 @@
 
                 {{structures|safe}}
 
-                <div class="input-field">
-                    <span> Color by: </span>
-                    <select id="selecter" onchange="changeColoring();">
-                        <!-- <option value="" disabled selected>Color by</option> -->
-                        <option value="1">Absolute energy</option>
-                        <option value="2" id="ediff" class="diff">Energy difference to parent</option>
-                        <option value="3">Absolute hydrophobicity</option>
-                        <option value="4" class="diff">Hydrophobicity difference to parent</option>
-                        <option value="5" class="diff">Sequence conservation</option>
-                        <option value="6" class="diff">Absolute interface binding energy</option>
-                        <option value="7">Interface binding energy difference to parent</option>
-                    </select>
-                </div>
+                <div id="color_option_select"></div>
 
                 <div>
                     <p>Currently displayed:</p>
-                    <div id="discol">n o t h i n g</div>
+                    <div id="current_pdb_displayed">n o t h i n g</div>
                 </div>
 
                 <div class="center-align">
@@ -202,15 +190,12 @@
     }
 
     $(document).ready(function () {
-        $('select').formSelect();
-
-        setDiffOptions();
-
+        buildColoringSelect(current_structure_name);
         loadPdb(current_structure_name, coloring_suffix);
         if (coloring_suffix == "_cons.pdb") {
-            dropdownChangeSelection('5');
+            dropdownChangeSelection('4');
         } else {
-            dropdownChangeSelection('2');
+            dropdownChangeSelection('1');
         }
     });
 
@@ -222,10 +207,9 @@
         return command;
     }
 
-
     async function loadPdb(name, coloring) {
-        // fill html elements
         updateInfoSection(current_structure_name);
+
         // input files
         var c_name = name;
         if (name == "mut_0" || name == "mut_1") {
@@ -238,7 +222,7 @@
                 coloring = "_IF.pdb";
             }
         }
-        document.getElementById('discol').innerHTML = name + coloring;
+        document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
         document.getElementById('fname').value = name; // + ".pdb";
 
         console.log(allchains)
@@ -369,11 +353,9 @@
         $(".structures").removeClass("bld");  // unbold all
         $(this).addClass("bld");              // bold current
 
+        buildColoringSelect(current_structure_name);
         // load:
         loadPdb(current_structure_name, coloring_suffix);
-        //document.getElementById('discol').innerHTML = strc;
-
-        setDiffOptions();
     })
 
 
@@ -391,58 +373,59 @@
         $('select').formSelect();
     }
 
-
     function changeColoring() {
         id = selectedColorScheme();
-        if (id == "1") { coloring_suffix = "_absE.pdb"; }
-        else if (id == "2") { coloring_suffix = "_diffE.pdb"; }
-        else if (id == "3") { coloring_suffix = "_HyPh.pdb"; }
-        else if (id == "4") { coloring_suffix = "_diffHyPh.pdb"; }
-        else if (id == "5") { coloring_suffix = "_cons.pdb"; }
-        else if (id == "6") { coloring_suffix = "_IF.pdb"; }
-        else if (id == "7") { coloring_suffix = "_diffIF.pdb"; }
-        //alert(selectedValue);
-        //document.getElementById('discol').innerHTML = the_name + the_ending;
-        loadPdb(current_structure_name, coloring_suffix);
+        coloring = getAllColoring();
+        suffix = `_${coloring[id]}.pdb`;
+        loadPdb(current_structure_name, suffix);
     }
 
+    function getColorSelectOption() {
+        return [
+            'Absolute energy', 'Energy difference to parent',
+            'Absolute hydrophobicity', 'Hydrophobicity difference to parent',
+            'Sequence conservation',
+            'Absolute interface binding energy', 'Interface binding energy difference to parent'
+        ]
+    }
 
-    // if mut_0.pdb is selected, there are no _diffE and _diffHyp colorings => disable select options
-    function setDiffOptions() {
-        console.log("diff")
-        if (current_structure_name == "mut_0" || current_structure_name == "mut_1") {
+    function buildColoringSelect(name) {
+        colorId = checkColoringOption(name);
+        colorOptions = getColorSelectOption();
 
-            // if diff color scheme currently selected, change the selection to the absolute equivalent
-            if (coloring_suffix == "_diffE.pdb" || (!two_strcs && coloring_suffix == "_cons.pdb")) {
-                //$("#selecter").val('1');
-                dropdownChangeSelection('1');
-            } else if (coloring_suffix == "_diffHyPh.pdb") {
-                //$("#selecter").val('3');
-                dropdownChangeSelection('3');
-            } else if (coloring_suffix == "_diffIF.pdb") {
-                dropdownChangeSelection('6');
-            }
+        var select = '';
+        select += `<div class="input-field">`;
+        select += `<span>Color by:</span>`;
+        select += '<select id="selecter" onchange="changeColoring();">';
 
-            // style changes have to be made after .formSelect() (called in dropdownChangeSelection()), otherwise materialize overrides them >:(
-            // opts elements become obsolete after every .formSelect()
-            opts = $(".dropdown-content:contains('Energy')")[0].children
-            $(opts[1]).css("display", "none")
-            $(opts[3]).css("display", "none")
+        for (id of colorId) {
+            select += `<option value='${id}'>${colorOptions[id]}</options>`;
+        }
 
-            if (!two_strcs) {
-                $(opts[4]).css("display", "none")
-            }
+        select += '</select>';
+        select += '</div>';
 
-        } else {
-            console.log("add opts")
-            opts = $(".dropdown-content:contains('Energy')")[0].children
-            $(opts[1]).css("display", "block")
-            $(opts[3]).css("display", "block")
+        document.getElementById('color_option_select').innerHTML = select;
+        $('select').formSelect();
+    }
 
-            if (!two_strcs) {
-                $(opts[4]).css("display", "block")
+    function getAllColoring() {
+        return ['absE', 'diffE', 'HyPh', 'diffHyPh', 'cons', 'IF', 'diffIf'];
+    }
+
+    function checkColoringOption(name) {
+        colorings = getAllColoring();
+        available = [];
+
+        for (let i = 0; i < colorings.length; i++) {
+            var c = colorings[i];
+            fileURL = getURL(`${name}_${c}.pdb`);
+            if (!UrlExists(fileURL)) {
+                available.push(i);
             }
         }
+
+        return available;
     }
 
     function updateInfoSection(fname) {
