@@ -1214,7 +1214,7 @@ def interface_one_structure(tag, mutant, inputs):
 
     if not waitID(pid):
         fatal_error(tag, MUTATION_FAILED + " (3)")
-
+        
 def interface_two_structures(tag, inputs):
     # TODO: errors
 
@@ -1311,6 +1311,9 @@ def interface_two_structures(tag, inputs):
         status_update( "structure not in alignment")
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
+
+    match_string = base_clustal_id + ',' + base_chain + ',' + target_clustal_id + ',' + target_chain
+    write_alignment_match(outdir, match_string)
 
     if target_noncanonical_residues:
         status_update(tag, "mut_1.pdb containes noncanonical residues, which are ignored")
@@ -1597,6 +1600,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     if filename == "":
         filename = "mut_0.pdb"
         print( 'filename now:', filename)
+
     with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
         parent = r.readline().strip()
         energy = r.readline().strip()
@@ -1604,6 +1608,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
         for l in r:
             mutations += ',' + l.strip()
     outdir = out + tag + "/"
+
     if parent == "none":
         chains = get_chains(outdir + filename)
     else:
@@ -1615,16 +1620,19 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print( __name__, filename , tag, chains)
 
     two_structures = os.path.isfile(out + tag + "/mut_1.pdb")
+    match_string = ''
     # assuming that this is only true when coming from AlignMe ...
     if two_structures:
         chains += get_chains( out + tag + "/mut_1.pdb")
         two_structures = get_alignment_ids( out + tag + "/alignment.aln")
+        match_string = read_txt_file(outdir, 'alignment.txt')
     else:
         two_structures = ''
+
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, chains_range = chains_range) #, connector_string = connector_string)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, match_string = match_string, chains_range = chains_range) #, connector_string = connector_string)
 
 @app.route('/chain_resids_sorted', methods=['POST'])
 def chain_resids_sorted():
@@ -2378,6 +2386,25 @@ def open_chains_range_file(outdir):
         print("An error occurred while trying to read the chain ranges file.")
         
     return chains_range
+
+def read_txt_file(outdir, filename):
+    string = ''
+    try:
+        with open(outdir + filename) as r:
+            string = r.read()
+    except FileNotFoundError:
+        print("File not found " + filename)
+    except Exception as e:
+        print("An error occurred while trying to read a file " + filename)
+        
+    return string
+
+def write_alignment_match(outdir, string):
+    try:
+        with open( outdir + 'alignment.txt', 'w') as w:
+            w.write(string)
+    except Exception as e:
+        print("An error occurred while trying to write the alignment match string into a file.")
 
 def get_chain_letters(raw_ranges):
     ranges = raw_ranges.split(",")

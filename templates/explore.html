@@ -228,15 +228,18 @@
             clustalFiles.push(clustalUrl);
 
             clustainChainIds = two_strcs.split(';');
+            match_string = '{{match_string}}'.split(',');
 
-            // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile; 
-            // connectorString += `mut_0${coloring}:${clustalFileName},${clustalIds[0],}`
+            // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile;
+            connectorString += `mut_0${coloring}:${clustalFileName},${match_string[0]},${match_string[1]};`;
+            connectorString += `mut_1${coloring}:${clustalFileName},${match_string[2]},${match_string[3]}`;
 
         } else if (name == 'mut_0') {
             // wildtype structure
             // no connector String needed, because there is no clustal file
             var pdbFile = getURL(name + coloring);
             pdbFiles.push(pdbFile);
+
         } else {
             // single mutated structure with a clustal file
             var pdbFileName = `${name + coloring}`;
