@@ -294,7 +294,7 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 status_update(tag, status)
 
 
-                cmd =  "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out
+                cmd =  "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out + " " + out + "rasp-error_" + chain + ".log" 
                 print(cmd)
                 bash_cmd(cmd, tag)
            
@@ -2310,15 +2310,35 @@ def download_uniprot( unid, filename):
         f.write(req.content)
 
 def get_chains( fname):
-    chains = ""
+    chains = {}
     print( __name__, 'get', fname)
     with open( fname) as r:
         for l in r:
-            if l[:4] == "ATOM" or l[:6] == "HETATM":
+            #if l[:4] == "ATOM" or l[:6] == "HETATM":
+                #c = chain(l)
+                #if c not in chains:
+                    #chains += c
+
+
+            if l[:4] == "ATOM":  # does not make sense: or l[:6] == "HETATM":
                 c = chain(l)
-                if c not in chains:
-                    chains += c
-    return chains
+                r = resid(l)
+                if c not in chains.keys():
+                    chains[c] = [[r,r]]
+                else:
+                    prev = chains[c][-1][1]
+                    # case: numbering jumps backward or there is gap
+                    if prev > r or r > prev + 1:
+                        chains[c].append( [r,r] )
+                    elif r == prev + 1:
+                        chains[c][-1][1] = r
+    chainstr = ""
+    for c,v in chains.items():
+        for x in v:
+            if not c in chainstr:
+                chainstr += c 
+    print( chainstr)
+    return chainstr
 
 def get_chains_and_range( fname):
     chains = {}
