@@ -159,6 +159,7 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/clustal.js') }}"></script>
 
 <script type="text/javascript">
 
@@ -210,65 +211,55 @@
     async function loadPdb(name, coloring) {
         updateInfoSection(current_structure_name);
 
-        // input files
-        var c_name = name;
-        if (name == "mut_0" || name == "mut_1") {
-            c_name = name + "_1"
-            if (coloring == "_diffE.pdb" || (!two_strcs && coloring == "_cons.pdb")) {
-                coloring = "_absE.pdb";
-            } else if (coloring == "_diffHyPh.pdb") {
-                coloring = "_HyPh.pdb";
-            } else if (coloring == "_diffIF.pdb") {
-                coloring = "_IF.pdb";
-            }
-        }
         document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
         document.getElementById('fname').value = name; // + ".pdb";
 
-        console.log(allchains)
-        console.log("color", coloring)
         var pdbFiles = [];
-
+        var clustalFiles = []
         connectorString = "";
 
-        if (two_strcs && (name == "mut_0" || name == "mut_1")) {
-            // two structures
+        if (two_strcs) {
+            // two structures from AlignMe
+            pdbFiles.push(getURL('mut_0' + coloring));
+            pdbFiles.push(getURL('mut_1' + coloring));
 
-            pdbFiles.push(getURL("mut_0" + coloring))
-            pdbFiles.push(getURL("mut_1" + coloring))
+            clustalFileName = 'alignment.aln';
+            clustalUrl = getURL(clustalFileName);
+            clustalFiles.push(clustalUrl);
 
-            var clustalFiles = [getURL("alignment.aln")]
+            clustalString = await fetchClustalWFile(clustalUrl);
+            clustalIds = extractChainIdsClustal(clustalString);
 
+            // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile; 
+            // connectorString += `mut_0${coloring}:${clustalFileName},${clustalIds[0],}`
 
-            if (allchains.length != 2) {
-                // print errror message!
-            }
-            connectorString = "mut_0" + coloring + ":alignment.aln," + aln_ids[0] + "," + allchains[0] + ";mut_1" + coloring + ":alignment.aln," + aln_ids[1] + "," + allchains[1] + ";"
-
-
-        } else {
-            // single structure
-
+        } else if (name == 'mut_0') {
+            // wildtype structure
+            // no connector String needed, because there is no clustal file
             var pdbFile = getURL(name + coloring);
-
-            pdbFiles.push(getURL(name + coloring))
-
-            var clustalFiles = []
+            pdbFiles.push(pdbFile);
+        } else {
+            // single mutated structure with a clustal file
+            var pdbFileName = `${name + coloring}`;
+            var pdbUrl = getURL(pdbFileName);
+            pdbFiles.push(pdbUrl);
 
             for (i = 0; i < allchains.length; i++) {
 
-                var clustalUrl = getURL(c_name + "_" + allchains[i] + ".clw")
-                var clustalUrlReordered = getURL(c_name + '_' + allchains[i] + '_reordered.clw')
+                var clustalUrl = getURL(name + "_" + allchains[i] + ".clw")
+                var clustalFileName = `${name}_${allchains[i]}_reordered.clw`;
+                var clustalUrlReordered = getURL(clustalFileName);
 
+                // check pdb resid sorting for proper alignment display
                 await checkChainRedidsSorted(allchains[i], name, '{{tag}}', clustalUrl)
 
-                console.log("load clustalUrl ", clustalUrlReordered)
-                if (UrlExists(clustalUrlReordered)) {
-                    console.log("Does not exist")
-                }
-                else {
+                if (!urlExists(clustalUrlReordered)) {
+                    console.log(`Reordered clustal file oes not exist - ${clustalFileName}`);
+                } else {
                     clustalFiles.push(clustalUrlReordered);
-                    connectorString += name + coloring + ":" + name + "_" + allchains[i] + "_reordered.clw," + name + "," + allchains[i] + ";"
+                    // mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;
+                    // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile;
+                    connectorString += pdbFileName + ":" + clustalFileName + ',' + name + "," + allchains[i] + ";"
                 }
             }
         }
@@ -289,9 +280,6 @@
             colorType = "interface-score";
             unit = "R.E.U."
         }
-        console.log("color type:", colorType)
-        console.log("unit:", unit)
-        console.log("string:", connectorString)
 
         const params = {
             structureUrls: pdbFiles,
@@ -346,7 +334,12 @@
 
     $(".structures").click(function (e) {
         e.preventDefault();
+
         current_structure_name = $(this).text();
+        if (current_structure_name == 'mut_0') {
+            coloring_suffix = '_absE.pdb';
+
+        }
         strc = current_structure_name + coloring_suffix;
 
         // highlight:
@@ -420,7 +413,7 @@
         for (let i = 0; i < colorings.length; i++) {
             var c = colorings[i];
             fileURL = getURL(`${name}_${c}.pdb`);
-            if (!UrlExists(fileURL)) {
+            if (urlExists(fileURL)) {
                 available.push(i);
             }
         }
@@ -443,11 +436,11 @@
         });
     }
 
-    function UrlExists(url) {
+    function urlExists(url) {
         var http = new XMLHttpRequest();
         http.open('HEAD', url, false);
         http.send();
-        return http.status == 404;
+        return http.status != 404;
     }
 
     function mutationChainCheck() {
