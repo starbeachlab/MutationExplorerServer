@@ -558,7 +558,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
                 path = rose + "alphafold/" + af.upper() + ".pdb"
 
         print(path)
-        start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path ], "minimisation")
+        start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path], "minimisation")
     else:
 
         if (not filtered) and longmin == True:
@@ -781,7 +781,7 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
     else:
         fatal_error(tag, NO_MUTATIONS)
 
-    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
 
     pid = getLastID(outdir)
 
@@ -1053,7 +1053,7 @@ def vcf_calculation(tag, inputs):
             path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
             print("Store " + path)
-            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path, ifscore], "minimisation")
+            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt", longmin, path, ifscore], "minimisation")
             error_msg = "Minimization of initial structure using Rosettas fixbb failed. Check your input PDB."
             print( 'fixbb started for initial upload\n')
         else:
@@ -1082,7 +1082,7 @@ def vcf_calculation(tag, inputs):
 
     # mutate
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
-    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt", ifscore], "mutti") # thread isnt needed anymore
+    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt", False, '', ifscore], "mutti") # thread isnt needed anymore
 
     # check if mutation successful
     # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
@@ -1203,7 +1203,7 @@ def interface_one_structure(tag, mutant, inputs):
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
 
     # start mutation calculation
-    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
