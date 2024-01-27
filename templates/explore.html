@@ -174,19 +174,21 @@
 
 <script type="text/javascript">
 
-    // set default structure
-    name = "{{filename}}";
-    let the_ending = "_diffE.pdb"; // for communication between fct
-    if (name == "") {
-        name = "mut_0.pdb";
-        the_ending = "_absE.pdb";
+    filename = "{{filename}}";
+    let coloring_suffix = "_diffE.pdb"; // defautl coloring
+
+    if (filename == "") {
+        filename = "mut_0.pdb";
+        coloring_suffix = "_absE.pdb";
     }
-    let the_name = name.substr(0, name.length - 4);
+
+    let current_structure_name = filename.substr(0, filename.length - 4);
+
     allchains = "{{chains}}"
 
-    let two_strcs = ("{{two_structures}}" !== "")
+    let two_strcs = ("{{two_structures}}" == 'True')
     if (two_strcs) {
-        the_ending = "_cons.pdb";
+        coloring_suffix = "_cons.pdb";
         tmp = "{{two_structures}}"
         aln_ids = tmp.split(";")
     }
@@ -194,7 +196,7 @@
     // highlight selected structure
     strcs = $(".structures");
     for (i = 0; i < strcs.length; i++) {
-        if (strcs[i].text == the_name) {
+        if (strcs[i].text == current_structure_name) {
             $(strcs[i]).addClass("bld");
         }
     }
@@ -204,8 +206,8 @@
 
         setDiffOptions();
 
-        loadPdb(the_name, the_ending);
-        if (the_ending == "_cons.pdb") {
+        loadPdb(current_structure_name, coloring_suffix);
+        if (coloring_suffix == "_cons.pdb") {
             dropdownChangeSelection('5');
         } else {
             dropdownChangeSelection('2');
@@ -223,7 +225,7 @@
 
     async function loadPdb(name, coloring) {
         // fill html elements
-        updateInfoSection(the_name);
+        updateInfoSection(current_structure_name);
         // input files
         var c_name = name;
         if (name == "mut_0" || name == "mut_1") {
@@ -360,15 +362,15 @@
 
     $(".structures").click(function (e) {
         e.preventDefault();
-        the_name = $(this).text();
-        strc = the_name + the_ending;
+        current_structure_name = $(this).text();
+        strc = current_structure_name + coloring_suffix;
 
         // highlight:
         $(".structures").removeClass("bld");  // unbold all
         $(this).addClass("bld");              // bold current
 
         // load:
-        loadPdb(the_name, the_ending);
+        loadPdb(current_structure_name, coloring_suffix);
         //document.getElementById('discol').innerHTML = strc;
 
         setDiffOptions();
@@ -392,32 +394,32 @@
 
     function changeColoring() {
         id = selectedColorScheme();
-        if (id == "1") { the_ending = "_absE.pdb"; }
-        else if (id == "2") { the_ending = "_diffE.pdb"; }
-        else if (id == "3") { the_ending = "_HyPh.pdb"; }
-        else if (id == "4") { the_ending = "_diffHyPh.pdb"; }
-        else if (id == "5") { the_ending = "_cons.pdb"; }
-        else if (id == "6") { the_ending = "_IF.pdb"; }
-        else if (id == "7") { the_ending = "_diffIF.pdb"; }
+        if (id == "1") { coloring_suffix = "_absE.pdb"; }
+        else if (id == "2") { coloring_suffix = "_diffE.pdb"; }
+        else if (id == "3") { coloring_suffix = "_HyPh.pdb"; }
+        else if (id == "4") { coloring_suffix = "_diffHyPh.pdb"; }
+        else if (id == "5") { coloring_suffix = "_cons.pdb"; }
+        else if (id == "6") { coloring_suffix = "_IF.pdb"; }
+        else if (id == "7") { coloring_suffix = "_diffIF.pdb"; }
         //alert(selectedValue);
         //document.getElementById('discol').innerHTML = the_name + the_ending;
-        loadPdb(the_name, the_ending);
+        loadPdb(current_structure_name, coloring_suffix);
     }
 
 
     // if mut_0.pdb is selected, there are no _diffE and _diffHyp colorings => disable select options
     function setDiffOptions() {
         console.log("diff")
-        if (the_name == "mut_0" || the_name == "mut_1") {
+        if (current_structure_name == "mut_0" || current_structure_name == "mut_1") {
 
             // if diff color scheme currently selected, change the selection to the absolute equivalent
-            if (the_ending == "_diffE.pdb" || (!two_strcs && the_ending == "_cons.pdb")) {
+            if (coloring_suffix == "_diffE.pdb" || (!two_strcs && coloring_suffix == "_cons.pdb")) {
                 //$("#selecter").val('1');
                 dropdownChangeSelection('1');
-            } else if (the_ending == "_diffHyPh.pdb") {
+            } else if (coloring_suffix == "_diffHyPh.pdb") {
                 //$("#selecter").val('3');
                 dropdownChangeSelection('3');
-            } else if (the_ending == "_diffIF.pdb") {
+            } else if (coloring_suffix == "_diffIF.pdb") {
                 dropdownChangeSelection('6');
             }
 
