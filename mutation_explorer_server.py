@@ -1619,6 +1619,8 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     if two_structures:
         chains += get_chains( out + tag + "/mut_1.pdb")
         two_structures = get_alignment_ids( out + tag + "/alignment.aln")
+    else:
+        two_structures = ''
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")

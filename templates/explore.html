@@ -175,8 +175,8 @@
 
     allchains = "{{chains}}"
 
-    let two_strcs = ("{{two_structures}}" == 'True')
-    if (two_strcs) {
+    let two_strcs = "{{two_structures}}"
+    if (two_strcs != '') {
         coloring_suffix = "_cons.pdb";
         tmp = "{{two_structures}}"
         aln_ids = tmp.split(";")
@@ -218,7 +218,7 @@
         var clustalFiles = []
         connectorString = "";
 
-        if (two_strcs) {
+        if (two_strcs != '') {
             // two structures from AlignMe
             pdbFiles.push(getURL('mut_0' + coloring));
             pdbFiles.push(getURL('mut_1' + coloring));
@@ -227,8 +227,7 @@
             clustalUrl = getURL(clustalFileName);
             clustalFiles.push(clustalUrl);
 
-            clustalString = await fetchClustalWFile(clustalUrl);
-            clustalIds = extractChainIdsClustal(clustalString);
+            clustainChainIds = two_strcs.split(';');
 
             // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile; 
             // connectorString += `mut_0${coloring}:${clustalFileName},${clustalIds[0],}`
