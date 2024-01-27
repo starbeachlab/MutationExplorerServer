@@ -211,7 +211,6 @@
     async function loadPdb(name, coloring) {
         updateInfoSection(current_structure_name);
 
-        document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
         document.getElementById('fname').value = name; // + ".pdb";
 
         var pdbFiles = [];
@@ -219,6 +218,8 @@
         connectorString = "";
 
         if (two_strcs != '') {
+            document.getElementById('current_pdb_displayed').innerHTML = `mut_0${coloring} <br> mut_1${coloring}`;
+
             // two structures from AlignMe
             pdbFiles.push(getURL('mut_0' + coloring));
             pdbFiles.push(getURL('mut_1' + coloring));
@@ -235,12 +236,14 @@
             connectorString += `mut_1${coloring}:${clustalFileName},${match_string[2]},${match_string[3]};`;
 
         } else if (name == 'mut_0') {
+            document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
             // wildtype structure
             // no connector String needed, because there is no clustal file
             var pdbFile = getURL(name + coloring);
             pdbFiles.push(pdbFile);
 
         } else {
+            document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
             // single mutated structure with a clustal file
             var pdbFileName = `${name + coloring}`;
             var pdbUrl = getURL(pdbFileName);
