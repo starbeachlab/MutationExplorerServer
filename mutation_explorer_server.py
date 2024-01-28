@@ -941,6 +941,11 @@ def mutate(tag,msg="",minimize="True"):
     # could not be done earlier because above selection was not known
     calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
 
+    email = request.form['email'].strip() 
+    if email:
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
+        write_email(outdir + "mail.txt", email, results_link)
+
     # get all mutations
     i = 0
    # print(len(request.form['mutations'].strip()))
