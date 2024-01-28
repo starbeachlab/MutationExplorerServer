@@ -138,9 +138,10 @@ def secure_str( string):
 
 
 def download_file(url, file_path):
-        req = requests.get(url)
-        with open(file_path, 'wb') as f:
-            f.write(req.content)
+    req = requests.get(url)
+    with open(file_path, 'wb') as f:
+        f.write(req.content)
+    return req.status_code
 
 
 def get_alphafold_id(af):
@@ -472,7 +473,13 @@ def save_pdb_file(file_path, upload, pdb, af):
             cp_from_db(pdb,file_path)
         else:
             msg="notfound"
-            download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+            status = download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+
+            if status == 404:
+                error = True
+                error_message = 'The PDB id you provided was not found in the PDB database.'
+                return original_name, error, error_message, msg
+
         print('pdb in db:', msg)
     elif af != "":
         af_id = get_alphafold_id(af)
@@ -483,7 +490,12 @@ def save_pdb_file(file_path, upload, pdb, af):
             cp_from_db(af,file_path)
         else:
             msg="notfound"
-            download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+            status = download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+
+            if status == 404:
+                error = True
+                error_message = 'The AlphaFold id you provided was not found in the AlphaFold database.'
+                return original_name, error, error_message, msg
             
     else:
         # no structure -> error
