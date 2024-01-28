@@ -131,7 +131,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal1">
+									<input type="file" name="clustal1" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -145,7 +145,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal2">
+									<input type="file" name="clustal2" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -159,7 +159,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal3">
+									<input type="file" name="clustal3" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -197,7 +197,7 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta1">
+										<input type="file" name="fasta1" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -215,7 +215,7 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta2">
+										<input type="file" name="fasta2" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -236,7 +236,7 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta3">
+										<input type="file" name="fasta3" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -670,7 +670,7 @@
 		if (!mutations) {
 			return true;
 		}
-		
+
 		mutattions = mutations.split(",");
 
 		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");

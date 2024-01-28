@@ -630,6 +630,10 @@ def submit():
     ### get form values
 
     upload = request.files['pdbfile']
+    if upload and not allowed_file(upload.filename, {'pdb'}):
+        error_message = 'You can only upload PDB files. Please try again with the right format.'
+        return render_template('submit.html', error = error_message)
+
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
 
@@ -853,6 +857,12 @@ def mutate(tag,msg="",minimize="True"):
         request.files['clustal3'],
     ]
 
+    if len(inputs['clustals']) != 0:
+        for clustal in inputs['clustals']:
+            if len(clustal.filename) != 0 and not allowed_file(clustal.filename, {'aln', 'clw'}):
+                error_message = 'You can only upload .aln or .clw files for the ClustalW files. Please try again with the right format.'
+                return render_template("mutate.html", tag = tag, error = error_message)
+
     inputs["chainCs"] = [
         request.form.get('chainC1'),
         request.form.get('chainC2'),
@@ -865,6 +875,12 @@ def mutate(tag,msg="",minimize="True"):
         request.files['fasta2'],
         request.files['fasta3'],
     ]
+
+    if len(inputs['fastas']) != 0:
+        for fasta in inputs['fastas']:
+            if len(fasta.filename) != 0 and not allowed_file(fasta.filename, {'fasta', 'fas', 'fa', 'fna', 'ffn', 'faa', 'mpfa', 'frn'}):
+                error_message = 'You can only upload .fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, or .frn files for the FASTA files. Please try again with the right format.'
+                return render_template("mutate.html", tag = tag, error = error_message)
 
     inputs["chainFs"] = [
         request.form.get('chainF1'),
@@ -1116,6 +1132,11 @@ def vcf():
     inputs = {}
 
     vcf = request.files['vcf']
+
+    if vcf and not allowed_file(vcf.filename, {'vcf'}):
+        error_message = 'You can only upload .vcf files. Please try again with the right format.'
+        return render_template('vcf.html', error = error_message)
+
     vcf_file = vcf.filename
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
@@ -2428,6 +2449,10 @@ def get_chain_letters(raw_ranges):
         if letter not in letters:
             letters.append(letter)
     return letters
+
+def allowed_file(filename, extensions):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in extensions
 
 def get_energy( fname):
     print( __name__, 'get', fname)
