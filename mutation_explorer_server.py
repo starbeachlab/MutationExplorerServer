@@ -587,8 +587,9 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
 
             # interface score for initial structure is going to be calculated later
             # because the selection for the chains was not done yet
-            # print( "calc interface from relax_initial_structure")
-            # calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb")
+            if ifscore != '':
+                print( "calc interface from relax_initial_structure")
+                calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb", ifscore)
 
             file_processing( tag, structure, name,  log_file)
 
