@@ -423,6 +423,18 @@
 		</div>
 		<br>
 		<br>
+		<br>
+		<br>
+		<br>
+
+		<div class="input-field col offset-s3 s6">
+			<input id="chain" type="email" name="email" class="validate"
+				placeholder="Email (optional)">
+			<label for="chain">Get notified after job completion.</label>
+		</div>
+
+		<br>
+		<br>
 
 	</form>
 </div>
@@ -716,7 +728,7 @@
 		if (!muts) {
 			return true;
 		}
-		return /^([a-zA-Z]:-?[0-9]+[a-zA-Z])(,([a-zA-Z]:-?[0-9]+[a-zA-Z]))*$/.test(muts);
+		return /^([A-Z]:-?[0-9]+[A-Z])(,([A-Z]:-?[0-9]+[A-Z]))*$/.test(muts);
 	}
 
 	$("#submitForm").on('submit', function (e) {
@@ -724,7 +736,7 @@
 			e.preventDefault();
 			console.log("incorrect mutation syntax");
 			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
+			$("#mutations-syntax-error").html("Invalid syntax. If your syntax is correct, please use upper case letters. See info button for more information");
 		} else if (!mutationChainCheck()) {
 			e.preventDefault();
 			console.log("incorrect mutation position (chain or residue)");
