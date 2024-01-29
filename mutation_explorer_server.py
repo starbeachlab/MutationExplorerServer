@@ -776,6 +776,9 @@ def submit():
 
     return redirect(url_for('mutate', tag = tag, msg=msg, minimize=minimize))
 
+
+
+
 def add_mutations(tag, mutant, inputs, ifscore=""):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
@@ -834,10 +837,13 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
         i += 1
         if uniprot != "" and chainU != '':
             uni_file = outdir + uniprot
+            print( 'get uniprot:', uniprot, uni_file, i)
             download_uniprot( uniprot, uni_file)
             target = seq_from_fasta( uni_file)
+            print( 'mutations before:', mutations, 'target', target, chainU, outdir + parent)
             add_mutations_from_sequence( mutations, target, chainU, "uni" + str(i % 3), outdir + parent)
-
+            print( 'mutations after:', mutations)
+            
     print(__name__, 'total number of mutations:', len(mutations))
     if len(mutations) != 0:
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
@@ -983,7 +989,8 @@ def mutate(tag,msg="",minimize="True"):
             else:
                 right += c
         if_score = left + "_" + right
-
+        print('manual interface definition:', if_score)
+        
     # calculate the interface score for the initial structure 
     # could not be done earlier because above selection was not known
     calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
@@ -2096,7 +2103,7 @@ def write_clustal( s1, s2, filename):
 
 def add_mutations_from_sequence( mutations, target, chain, idy, parent):
     print("add_mutations_from_sequence")
-    print("idy: ", idy)
+    print("idy: ", idy, 'chain:', chain, 'target:', target, 'parent:', parent, 'mutations:', mutations)
     h1 = idy
     h2 = os.path.basename(parent)[:-4]
     outdir = os.path.dirname( parent) + '/'
@@ -2128,6 +2135,7 @@ def seq_from_fasta( filename):
     return head,seq
 
 def write_fasta( filename, seq, header=""):
+    print( 'write_fasta:', filename, seq, header)
     with open(filename,'w') as w:
         w.write('>' + header + '\n')
         w.write(seq + '\n')
@@ -2409,10 +2417,10 @@ def wait( filename, step, maxw):
     return False
         
 def download_uniprot( unid, filename):
-    link = "https://www.uniprot.org/uniprot/" + secure_filename(unid) + '.fasta'
+    link = "https://rest.uniprot.org/uniprotkb/" + secure_filename(unid) + '.fasta'
     req = requests.get(link)
     with open(filename, "w") as f:
-        f.write(req.content)
+        f.write(req.text)
 
 def get_chains( fname):
     chains = {}
