@@ -491,7 +491,7 @@
         }
         return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
     }
-
+						     
     $("#submitForm").on('submit', function (e) {
         if (!mutationSyntaxCorrect()) {
             e.preventDefault();
