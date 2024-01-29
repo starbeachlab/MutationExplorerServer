@@ -547,7 +547,7 @@ def filter_chain( inpdb, fchain, outpdb):
         for l in f_in:
             if l[:4] == "ATOM" and chain(l) == fchain:
                 f_out.write(l)
-           
+
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
@@ -1257,6 +1257,7 @@ def interface_two_structures(tag, inputs):
     ifscore = ''
     if ifscore_calculation:
         ifscore = 'all'
+        status_update( 'calc+interface+score')
 
     #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
@@ -1270,10 +1271,13 @@ def interface_two_structures(tag, inputs):
         os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
     
     if not minimize:
+        status_update( tag, "score+base+structure")
         score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
+        status_update( tag, "score+target+structure")
         score_structure(tag, outdir, "mut_1", "structure2.pdb", ifscore)
     else:
-        # relax provided structure                                                                                                                                                                 
+        # relax provided structure
+        status_update( tag, "relax+base+structure")  
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb", ifscore)
 
@@ -1284,6 +1288,7 @@ def interface_two_structures(tag, inputs):
 
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
+        status_update( tag, "relax+target+structure")  
 
         relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb", ifscore)
 
@@ -1302,7 +1307,6 @@ def interface_two_structures(tag, inputs):
 
     # get clustal ids, chains, sequence ids
     pdb_match, base_noncanonical_residues = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
-    # Nikola: this is never true: if pdb_match is None:
     if pdb_match == ["",""]:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
@@ -1316,6 +1320,8 @@ def interface_two_structures(tag, inputs):
         status_update( "no+base+seq+in+alignment")
         return
 
+    status_update( 'base+ids+matched')
+    
     dev_status( tag, "find target pdb in alignment")
 
     pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
@@ -1339,6 +1345,8 @@ def interface_two_structures(tag, inputs):
     if base_seq_id == target_seq_id:
         fatal_error(tag, NO_MUTATIONS)
 
+    status_update( 'target+ids+matched')
+    status_update( 'superimpose')
     dev_status(tag, "superimpose")
 
     # superimpose
@@ -1348,6 +1356,7 @@ def interface_two_structures(tag, inputs):
         superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
     dev_status(tag, "calc conservation")
+    status_update( 'calc+conservation')
 
     # calculate conservation
     calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
@@ -1356,6 +1365,7 @@ def interface_two_structures(tag, inputs):
 
     dev_status(tag, "finished calculation")
 
+    
 @app.route('/interface_post', methods=["GET", "POST"])
 def interface_post():
     if request.method == 'GET':
