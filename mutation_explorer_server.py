@@ -543,11 +543,57 @@ def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
     return False
 
 def filter_chain( inpdb, fchain, outpdb):
-    with open(inpdb, "r") as f_in, open(outpdb, "w") as f_out:
+    atoms = []
+    energies = []
+    with open(inpdb, "r") as f_in:
+        count = 0
+        prev_resid = -999999
+        min_id = 9999999
+        max_id = -9999999
+        good_boy = False
         for l in f_in:
-            if l[:4] == "ATOM" and chain(l) == fchain:
+            if l[:3] == "TER" and good_boy:
+                atoms.append(l)
+                good_boy  = False
+            elif l[:4] == "ATOM" or l[:6] == "HETATM":
+                curr_resid = resid(l)
+                if curr_resid != prev_resid:
+                    prev_resid = curr_resid
+                    count += 1
+                if chain(l) == fchain:
+                    atoms.append( l)
+                    min_id = min( min_id, count)
+                    max_id = max( max_id, count)
+                    good_boy = True
+                else:
+                    good_boy = False
+            elif l[0] != '#' and len(l) > 20:
+                good_boy = False
+                c = l.split()
+                if 'label' in l and 'total' in l:
+                    energies.append(l)
+                elif c[0].find('_') != -1:
+                    energies.append(l)
+            else:
+                good_boy = False
+    with open(outpdb, "w") as f_out:
+        for l in atoms:
+            f_out.write(l)
+        count = 1
+        for l in energies:
+            if 'label' in l and 'total' in l:
                 f_out.write(l)
-
+                continue
+            c = l.split()
+            cid = c[0].rfind( '_' )
+            myid = int(c[0][cid+1:])
+            if myid >= min_id and myid <= max_id:
+                f_out.write( c[0][:cid+1] + str(count))
+                for i in range(1,len(c)):
+                    f_out.write( ' ' + c[i])
+                f_out.write('\n')
+                count += 1
+            
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
@@ -1293,8 +1339,8 @@ def interface_two_structures(tag, inputs):
         os.rename( outdir+ "tmp.pdb", outdir + "structure.pdb" )
     if target_chain != '':
         status_update( tag, "filter+target+chain")
-        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp.pdb")
-        os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
+        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp2.pdb")
+        os.rename( outdir+ "tmp2.pdb", outdir + "structure2.pdb" )
     
     if not minimize:
         status_update( tag, "score+base+structure")
