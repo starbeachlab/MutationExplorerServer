@@ -253,6 +253,8 @@
 
 					<!-- 2) Sequence upload -->
 					<div>
+						<div id="target_sequence_syntax_error" style="color: red;"></div>
+
 						<div class="row">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainS1">
@@ -731,6 +733,20 @@
 		return /^([A-Z]:-?[0-9]+[A-Z])(,([A-Z]:-?[0-9]+[A-Z]))*$/.test(muts);
 	}
 
+	function checkTargetSequence() {
+		seq = [$('#seq1').val(), $('#seq2').val(), $('#seq3').val()];
+		upperCaseRegex = /^[A-Z]+$/;
+
+		for (s of seq) {
+			if (s == '') continue;
+			if (!upperCaseRegex.test(s)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	$("#submitForm").on('submit', function (e) {
 		if (!mutationSyntaxCorrect()) {
 			e.preventDefault();
@@ -749,6 +765,10 @@
 			$("#interface_score_checkbox").addClass("invalid");
 			$("#interface_score_error").html(`Invalid interface score selection. Left or right side must not be empty.
 				If there is only one chain available, please select 'No calculation' or 'Complete calculation.`);
+		} else if (!checkTargetSequence()) {
+			e.preventDefault();
+			console.log("incorrect target sequence syntax");
+			$("#target_sequence_syntax_error").html(`The target sequence must be in upper case letters only. Please try again.`);
 		}
 	});
 
