@@ -18,7 +18,7 @@ import smtplib, ssl
 
 # fatal error messages
 NO_MUTATIONS = "No valid mutations were defined"
-RELAXATION_FAILED = "Relaxation of initial structure failed. Check your input PDB. Potentially unknown HETATMs (if this is the case, try using the 'remove hetatms' option in the 'Filter structure' button on the submit page). Calpha only traces can not be handled. RaSP requires side-chains to be present."
+RELAXATION_FAILED = "Relaxation of initial structure failed. Check your input PDB. Potentially unknown HETATMs (if this is the case, try using the 'remove hetatms' option in the 'Filter structure' button on the 'upload structure or model' page). Calpha only traces can not be handled. RaSP requires side-chains to be present."
 MUTATION_FAILED = "Mutation failed"
 STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
 
