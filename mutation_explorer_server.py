@@ -1329,7 +1329,7 @@ def interface_two_structures(tag, inputs):
     ifscore = ''
     if ifscore_calculation:
         ifscore = 'all'
-        status_update( 'calc+interface+score')
+        status_update( tag,  'calc+interface+score')
 
     #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
@@ -1389,16 +1389,16 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get base seq id in clustal")    
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
-        status_update( "no+base+seq+in+alignment")
+        status_update( tag, "no+base+seq+in+alignment")
         return
 
-    status_update( 'base+ids+matched')
+    status_update( tag, 'base+ids+matched')
     
     dev_status( tag, "find target pdb in alignment")
 
     pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match == ["",""]:
-        status_update( "structure not in alignment")
+        status_update( tag, "structure not in alignment")
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
 
@@ -1411,14 +1411,14 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get target seq id in clustal")    
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
-        status_update( "no+target+seq+in+alignment")
+        status_update( tag, "no+target+seq+in+alignment")
         return
 
     if base_seq_id == target_seq_id:
         fatal_error(tag, NO_MUTATIONS)
 
-    status_update( 'target+ids+matched')
-    status_update( 'superimpose')
+    status_update( tag, 'target+ids+matched')
+    status_update( tag, 'superimpose')
     dev_status(tag, "superimpose")
 
     # superimpose
@@ -1428,7 +1428,7 @@ def interface_two_structures(tag, inputs):
         superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
     dev_status(tag, "calc conservation")
-    status_update( 'calc+conservation')
+    status_update(tag, 'calc+conservation')
 
     # calculate conservation
     calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
