@@ -543,11 +543,57 @@ def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
     return False
 
 def filter_chain( inpdb, fchain, outpdb):
-    with open(inpdb, "r") as f_in, open(outpdb, "w") as f_out:
+    atoms = []
+    energies = []
+    with open(inpdb, "r") as f_in:
+        count = 0
+        prev_resid = -999999
+        min_id = 9999999
+        max_id = -9999999
+        good_boy = False
         for l in f_in:
-            if l[:4] == "ATOM" and chain(l) == fchain:
+            if l[:3] == "TER" and good_boy:
+                atoms.append(l)
+                good_boy  = False
+            elif l[:4] == "ATOM" or l[:6] == "HETATM":
+                curr_resid = resid(l)
+                if curr_resid != prev_resid:
+                    prev_resid = curr_resid
+                    count += 1
+                if chain(l) == fchain:
+                    atoms.append( l)
+                    min_id = min( min_id, count)
+                    max_id = max( max_id, count)
+                    good_boy = True
+                else:
+                    good_boy = False
+            elif l[0] != '#' and len(l) > 20:
+                good_boy = False
+                c = l.split()
+                if 'label' in l and 'total' in l:
+                    energies.append(l)
+                elif c[0].find('_') != -1:
+                    energies.append(l)
+            else:
+                good_boy = False
+    with open(outpdb, "w") as f_out:
+        for l in atoms:
+            f_out.write(l)
+        count = 1
+        for l in energies:
+            if 'label' in l and 'total' in l:
                 f_out.write(l)
-           
+                continue
+            c = l.split()
+            cid = c[0].rfind( '_' )
+            myid = int(c[0][cid+1:])
+            if myid >= min_id and myid <= max_id:
+                f_out.write( c[0][:cid+1] + str(count))
+                for i in range(1,len(c)):
+                    f_out.write( ' ' + c[i])
+                f_out.write('\n')
+                count += 1
+            
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
@@ -1284,6 +1330,7 @@ def interface_two_structures(tag, inputs):
     ifscore = ''
     if ifscore_calculation:
         ifscore = 'all'
+        status_update( tag,  'calc+interface+score')
 
     #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
@@ -1293,14 +1340,17 @@ def interface_two_structures(tag, inputs):
         os.rename( outdir+ "tmp.pdb", outdir + "structure.pdb" )
     if target_chain != '':
         status_update( tag, "filter+target+chain")
-        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp.pdb")
-        os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
+        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp2.pdb")
+        os.rename( outdir+ "tmp2.pdb", outdir + "structure2.pdb" )
     
     if not minimize:
+        status_update( tag, "score+base+structure")
         score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
+        status_update( tag, "score+target+structure")
         score_structure(tag, outdir, "mut_1", "structure2.pdb", ifscore)
     else:
-        # relax provided structure                                                                                                                                                                 
+        # relax provided structure
+        status_update( tag, "relax+base+structure")  
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb", ifscore)
 
@@ -1311,6 +1361,7 @@ def interface_two_structures(tag, inputs):
 
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
+        status_update( tag, "relax+target+structure")  
 
         relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb", ifscore)
 
@@ -1329,7 +1380,6 @@ def interface_two_structures(tag, inputs):
 
     # get clustal ids, chains, sequence ids
     pdb_match, base_noncanonical_residues = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
-    # Nikola: this is never true: if pdb_match is None:
     if pdb_match == ["",""]:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
@@ -1340,14 +1390,16 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get base seq id in clustal")    
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
-        status_update( "no+base+seq+in+alignment")
+        status_update( tag, "no+base+seq+in+alignment")
         return
 
+    status_update( tag, 'base+ids+matched')
+    
     dev_status( tag, "find target pdb in alignment")
 
     pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match == ["",""]:
-        status_update( "structure not in alignment")
+        status_update( tag, "structure not in alignment")
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
 
@@ -1360,12 +1412,14 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get target seq id in clustal")    
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
-        status_update( "no+target+seq+in+alignment")
+        status_update( tag, "no+target+seq+in+alignment")
         return
 
     if base_seq_id == target_seq_id:
         fatal_error(tag, NO_MUTATIONS)
 
+    status_update( tag, 'target+ids+matched')
+    status_update( tag, 'superimpose')
     dev_status(tag, "superimpose")
 
     # superimpose
@@ -1375,6 +1429,7 @@ def interface_two_structures(tag, inputs):
         superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
     dev_status(tag, "calc conservation")
+    status_update(tag, 'calc+conservation')
 
     # calculate conservation
     calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
@@ -1383,6 +1438,7 @@ def interface_two_structures(tag, inputs):
 
     dev_status(tag, "finished calculation")
 
+    
 @app.route('/interface_post', methods=["GET", "POST"])
 def interface_post():
     if request.method == 'GET':
