@@ -3,20 +3,29 @@
 
 {% block head %}
 <style>
-    .file-field {
-        display: flex;
-    }
+	.file-field {
+		display: flex;
+	}
+
+	.disabled {
+		display: none;
+	}
+
+	.interface-score-selection th {
+		text-align: center;
+	}
+
+	.interface-score-selection span {
+		font-size: 1rem;
+	}
 </style>
 {% endblock %}
-
-
-
 
 {% block content %}
 
 <center>
-  <br>
-  <h3>Define mutations </h3>
+	<br>
+	<h3>Define mutations </h3>
 </center>
 
 <p class="center-align"><b> Select (click on) one or more of the following options:</b></p>
@@ -27,494 +36,417 @@
 <br>
 
 <div class="row">
- <form id="submitForm" method="POST" enctype="multipart/form-data" class="col s12"> 
+	<form id="submitForm" method="POST" enctype="multipart/form-data" class="col s12">
 
-   <ul class="collapsible s12">
-
-
-	<!-- MANUAL MUTATIONS -->
-    <li>
-      <div class="collapsible-header grey lighten-3">
-	<h5 class="center-align"> Manual mutation definition</h5>
-      </div>
-      <div class="collapsible-body">
-
-	  <button data-target="modalPDB" class="btn-small modal-trigger grey lighten-1" title="PDB chains" style="float:left;"> available PDB chains</button>
-	  <div id="modalPDB" class="modal">
-	    <div class="modal-content left-align">
-	      <h4> Available PDB chains</h4>
-	      <p> The PDB that you uploaded contains the following chains: <div id="chain_list"></div> </p>
-	    </div>
-	    <div class="modal-footer">
-	      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	    </div>
-	  </div>								   
-
-	<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button>
-	<!-- Modal Structure -->
-	<div id="modal1" class="modal">
-	  <div class="modal-content">
-	    <h4>Mutate current model</h4>
-	    <p>You can mutate the model that you uploaded in previous step using the syntax:<br> CHAIN ':' PDB-RESIDUE-ID AA-TYPE<br>Separate multiple mutations with commas.<br>Example: 'A:12G,B:123A'<br>This would mutate residue with the PDB residue ID 12 in chain A to glycine and residue with the ID 123 in chain B to alanine. </p>
-	  </div>
-	  <div class="modal-footer">
-	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	  </div>
-	</div>
-
-	<br>
-	<br>
-
-	<button data-target="modalCode" class="btn-small modal-trigger grey lighten-1" title="PDB chains" style="float:left;">one letter code</button>
-	<div id="modalCode" class="modal">
-	<div class="modal-content left-align">
-		<h4> Amino acid one letter code </h4>
-
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>One letter code</th>
-				</tr>
-			</thead>
-
-			<tbody>
-				<tr>
-					<th>Alanine</th>
-					<th>A</th>
-				</tr>
-				<tr>
-					<th>Arginine</th>
-					<th>R</th>
-				</tr>
-				<tr>
-					<th>Asparagine</th>
-					<th>N</th>
-				</tr>
-				<tr>
-					<th>Aspartic Acid</th>
-					<th>D</th>
-				</tr>
-				<tr>
-					<th>Cysteine</th>
-					<th>C</th>
-				</tr>
-				<tr>
-					<th>Gluatmic Acid</th>
-					<th>E</th>
-				</tr>
-				<tr>
-					<th>Glutamine</th>
-					<th>Q</th>
-				</tr>
-				<tr>
-					<th>Glycine</th>
-					<th>G</th>
-				</tr>
-				<tr>
-					<th>Histidine</th>
-					<th>H</th>
-				</tr>
-				<tr>
-					<th>Isoleucin</th>
-					<th>I</th>
-				</tr>
-				<tr>
-					<th>Leucine</th>
-					<th>L</th>
-				</tr>
-				<tr>
-					<th>Lysine</th>
-					<th>K</th>
-				</tr>
-				<tr>
-					<th>Methionine</th>
-					<th>M</th>
-				</tr>
-				<tr>
-					<th>Phenylalanine</th>
-					<th>F</th>
-				</tr>
-				<tr>
-					<th>Proline</th>
-					<th>P</th>
-				</tr>
-				<tr>
-					<th>Serine</th>
-					<th>S</th>
-				</tr>
-				<tr>
-					<th>Threonine</th>
-					<th>T</th>
-				</tr>
-				<tr>
-					<th>Tryptophan</th>
-					<th>W</th>
-				</tr>
-				<tr>
-					<th>Tyrosine</th>
-					<th>Y</th>
-				</tr>
-				<tr>
-					<th>Valine</th>
-					<th>V</th>
-				</tr>
-			</tbody>
-		</table>
-
-	</div>
-	<div class="modal-footer">
-		<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	</div>
-	</div>								   
-
-	<br>
-	<br>
-	<br>
-	<div class="row">
-	  <div id="mutation" class="input-field col s12">
-	    <input id="mutations-input" type="text" name="mutations" class="validate" placeholder="X:123Y, A:45B" >
-	    <label for="mutations">Enter a comma separated list of mutations to be performed together</label>
-	  	<div id="mutations-syntax-error" style="color: red;"></div>
-	  </div>
+		<ul class="collapsible s12">
 
 
-	</div>
-	<br>
-      </div>
-    </li>
+			<!-- MANUAL MUTATIONS -->
+			<li>
+				<div class="collapsible-header grey lighten-3">
+					<h5 class="center-align"> Manual mutation definition</h5>
+				</div>
+				<div class="collapsible-body">
 
-
-	<!-- SEQUENCE ALIGNMENT -->
-
-    <li>
-      <div class="collapsible-header grey lighten-4">
-		<h5 class="center-align"> Sequence alignment </h5>
-      </div>
-      <div class="collapsible-body">
-	<h4> <button data-target="modal2" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
-	<!-- Modal Structure -->
-	<div id="modal2" class="modal">
-	  <div class="modal-content">
-	    <h4>Define mutations by sequence alignment</h4>
-	    <p>You can mutate the model that you uploaded in previous step using a sequence alignment in ClustalW format.<br>
-	      One of the sequences in the alignment has to match exactly one sequence in the PDB that you uploaded in previous step.<br>
-	      Since one alignment is associated with one chain, you can upload up to three alignments.<br>
-	      If you need to mutate more than three chains, you can upload target sequences for the other chains or define mutations manually. </p>
-	  </div>
-	  <div class="modal-footer">
-	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	  </div>
-	</div>
-
-	<br>
-	
-	<!--
-	  	<div class="row">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainF1"></div>
-			</div>
-			<div class="col s6">
-				<div class="file-field input-field" style="width: 100%">
-					<div class="btn" style="width: 100%">
-						<span>Upload a FASTA file</span>
-						<input type="file" name="fasta1">
+					<button data-target="modalPDB" class="btn-small modal-trigger grey lighten-1" title="PDB chains"
+						style="float:left;"> available PDB chains</button>
+					<div id="modalPDB" class="modal">
+						<div class="modal-content left-align">
+							<h4> Available PDB chains</h4>
+							<p> The PDB that you uploaded contains the following chains:
+							<div id="chain_list"></div>
+							</p>
+						</div>
+						<div class="modal-footer">
+							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+						</div>
 					</div>
-				</div>
-			</div>
-	  	</div>
-	-->
 
-    <div class="row">
-		<div class="col s3">
-			<div class="input-field chain-select-field" sel="chainC1"></div>
-		</div>
-		<div class="col s6">
-			<div class="file-field input-field" style="width: 100%">
-				<div class="btn" style="width: 100%">
-					<span>Upload a ClustalW file</span>
-					<input type="file" name="clustal1">
-				</div>
-			</div>
-    	</div>
-	</div>
+					<div id="manual_mutation_info"></div>
 
-    <div class="row clw1 additional">
-		<div class="col s3">
-			<div class="input-field chain-select-field" sel="chainC2"></div>
-		</div>
-		<div class="col s6">
-			<div class="file-field input-field" style="width: 100%">
-				<div class="btn" style="width: 100%">
-					<span>Upload a ClustalW file</span>
-					<input type="file" name="clustal2">
-				</div>
-			</div>
-		</div>
-	</div>
+					<br>
+					<br>
 
-    <div class="row clw2 additional">
-		<div class="col s3">
-			<div class="input-field chain-select-field" sel="chainC3"></div>
-		</div>
-		<div class="col s6">
-			<div class="file-field input-field" style="width: 100%">
-				<div class="btn" style="width: 100%">
-					<span>Upload a ClustalW file</span>
-					<input type="file" name="clustal3">
-				</div>
-			</div>
-		</div>
-	</div>
-
-		<div style="width: 100%; display: flex; justify-content: center">
-			<div id="add-clw" style="margin-top: 2rem">
-				<a class="btn-small grey lighten-1" onclick="addAlignments()">Add more Alignments</a>
-			</div>
-		</div>
-
-    </div>
-	
-    </li>
-
-    
-
-	<!-- TARGET SEQUENCE -->
-	
-    <li>
-      <div class="collapsible-header grey lighten-3">
-	<h5 class="center-align"> Target sequence</h5>
-      </div>
-
-      <div class="collapsible-body">
-	<h4> <button data-target="modal3" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float:right;">info</button> </h4>
-	<!-- Modal Structure -->
-	<div id="modal3" class="modal">
-	  <div class="modal-content">
-	    <h4>Define mutations by target sequence</h4>
-	    <p>You can mutate the model that you uploaded in previous step using a target sequence in FASTA format.<br>
-	      </p>
-	  </div>
-	  <div class="modal-footer">
-	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	  </div>
-	</div>
-    
-      
-	<br>
-
-
-	<!-- 1) FASTA uploads -->
-	<div>
-	  	<div class="row">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainF1"></div>
-			</div>
-			<div class="col s6">
-				<div class="file-field input-field" style="width: 100%">
-					<div class="btn" style="width: 100%">
-						<span>Upload a FASTA file</span>
-						<input type="file" name="fasta1">
+					<button data-target="modalCode" class="btn-small modal-trigger grey lighten-1" title="PDB chains"
+						style="float:left;">one letter code</button>
+					<div id="modalCode" class="modal">
+						<div class="modal-content left-align">
+							<div id="letter_code_info"></div>
+						</div>
+						<div class="modal-footer">
+							<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+						</div>
 					</div>
+
+					<br>
+					<br>
+					<br>
+					<div class="row">
+						<div id="mutation" class="input-field col s12">
+							<input id="mutations-input" type="text" name="mutations" class="validate"
+								placeholder="X:123Y, A:45B">
+							<label for="mutations">Enter a comma separated list of mutations to be performed
+								together</label>
+							<div id="mutations-syntax-error" style="color: red;"></div>
+						</div>
+
+
+					</div>
+					<br>
 				</div>
-			</div>
-	  	</div>
-	  
-	  <div class="row additional fasta1">
-	    <div class="col s3">
-	      <div class="input-field chain-select-field" sel="chainF2">
-		<!--<select id="chainF2"></select>-->
-		<!--<input id="chainF2" type="text" name="chainF2" class="validate" >
-		<label for="chainF2">PDB Chain</label>-->
-	      </div>
-	    </div>
-	    <div class="col s6">
-	      <div class="file-field input-field" style="width: 100%">
-		<div class="btn" style="width: 100%">
-		  <span>Upload a FASTA file</span>
-		  <input type="file" name="fasta2">
+			</li>
+
+			<!-- SEQUENCE ALIGNMENT -->
+
+			<li>
+				<div class="collapsible-header grey lighten-4">
+					<h5 class="center-align"> Sequence alignment </h5>
+				</div>
+				<div class="collapsible-body">
+					<div id="sequence_alignment_info"></div>
+
+					<br>
+
+					<!-- 
+					<div class="row">
+						<div class="col s3">
+							<div class="input-field chain-select-field" sel="chainF1"></div>
+						</div>
+						<div class="col s6">
+							<div class="file-field input-field" style="width: 100%">
+								<div class="btn" style="width: 100%">
+									<span>Upload a FASTA file</span>
+									<input type="file" name="fasta1">
+								</div>
+							</div>
+						</div>
+					</div> -->
+
+
+					<div class="row">
+						<div class="col s3">
+							<div class="input-field chain-select-field" sel="chainC1"></div>
+						</div>
+						<div class="col s6">
+							<div class="file-field input-field" style="width: 100%">
+								<div class="btn" style="width: 100%">
+									<span>Upload a ClustalW file</span>
+									<input type="file" name="clustal1" accept=".clw, .aln">
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row clw1 additional">
+						<div class="col s3">
+							<div class="input-field chain-select-field" sel="chainC2"></div>
+						</div>
+						<div class="col s6">
+							<div class="file-field input-field" style="width: 100%">
+								<div class="btn" style="width: 100%">
+									<span>Upload a ClustalW file</span>
+									<input type="file" name="clustal2" accept=".clw, .aln">
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row clw2 additional">
+						<div class="col s3">
+							<div class="input-field chain-select-field" sel="chainC3"></div>
+						</div>
+						<div class="col s6">
+							<div class="file-field input-field" style="width: 100%">
+								<div class="btn" style="width: 100%">
+									<span>Upload a ClustalW file</span>
+									<input type="file" name="clustal3" accept=".clw, .aln">
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div style="width: 100%; display: flex; justify-content: center">
+						<div id="add-clw" style="margin-top: 2rem">
+							<a class="btn-small grey lighten-1" onclick="addAlignments()">Add more Alignments</a>
+						</div>
+					</div>
+
+				</div>
+
+			</li>
+
+			<!-- TARGET SEQUENCE -->
+
+			<li>
+				<div class="collapsible-header grey lighten-3">
+					<h5 class="center-align"> Target sequence</h5>
+				</div>
+
+				<div class="collapsible-body">
+
+					<div id="target_sequence_info"></div>
+					<br>
+
+					<!-- 1) FASTA uploads -->
+					<div>
+						<div class="row">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainF1"></div>
+							</div>
+							<div class="col s6">
+								<div class="file-field input-field" style="width: 100%">
+									<div class="btn" style="width: 100%">
+										<span>Upload a FASTA file</span>
+										<input type="file" name="fasta1"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional fasta1">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainF2">
+									<!--<select id="chainF2"></select>-->
+									<!--<input id="chainF2" type="text" name="chainF2" class="validate" >
+									<label for="chainF2">PDB Chain</label>-->
+								</div>
+							</div>
+							<div class="col s6">
+								<div class="file-field input-field" style="width: 100%">
+									<div class="btn" style="width: 100%">
+										<span>Upload a FASTA file</span>
+										<input type="file" name="fasta2"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional fasta2">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainF3">
+									<!-- <select id="chainF3">
+										<option value="" disabled selected>PDB chain</option>
+									</select> -->
+
+									<!-- <input id="chainF3" type="text" name="chainF3" class="validate">
+									<label for="chainF3">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s6">
+								<div class="file-field input-field" style="width: 100%">
+									<div class="btn" style="width: 100%">
+										<span>Upload a FASTA file</span>
+										<input type="file" name="fasta3"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div style="width: 100%; display: flex; justify-content: center">
+							<div id="add-fasta" style="margin-bottom: 2rem">
+								<a class="btn-small grey lighten-1" onclick="addFastas()">Add more FASTAs</a>
+							</div>
+						</div>
+					</div>
+
+					<br>
+
+					<!-- 2) Sequence upload -->
+					<div>
+						<div id="target_sequence_syntax_error" style="color: red;"></div>
+
+						<div class="row">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainS1">
+									<!-- <input id="chainS1" type="text" name="chainS1" class="validate">
+									<label for="chainS1">PDB Chain</label> -->
+									<!--<select id="chainS1"></select> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="seq1" type="text" name="sequence1" class="validate"
+										placeholder="ABBA...ACDC">
+									<label for="seq1"> Paste a sequence</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional pseq1">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainS2">
+									<!-- <input id="chainS2" type="text" name="chainS2" class="validate">
+									<label for="chainS2">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="seq2" type="text" name="sequence2" class="validate"
+										placeholder="ABBA...ACDC">
+									<label for="seq2"> Paste a sequence</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional pseq2">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainS3">
+									<!-- <input id="chainS3" type="text" name="chainS3" class="validate">
+									<label for="chainS3">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="seq3" type="text" name="sequence3" class="validate"
+										placeholder="ABBA...ACDC">
+									<label for="seq3"> Paste a sequence</label>
+								</div>
+							</div>
+						</div>
+
+						<div style="width: 100%; display: flex; justify-content: center">
+							<div id="add-seq" style="margin-bottom: 2rem">
+								<a class="btn-small grey lighten-1" onclick="addSequences()">Add more Sequences</a>
+							</div>
+						</div>
+					</div>
+
+					<br>
+
+					<!-- 3) Uniprot upload -->
+					<div>
+						<div class="row">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainU1">
+									<!-- <input id="chainU1" type="text" name="chainU1" class="validate">
+									<label for="chainU1">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="U1" type="text" name="uniprot1" class="validate"
+										placeholder="Uniprot ID">
+									<label for="U1">Load sequence from UniProt</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional up1">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainU2">
+									<!-- <input id="chainU2" type="text" name="chainU2" class="validate">
+									<label for="chainU2">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="U2" type="text" name="uniprot2" class="validate"
+										placeholder="Uniprot ID">
+									<label for="U2">Load sequence from UniProt</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="row additional up2">
+							<div class="col s3">
+								<div class="input-field chain-select-field" sel="chainU3">
+									<!-- <input id="chainU3" type="text" name="chainU3" class="validate">
+									<label for="chainU3">PDB Chain</label> -->
+								</div>
+							</div>
+							<div class="col s9">
+								<div class="input-field">
+									<input id="U3" type="text" name="uniprot3" class="validate"
+										placeholder="Uniprot ID">
+									<label for="U3">Load sequence from UniProt</label>
+								</div>
+							</div>
+						</div>
+
+						<div style="width: 100%; display: flex; justify-content: center">
+							<div id="add-up" style="margin-bottom: 2rem">
+								<a class="btn-small grey lighten-1" onclick="addUniprots()">Add more Uniprots</a>
+							</div>
+						</div>
+					</div>
+
+
+
+			</li>
+
+
+		</ul>
+		<br>
+
+		<div id="status-info">
+			<h5 style="color:blue;">{{status}}</h5>
 		</div>
-	      </div>
-	    </div>
-	  </div>
-	  
-	  <div class="row additional fasta2">
-	    <div class="col s3">
-	      <div class="input-field chain-select-field" sel="chainF3">
-		<!--<select id="chainF3">
-		  <option value="" disabled selected>PDB chain</option>
-		</select> -->
 
-		<!--
-		<input id="chainF3" type="text" name="chainF3" class="validate" >
-		<label for="chainF3">PDB Chain</label>-->
+		<br>
 
-
-	      </div>
-	    </div>
-	    <div class="col s6">
-	      <div class="file-field input-field" style="width: 100%">
-		<div class="btn" style="width: 100%">
-		  <span>Upload a FASTA file</span>
-		  <input type="file" name="fasta3">
-		</div>
-	      </div>
-	    </div>
-	  </div>
-	  
-	  <div style="width: 100%; display: flex; justify-content: center">
-	    <div id="add-fasta" style="margin-bottom: 2rem">
-	      <a class="btn-small grey lighten-1" onclick="addFastas()">Add more FASTAs</a>
-	    </div>
-	  </div>
-	</div>
-	
-	<br>
-	
-	<!-- 2) Sequence upload -->
-	<div>
-	  <div class="row">
-	    <div class="col s3">
-	      <div class="input-field chain-select-field" sel="chainS1">
-			<!--
-		<input id="chainS1" type="text" name="chainS1" class="validate" >
-		<label for="chainS1">PDB Chain</label> -->
-		<!--<select id="chainS1"></select>-->
-	      </div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="seq1" type="text" name="sequence1" class="validate" placeholder="ABBA...ACDC">
-					<label for="seq1"> Paste a sequence</label>
+		<ul class="collapsible s12">
+			<li>
+				<div class="collapsible-header grey lighten-3">
+					<h5 class="center-align"> Interface Score Definition </h5>
 				</div>
-			</div>
+				<div class="collapsible-body">
+
+					<div id="ifscore_info"></div>
+
+					<div> Do you want to calculate the interface score? </div>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_no' name='ifscore' value="none" checked>
+							<span for="ifscore_no">No calculation</span><br>
+						</label>
+					</p>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_manual' name='ifscore' value="manual">
+							<span for="ifscore_manual">Define manual calculation</span><br>
+						</label>
+					</p>
+					<div class="interface-score-selection disabled" id="interface_score_checkbox">
+
+					</div>
+					<div id="interface_score_error" style="color: red;"></div>
+					<p>
+						<label>
+							<input type='radio' id='ifscore_all' name='ifscore' value="all">
+							<span for="ifscore_all">Complete calculation</span><br>
+						</label>
+					</p>
+
+				</div>
+		</ul>
+
+		<div class="col offset-s3 s6 center-align">
+			<input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
+		</div>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+
+		<div class="input-field col offset-s3 s6">
+			<input id="chain" type="email" name="email" class="validate" placeholder="Email (optional)">
+			<label for="chain">Get notified after job completion.</label>
 		</div>
 
-		<div class="row additional pseq1">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainS2">
-					<!--
-					<input id="chainS2" type="text" name="chainS2" class="validate" >
-					<label for="chainS2">PDB Chain</label>-->
-				</div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="seq2" type="text" name="sequence2" class="validate" placeholder="ABBA...ACDC">
-					<label for="seq2"> Paste a sequence</label>
-				</div>
-			</div>
-		</div>
+		<br>
+		<br>
 
-		<div class="row additional pseq2">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainS3">
-					<!--
-					<input id="chainS3" type="text" name="chainS3" class="validate" >
-					<label for="chainS3">PDB Chain</label>-->
-				</div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="seq3" type="text" name="sequence3" class="validate" placeholder="ABBA...ACDC">
-					<label for="seq3"> Paste a sequence</label>
-				</div>
-			</div>
-		</div>
-
-		<div style="width: 100%; display: flex; justify-content: center">
-			<div id="add-seq" style="margin-bottom: 2rem">
-				<a class="btn-small grey lighten-1" onclick="addSequences()">Add more Sequences</a>
-			</div>
-		</div>
-	</div>
-
-	<br>
-
-	<!-- 3) Uniprot upload -->
-	<div>
-		<div class="row">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainU1">
-					<!--
-					<input id="chainU1" type="text" name="chainU1" class="validate" >
-					<label for="chainU1">PDB Chain</label>-->
-				</div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="U1" type="text" name="uniprot1" class="validate" placeholder="Uniprot ID">
-					<label for="U1">Load sequence from UniProt</label>
-				</div>
-			</div>
-		</div>
-
-		<div class="row additional up1">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainU2">
-					<!--
-					<input id="chainU2" type="text" name="chainU2" class="validate" >
-					<label for="chainU2">PDB Chain</label>-->
-				</div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="U2" type="text" name="uniprot2" class="validate" placeholder="Uniprot ID">
-					<label for="U2">Load sequence from UniProt</label>
-				</div>
-			</div>
-		</div>
-
-		<div class="row additional up2">
-			<div class="col s3">
-				<div class="input-field chain-select-field" sel="chainU3">
-					<!--
-					<input id="chainU3" type="text" name="chainU3" class="validate" >
-					<label for="chainU3">PDB Chain</label>-->
-				</div>
-			</div>
-			<div class="col s9">
-				<div class="input-field">
-					<input id="U3" type="text" name="uniprot3" class="validate" placeholder="Uniprot ID">
-					<label for="U3">Load sequence from UniProt</label>
-				</div>
-			</div>
-		</div>
-
-		<div style="width: 100%; display: flex; justify-content: center">
-			<div id="add-up" style="margin-bottom: 2rem">
-				<a class="btn-small grey lighten-1" onclick="addUniprots()">Add more Uniprots</a>
-			</div>
-		</div>
-	</div>
-
-	
-
-    </li>
-    
-    
-   </ul>
-   <br>
-
-
-   <div id="status-info"><h5 style="color:blue;">{{status}}</h5> </div>
-
-
-
-   
-   <div class="col offset-s3 s6 center-align">
-     <input id="submit-btn" type="submit" value="submit and launch explorer" class="btn">
-   </div>
-<br>
-<br>
- 
- </form>
+	</form>
 </div>
 
 <br>
 <br>
 <div style="width:100%;">
-  <h5> Link to results </h5>
+	<h5> Link to results </h5>
 </div>
 <p>Copy this link for later to access your results <br>(not available before the job is finished): <br>
 	<a href="{{url_for('explore',tag=tag,filename='mut_0_1.pdb')}}">Result Page</a>
@@ -522,8 +454,8 @@
 
 <h5> Rough time estimate </h5>
 <ul>
-  <li> Initial basic minimization prior to mutation: 1 min </li>
-  <li> Mutation followed by basic minimization: 2 min  </li>
+	<li> Initial basic minimization prior to mutation: 1 min </li>
+	<li> Mutation followed by basic minimization: 2 min </li>
 </ul>
 <p> Details can be found in the FAQs </p>
 
@@ -538,45 +470,74 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/mutation_check.js') }}"></script>
 
 <script>
 
+	var aligns = 0;
+	var fastas = 0;
+	var seqs = 0;
+	var uniprots = 0;
 
-  var aligns = 0;
-  var fastas = 0;
-  var seqs = 0;
-  var uniprots = 0;
+	document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
 
-  document.getElementById( 'chain_list').innerHTML = "{{chains_range}}".replace( /,/g, '<br/>');  // .split('');   // availabe chains manual-mut
+	chainSelect();
 
-  chainSelect();
-  
-  function addOpt( target){
-      if(!target){
-          return false;
-      }
-      var chains = "{{chains}}";
-      var select =  document.getElementById(target);
-      select.add( new Option( 0, 'Chain in PDB'));
-      for (var i = 0; i < chains.length; i++)
-      {
-	   select.options.add(new Option( i, chains.charAt(i)));     // chains target seq
-           //var opt = document.createElement('option');
-           //opt.value = i;
-           //opt.innerHTML = chains.charAt(i);
-           //select.appendChild(opt);
-           //alert( target + ' ' + i + ' ' + chains.charAt(i) + ' ' + opt.innerHTML );
-      }
-      M.FormSelect.init( select);
-  }
-  //addOpt('chainF1');
-  //addOpt('chainF2');
-  //addOpt('chainS1');
+	function fillInfoBox(target, textHtml) {
+		var infoBox = `
+			<button data-target="${target}" class="btn-small modal-trigger grey lighten-1"
+						title="Further information" style="float:right;">info</button>
+			<div id="${target}" class="modal">
+			<div class="modal-content">
+					${textHtml}
+				</div>
+				<div class="modal-footer">
+					<a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+				</div>
+			</div>
+		`;
 
-  initUploads();
+		return infoBox;
+	}
 
+	document.getElementById('ifscore_info').innerHTML = fillInfoBox('ifscoreModal', `{% include "text/interface_score.html" %}`);
+	document.getElementById('manual_mutation_info').innerHTML = fillInfoBox('manualMutationModal', `{% include "text/manual_mutation.html" %}`);
+	document.getElementById('sequence_alignment_info').innerHTML = fillInfoBox('seqAlginModal', `{% include "text/sequence_alignment.html" %}`);
+	document.getElementById('target_sequence_info').innerHTML = fillInfoBox('targetSeqModal', `{% include "text/target_sequence.html" %}`);
 
-  
+	function fillDiv(textHtml) {
+		return textHtml;
+	};
+
+	document.getElementById('letter_code_info').innerHTML = fillDiv(`{% include "text/letter_code.html" %}`);
+
+	function addOpt(target) {
+		if (!target) {
+			return false;
+		}
+		var chains = "{{chains}}";
+		var select = document.getElementById(target);
+		select.add(new Option(0, 'Chain in PDB'));
+		for (var i = 0; i < chains.length; i++) {
+			select.options.add(new Option(i, chains.charAt(i)));     // chains target seq
+			//var opt = document.createElement('option');
+			//opt.value = i;
+			//opt.innerHTML = chains.charAt(i);
+			//select.appendChild(opt);
+			//alert( target + ' ' + i + ' ' + chains.charAt(i) + ' ' + opt.innerHTML );
+		}
+		M.FormSelect.init(select);
+	}
+	//addOpt('chainF1');
+	//addOpt('chainF2');
+	//addOpt('chainS1');
+
+	initUploads();
+
+	function getChainLetters() {
+		return [...new Set("{{chains}}".split(""))];
+	}
+
 	function addAlignments() {
 		aligns += 1;
 		$(".clw" + aligns).removeClass("additional");
@@ -610,26 +571,25 @@
 	}
 
 	// showFilename, initUploads are slightly different to submit.html versions
-    function showFilename() {
-        var fname = $(this).val().replace(/^.*[\\\/]/, '')
-        $(this).parent().parent().parent().find(".filename").html(fname)
-    }
+	function showFilename() {
+		var fname = $(this).val().replace(/^.*[\\\/]/, '')
+		$(this).parent().parent().parent().find(".filename").html(fname)
+	}
 
-    function initUploads() {
-        var uploads = $(".file-field")
-        for (i = 0; i < uploads.length; i++) {
-            $(uploads[i]).parent().append('<center><div class="filename"></div></center>')
-            $($(uploads[i]).find("input")).on("change", showFilename)
-        }
-    }
-
+	function initUploads() {
+		var uploads = $(".file-field")
+		for (i = 0; i < uploads.length; i++) {
+			$(uploads[i]).parent().append('<center><div class="filename"></div></center>')
+			$($(uploads[i]).find("input")).on("change", showFilename)
+		}
+	}
 
 	function chainSelect() {
 
-		var chains = "{{chains}}".split("")
+		var chains = getChainLetters();
 		var selectHtml
 
-		if(chains.length == 1) {
+		if (chains.length == 1) {
 			// if only one chain is available, preselect it 
 			c = chains[0]
 			selectHtml = "<select name='XYZ' style='display: none'><option value='" + c + "' selected>" + c + "</option></select>"
@@ -648,69 +608,110 @@
 			$(fields[i]).append(selectHtml.replace("XYZ", sel))
 		}
 
-      	$('select').formSelect();
+		$('select').formSelect();
 	}
 
-	function mutationChainCheck(){
-		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
-		console.log('mutations ', mutations);
+	function buildInterfaceScoreCheckboxes() {
+		var chains = getChainLetters();
+		var checkboxes = '';
 
-		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
-		console.log('chains_range ', chains);
-		var ranges = [];
+		checkboxes += `
+			<table> 
+				<thead> 
+					<tr> 
+						<th> Left </th> 
+						<th> Chain </th>
+						<th> Right </th> 
+					</tr> 
+				</thead>
+				<tbody>`;
+
 		for (c of chains) {
-			ranges.push(c.split(/[:-]/));
+			checkboxes += `
+				<tr>
+					<th> <label> <input type='radio' id='left_chain_${c}' name='chain_${c}' value="left" checked > <span /> </label> </th>
+					<th> <label> <span>${c}</span> </label> </th>
+					<th> <label> <input type='radio' id='right_chain_${c}' name='chain_${c}' value="right"> <span /> </label> </th>
+				</tr>
+			`;
 		}
-		console.log('ranges ', ranges);
 
-		for (m of mutations) {
-			if (!checkMutation(m, ranges)) {
-				return false
+		checkboxes += `</tbody>`;
+
+		document.getElementById('interface_score_checkbox').innerHTML += checkboxes;
+	}
+
+	buildInterfaceScoreCheckboxes();
+
+	var ifCheckboxes = document.querySelectorAll('input[type=radio][name=ifscore]');
+	ifCheckboxes.forEach(checkbox => {
+		checkbox.addEventListener('change', () => {
+			table = document.querySelector('#interface_score_checkbox');
+			if (checkbox.checked && checkbox.id === 'ifscore_manual') {
+				table.classList.remove('disabled');
+			} else {
+				table.classList.add('disabled');
+			}
+		});
+	});
+
+	function getRadioButtonsChecked() {
+		var chains = getChainLetters();
+
+		left = [];
+		right = [];
+
+		for (c of chains) {
+			if (document.getElementById(`left_chain_${c}`).checked) {
+				left.push(c);
+			} else {
+				right.push(c);
+			}
+		}
+
+		return [left, right];
+	};
+
+	function interfaceScoreValid() {
+		manual = document.getElementById("ifscore_manual").checked;
+		assignment = getRadioButtonsChecked();
+
+		if ((assignment[0].length == 0 || assignment[1].length == 0) && manual) {
+			return false;
+		}
+		return true;
+	};
+
+	function checkTargetSequence() {
+		seq = [$('#seq1').val(), $('#seq2').val(), $('#seq3').val()];
+		upperCaseRegex = /^[A-Z]+$/;
+
+		for (s of seq) {
+			if (s == '') continue;
+			if (!upperCaseRegex.test(s)) {
+				return false;
 			}
 		}
 
 		return true;
 	}
 
-	function checkMutation(mutation, ranges) {
-		var chain = mutation[0];
-		var position = parseInt(mutation.replace(/^\D+/g, ''));
-		console.log(position);
-		for (r of ranges) {
-			if (r[0] == chain) {
-				var start = parseInt(r[1]);
-				var end = parseInt(r[2]);
-				if (start <= position && position <= end) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	function mutationSyntaxCorrect() {
-		muts = $("#mutations-input").val().replace(/ /g, "");
-		if(!muts) {
-			return true;
-		}
-		return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
-	}
-
-	$("#submitForm").on('submit', function(e) {
-		if(!mutationSyntaxCorrect()) {
+	$("#submitForm").on('submit', function (e) {
+		if (!interfaceScoreValid()) {
+			console.log('interfaceScoreValid ', interfaceScoreValid())
 			e.preventDefault();
-			console.log("incorrect mutation syntax");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
-		}else if (!mutationChainCheck()) {
+			console.log("incorrect interface score selection");
+			$("#interface_score_checkbox").addClass("invalid");
+			$("#interface_score_error").html(`Invalid interface score selection. Left or right side must not be empty.
+				If there is only one chain available, please select 'No calculation' or 'Complete calculation.`);
+		} else if (!checkTargetSequence()) {
 			e.preventDefault();
-			console.log("incorrect mutation position (chain or residue)");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-		}
+			console.log("incorrect target sequence syntax");
+			$("#target_sequence_syntax_error").html(`The target sequence must be in upper case letters only. Please try again.`);
+		};
+		mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}' , e);
 	});
 
 </script>
-
 
 {% endblock %}

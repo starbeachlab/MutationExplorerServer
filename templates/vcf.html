@@ -3,16 +3,16 @@
 {% block content %}
 
 <center>
-  <br>
-  <h3>Upload human SNPs in VCF format</h3>
-  <br>
+    <br>
+    <h3>Upload human SNPs in VCF format</h3>
+    <br>
 
     <!-- modal body -->
     <div id="modal1" class="modal">
-      <div class="modal-content">
-        <h4>Example of an VCF file:</h4>
-        <div style="text-align: center">
-	  <pre>
+        <div class="modal-content">
+            <h4>Example of an VCF file:</h4>
+            <div style="text-align: center">
+                <pre>
           <div align="left" style="display: inline-block !important">
             #CHROM  POS ID  REF ALT
             20  63659451  . C T . . .
@@ -30,108 +30,58 @@
             20  63695619  . G A . . .
           </div>
 	  </pre>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-      </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+        </div>
     </div>
 
 
-  <div class="row">
-    <div class="col offset-s3 s6">
-      <p style="text-align: justify"> 
-        At the moment, <span style="font-variant:small-caps"> MutationExplorer </span> automatically loads AlphaFold models
-        for human transcripts with 2700 or fewer residues.  GRCh38 coordinates are required in the VCF file, which is forwarded to ENSEMBL VEP to identify missense variant(s).  Only missense variants which impact canonical UniProtKB/Swiss-Prot transcripts are further explored. 
-      </p>
-      <p> Details of the workflow are outlined in FAQs. </p>
-      <br>
-      <div id="err" style="color:red;"><b>{{error}}</b></div>
+    <div class="row">
+        <div class="col offset-s3 s6">
+            <p style="text-align: justify">
+                At the moment, <span style="font-variant:small-caps"> MutationExplorer </span> automatically loads
+                AlphaFold
+                models
+                for human transcripts with 2700 or fewer residues. GRCh38 coordinates are required in the VCF file,
+                which is
+                forwarded to ENSEMBL VEP to identify missense variant(s). Only missense variants which impact canonical
+                UniProtKB/Swiss-Prot transcripts are further explored.
+            </p>
+            <p> Details of the workflow are outlined in FAQs. </p>
+            <br>
+            <div id="err" style="color:red;"><b>{{error}}</b></div>
+        </div>
     </div>
-  </div>
-  
+
 
 
 
 </center>
 <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
-      <div class="input-field col offset-s3 s6">
-    <input  type="text" name="email" class="validate" placeholder="Email (optional, recommended for long minimization)">
-    <label>Get notified after job completion </label>
-</div>
-<div id="radio-field" class="input-field col offset-s3 s6">
-  <span id="radio-title" class="grey-text text-darken-1">Minimization <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalmin" title="Further information" style="float:right;">i</a></span>
+    <div class="input-field col offset-s3 s6">
+        <input type="text" name="email" class="validate"
+            placeholder="Email (optional, recommended for long minimization)">
+        <label>Get notified after job completion </label>
+    </div>
 
-      <!-- Modal Structure -->
-      <div id="modalmin" class="modal">
-	<div class="modal-content">
-	  <h4>Minimization</h4>
-	  <p>
-	    The minimization is crucial for the quality of the outcome. The better the structure is energetically minimized, the more reliable the results will be. <br>
-	    We continuously pre-minimize structures from the PDB using the commandline described below.
-	    If you specify a PDB ID that is contained in our database, the pre-minimized structure is used. <br>
-	    Otherwise we offer two modes of side-chain minimization, a short and a long one. The short one should take a few minutes, depending on the size of the protein. The long one may take some hours for large proteins. 
-	  </p>
+    <div id="radio-field" class="input-field col offset-s3 s6">
+        <div id="min_info"></div>
+    </div>
 
-	</div>
-	<div class="modal-footer">
-	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	</div>
-      </div>
-  
-  <p>
-    <label>
-      <input type="radio" name="min-selector" value="long" checked required />
-      <span>long (5-60 min, recommended)</span>
-    </label>
-  </p>
-  <p>
-    <label>
-      <input type="radio" name="min-selector" value="short" />
-      <span>quick (1-3 min)</span>
-    </label>
-  </p>
-  <p>
-    <label>
-      <input type="radio" name="min-selector" value="none" />
-      <span>none<span>
-    </label>
-  </p>
+    <div id="radio-field" class="input-field col offset-s3 s6">
+        <div id="rasp_info"></div>
+    </div>
 
-</div>
-<div id="radio-field" class="input-field col offset-s3 s6">
-  <span id="radio-title" class="grey-text text-darken-1">RaSP Model <a class="waves-effect waves-light btn modal-trigger grey lighten-2" href="#modalrasp" title="Further information" style="float:right;">i</a></span>
-  
-  <!-- Modal Structure -->
-      <div id="modalrasp" class="modal">
-	<div class="modal-content">
-	  <h4>RaSP model</h4>
-	  <p>
-	   RaSP is a deep-learning-based tool that rapidly estimates
-protein stability changes. With RaSP, Mutation Explorer presents the user with a quick initial estimation of a mutation's (de)stabilizing effect, without their having to wait for the longer full minimization process.  The RaSP tool consists of two linearly linked networks.  A self-supervised 3D convolutional neural network that has learned representations of protein structures is followed by a fully connected neural network that maps these internal representations to Rosetta protein stability changes. RaSP is optimised for accuracy in the range [-1,7] kcal/mol.	   
-	   </p>
-	    <p>
-	    This command will create a RaSP model for each chain of the structure. This can take up to 10 minutes per chain.</p>
-	    <p>Once this option is selected, it will be applied in all subsequent steps accordingly.</p>
-  	</div>
-	<div class="modal-footer">
-	  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-	</div>
-      </div>
-  
-     <p>
-    <label>
-      <input type="checkbox" name="rasp-checkbox"  checked />
-      <span>Calculate RaSP model (~10 min for each chain)</span>
-    </label>
-  </p>
-</div>
+    <div id="radio-field" class="input-field col offset-s3 s6">
+        <div id="ifscore_info"></div>
+    </div>
+
+    <form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
 
 
-<form id="submitForm" method="POST" enctype="multipart/form-data" class="row">
-  
-
-  <!-- modal vcf demo 
+        <!-- modal vcf demo 
   <div class="col offset-s2 s8">
     <button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information" style="float: right;">demo vcf file</button>
   </div>
@@ -141,67 +91,74 @@ protein stability changes. With RaSP, Mutation Explorer presents the user with a
 <br>
 <br>-->
 
-<div class="col offset-s3 s6 center-align">
-  <div class="">
-    <div style="width: 100%; display: flex; justify-content: center">
-      <div class="file-field input-field" style="width: 100%">
-	<div class="btn" style="width: 100%">
-	  <span>Upload a VCF file</span>
-	  <input type="file" name="vcf" id="vcf" accept=".vcf">
-	</div>
-      </div>
-    </div>
-  </div>
-</div>
+        <div class="col offset-s3 s6 center-align">
+            <div class="">
+                <div style="width: 100%; display: flex; justify-content: center">
+                    <div class="file-field input-field" style="width: 100%">
+                        <div class="btn" style="width: 100%">
+                            <span>Upload a VCF file</span>
+                            <input type="file" name="vcf" id="vcf" accept=".vcf">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
-<br>
+        <br>
 
-<div class="col offset-s3 s6 center-align">
-    <span id="error-msg">{{error}}</span>
-</div>
+        <div class="col offset-s3 s6 center-align">
+            <span id="error-msg">{{error}}</span>
+        </div>
 
-<div class="col offset-s3 s6 center-align">
-<input id="submit-btn" type="submit" value="submit" class="btn">
-<br>
-<br>
-<br>
-<div style="display: flex; justify-content: center">
-<a href="{{url_for('load_example', tag='rtel1')}}" class="btn-small grey lighten-1">load example</a>
-<div style="width: 2vh"></div>
-<button data-target="modal1" class="btn-small modal-trigger grey lighten-1" title="Further information">demo vcf file</button>
-</div>
-</div>
-
-
-
-</form>
-
-<br>
-<br>
+        <div class="col offset-s3 s6 center-align">
+            <input id="submit-btn" type="submit" value="submit" class="btn">
+            <br>
+            <br>
+            <br>
+            <div style="display: flex; justify-content: center">
+                <a href="{{url_for('load_example', tag='rtel1')}}" class="btn-small grey lighten-1">load example</a>
+                <div style="width: 2vh"></div>
+                <button data-target="modal1" class="btn-small modal-trigger grey lighten-1"
+                    title="Further information">demo vcf
+                    file</button>
+            </div>
+        </div>
 
 
 
-{% endblock %}
+    </form>
+
+    <br>
+    <br>
 
 
-{% block scripts %}
-<script>
 
-    function showFilename() {
-        var fname = $(this).val().replace(/^.*[\\\/]/, '')
-        $(this).parent().parent().find(".filename").html(fname)
-    }
+    {% endblock %}
 
-    function initUploads() {
-        var uploads = $(".file-field")
-        for (i = 0; i < uploads.length; i++) {
-            $(uploads[i]).append('<center><div class="filename"></div></center>')
-            $($(uploads[i]).find("input")).on("change", showFilename)
+
+    {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/info_box.js') }}"></script>
+    <script>
+
+        document.getElementById('rasp_info').innerHTML = raspCheckbox('raspModal', `{% include "text/rasp.html" %}`, ' ');
+        document.getElementById('min_info').innerHTML = minimizationCheckbox('minModal', `{% include "text/minimization.html" %}`);
+        document.getElementById('ifscore_info').innerHTML = interfaceScoreCheckbox('ifscoreModal', `{% include "text/interface_score.html" %}`);
+
+        function showFilename() {
+            var fname = $(this).val().replace(/^.*[\\\/]/, '')
+            $(this).parent().parent().find(".filename").html(fname)
         }
-    }
 
-    initUploads()
+        function initUploads() {
+            var uploads = $(".file-field")
+            for (i = 0; i < uploads.length; i++) {
+                $(uploads[i]).append('<center><div class="filename"></div></center>')
+                $($(uploads[i]).find("input")).on("change", showFilename)
+            }
+        }
 
-</script>
-{% endblock %}
+        initUploads()
+
+    </script>
+    {% endblock %}
