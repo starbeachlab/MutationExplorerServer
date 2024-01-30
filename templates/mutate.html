@@ -197,7 +197,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta1" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+										<input type="file" name="fasta1"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -215,7 +216,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta2" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+										<input type="file" name="fasta2"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -236,7 +238,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta3" accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
+										<input type="file" name="fasta3"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -430,8 +433,7 @@
 		<br>
 
 		<div class="input-field col offset-s3 s6">
-			<input id="chain" type="email" name="email" class="validate"
-				placeholder="Email (optional)">
+			<input id="chain" type="email" name="email" class="validate" placeholder="Email (optional)">
 			<label for="chain">Get notified after job completion.</label>
 		</div>
 
@@ -468,6 +470,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/mutation_check.js') }}"></script>
 
 <script>
 
@@ -679,60 +682,6 @@
 		return true;
 	};
 
-	function mutationChainCheck() {
-		var mutations = $("#mutations-input").val().replace(/\s/g, "");
-		if (!mutations) {
-			return true;
-		}
-
-		mutations = mutations.split(",");
-
-		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
-
-		var ranges = [];
-		for (c of chains) {
-			r = c.split(/[:-]/);
-
-			// if it is a negative range, the string will split into 4
-			if (r.length == 4 && r[1] == '') {
-				r.splice(1, 1);
-				r[1] = `-${r[1]}`;
-			}
-			ranges.push(r);
-		}
-
-		for (m of mutations) {
-			if (!checkMutation(m, ranges)) {
-				return false
-			}
-		}
-
-		return true;
-	}
-
-	function checkMutation(mutation, ranges) {
-		var chain = mutation[0];
-		var position = parseInt(mutation.match(/-?\d+(\.\d+)?/));
-		for (r of ranges) {
-			if (r[0] == chain) {
-				var start = parseInt(r[1]);
-				var end = parseInt(r[2]);
-				if (start <= position && position <= end) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	function mutationSyntaxCorrect() {
-		muts = $("#mutations-input").val().replace(/ /g, "");
-		if (!muts) {
-			return true;
-		}
-		return /^([A-Z]:-?[0-9]+[A-Z])(,([A-Z]:-?[0-9]+[A-Z]))*$/.test(muts);
-	}
-
 	function checkTargetSequence() {
 		seq = [$('#seq1').val(), $('#seq2').val(), $('#seq3').val()];
 		upperCaseRegex = /^[A-Z]+$/;
@@ -748,17 +697,7 @@
 	}
 
 	$("#submitForm").on('submit', function (e) {
-		if (!mutationSyntaxCorrect()) {
-			e.preventDefault();
-			console.log("incorrect mutation syntax");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. If your syntax is correct, please use upper case letters. See info button for more information");
-		} else if (!mutationChainCheck()) {
-			e.preventDefault();
-			console.log("incorrect mutation position (chain or residue)");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-		} else if (!interfaceScoreValid()) {
+		if (!interfaceScoreValid()) {
 			console.log('interfaceScoreValid ', interfaceScoreValid())
 			e.preventDefault();
 			console.log("incorrect interface score selection");
@@ -769,7 +708,8 @@
 			e.preventDefault();
 			console.log("incorrect target sequence syntax");
 			$("#target_sequence_syntax_error").html(`The target sequence must be in upper case letters only. Please try again.`);
-		}
+		};
+		mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}' , e);
 	});
 
 </script>

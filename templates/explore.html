@@ -160,6 +160,7 @@
 {% block scripts %}
 <script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/clustal.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/mutation_check.js') }}"></script>
 
 <script type="text/javascript">
 
@@ -448,66 +449,9 @@
         return http.status != 404;
     }
 
-    function mutationChainCheck() {
-        var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
-        console.log('mutations ', mutations);
-
-        var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
-        console.log(chains);
-        var ranges = [];
-        for (c of chains) {
-            ranges.push(c.split(/[:-]/));
-        }
-        console.log('ranges');
-
-        for (m of mutations) {
-            if (!checkMutation(m, ranges)) {
-                return false
-            }
-        }
-
-        return true;
-    }
-
-    function checkMutation(mutation, ranges) {
-        var chain = mutation[0];
-        var position = parseInt(mutation.replace(/^\D+/g, ''));
-        for (r of ranges) {
-            if (r[0] == chain) {
-                var start = parseInt(r[1]);
-                var end = parseInt(r[2]);
-                if (start <= position && position <= end) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    function mutationSyntaxCorrect() {
-        muts = $("#mutations-input").val().replace(/ /g, "");
-        if (!muts) {
-            return true;
-        }
-        return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
-    }
-						     
     $("#submitForm").on('submit', function (e) {
-        if (!mutationSyntaxCorrect()) {
-            e.preventDefault();
-            console.log("incorrect mutation syntax");
-            $("#mutations-input").addClass("invalid");
-            $("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
-        } else if (!mutationChainCheck()) {
-            e.preventDefault();
-            console.log("incorrect mutation position (chain or residue)");
-            $("#mutations-input").addClass("invalid");
-            $("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-        }
+        mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}', e);
     });
-
-
-
 
     /*
     function getFileName(){
