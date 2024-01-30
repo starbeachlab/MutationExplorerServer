@@ -131,7 +131,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal1">
+									<input type="file" name="clustal1" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -145,7 +145,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal2">
+									<input type="file" name="clustal2" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -159,7 +159,7 @@
 							<div class="file-field input-field" style="width: 100%">
 								<div class="btn" style="width: 100%">
 									<span>Upload a ClustalW file</span>
-									<input type="file" name="clustal3">
+									<input type="file" name="clustal3" accept=".clw, .aln">
 								</div>
 							</div>
 						</div>
@@ -197,7 +197,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta1">
+										<input type="file" name="fasta1"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -215,7 +216,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta2">
+										<input type="file" name="fasta2"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -236,7 +238,8 @@
 								<div class="file-field input-field" style="width: 100%">
 									<div class="btn" style="width: 100%">
 										<span>Upload a FASTA file</span>
-										<input type="file" name="fasta3">
+										<input type="file" name="fasta3"
+											accept=".fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, .frn">
 									</div>
 								</div>
 							</div>
@@ -253,6 +256,8 @@
 
 					<!-- 2) Sequence upload -->
 					<div>
+						<div id="target_sequence_syntax_error" style="color: red;"></div>
+
 						<div class="row">
 							<div class="col s3">
 								<div class="input-field chain-select-field" sel="chainS1">
@@ -423,6 +428,17 @@
 		</div>
 		<br>
 		<br>
+		<br>
+		<br>
+		<br>
+
+		<div class="input-field col offset-s3 s6">
+			<input id="chain" type="email" name="email" class="validate" placeholder="Email (optional)">
+			<label for="chain">Get notified after job completion.</label>
+		</div>
+
+		<br>
+		<br>
 
 	</form>
 </div>
@@ -454,6 +470,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/mutation_check.js') }}"></script>
 
 <script>
 
@@ -569,7 +586,7 @@
 
 	function chainSelect() {
 
-		var chains = "{{chains}}".split("")
+		var chains = getChainLetters();
 		var selectHtml
 
 		if (chains.length == 1) {
@@ -665,70 +682,34 @@
 		return true;
 	};
 
-	function mutationChainCheck() {
-		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
-		console.log('mutations ', mutations);
+	function checkTargetSequence() {
+		seq = [$('#seq1').val(), $('#seq2').val(), $('#seq3').val()];
+		upperCaseRegex = /^[A-Z]+$/;
 
-		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
-		console.log('chains_range ', chains);
-		var ranges = [];
-		for (c of chains) {
-			ranges.push(c.split(/[:-]/));
-		}
-		console.log('ranges ', ranges);
-
-		for (m of mutations) {
-			if (!checkMutation(m, ranges)) {
-				return false
+		for (s of seq) {
+			if (s == '') continue;
+			if (!upperCaseRegex.test(s)) {
+				return false;
 			}
 		}
 
 		return true;
 	}
 
-	function checkMutation(mutation, ranges) {
-		var chain = mutation[0];
-		var position = parseInt(mutation.replace(/^\D+/g, ''));
-		console.log(position);
-		for (r of ranges) {
-			if (r[0] == chain) {
-				var start = parseInt(r[1]);
-				var end = parseInt(r[2]);
-				if (start <= position && position <= end) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	function mutationSyntaxCorrect() {
-		muts = $("#mutations-input").val().replace(/ /g, "");
-		if (!muts) {
-			return true;
-		}
-		return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
-	}
-
 	$("#submitForm").on('submit', function (e) {
-		if (!mutationSyntaxCorrect()) {
-			e.preventDefault();
-			console.log("incorrect mutation syntax");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
-		} else if (!mutationChainCheck()) {
-			e.preventDefault();
-			console.log("incorrect mutation position (chain or residue)");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-		} else if (!interfaceScoreValid()) {
+		if (!interfaceScoreValid()) {
 			console.log('interfaceScoreValid ', interfaceScoreValid())
 			e.preventDefault();
 			console.log("incorrect interface score selection");
 			$("#interface_score_checkbox").addClass("invalid");
 			$("#interface_score_error").html(`Invalid interface score selection. Left or right side must not be empty.
 				If there is only one chain available, please select 'No calculation' or 'Complete calculation.`);
-		}
+		} else if (!checkTargetSequence()) {
+			e.preventDefault();
+			console.log("incorrect target sequence syntax");
+			$("#target_sequence_syntax_error").html(`The target sequence must be in upper case letters only. Please try again.`);
+		};
+		mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}' , e);
 	});
 
 </script>

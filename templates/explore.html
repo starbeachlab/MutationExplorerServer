@@ -52,23 +52,11 @@
 
                 {{structures|safe}}
 
-                <div class="input-field">
-                    <span> Color by: </span>
-                    <select id="selecter" onchange="changeColoring();">
-                        <!-- <option value="" disabled selected>Color by</option> -->
-                        <option value="1">Absolute energy</option>
-                        <option value="2" id="ediff" class="diff">Energy difference to parent</option>
-                        <option value="3">Absolute hydrophobicity</option>
-                        <option value="4" class="diff">Hydrophobicity difference to parent</option>
-                        <option value="5" class="diff">Sequence conservation</option>
-                        <option value="6" class="diff">Absolute interface binding energy</option>
-                        <option value="7">Interface binding energy difference to parent</option>
-                    </select>
-                </div>
+                <div id="color_option_select"></div>
 
                 <div>
                     <p>Currently displayed:</p>
-                    <div id="discol">n o t h i n g</div>
+                    <div id="current_pdb_displayed">n o t h i n g</div>
                 </div>
 
                 <div class="center-align">
@@ -106,10 +94,11 @@
 
                 <div>
                     <div class="input-field">
-                        <input id="mutations-input" type="text" name="mutations" class="validate" placeholder="X:123L,A:45G" required>
+                        <input id="mutations-input" type="text" name="mutations" class="validate"
+                            placeholder="X:123L,A:45G" required>
                         <label for="mutations">Enter mutations</label>
                     </div>
-					<div id="mutations-syntax-error" style="color: red;"></div>
+                    <div id="mutations-syntax-error" style="color: red;"></div>
 
                     <div>
                         <input id="fname" name="fname" type="hidden"> <!--to communicate filename-->
@@ -170,48 +159,49 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{url_for('static', filename='v7/mdsrv.js')}}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/clustal.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/mutation_check.js') }}"></script>
 
 <script type="text/javascript">
 
-    // set default structure
-    name = "{{filename}}";
-    let the_ending = "_diffE.pdb"; // for communication between fct
-    if (name == "") {
-        name = "mut_0.pdb";
-        the_ending = "_absE.pdb";
+    filename = "{{filename}}";
+    let coloring_suffix = "_diffE.pdb"; // defautl coloring
+
+    if (filename == "") {
+        filename = "mut_0.pdb";
+        coloring_suffix = "_absE.pdb";
     }
-    let the_name = name.substr(0, name.length - 4);
+
+    let current_structure_name = filename.substr(0, filename.length - 4);
+
     allchains = "{{chains}}"
 
-    let two_strcs = ("{{two_structures}}" !== "")
-  if (two_strcs) {
-    the_ending = "_cons.pdb";
-    tmp = "{{two_structures}}"
-    aln_ids = tmp.split(";")
+    let two_strcs = "{{two_structures}}"
+    if (two_strcs != '') {
+        coloring_suffix = "_cons.pdb";
+        tmp = "{{two_structures}}"
+        aln_ids = tmp.split(";")
     }
 
     // highlight selected structure
     strcs = $(".structures");
     for (i = 0; i < strcs.length; i++) {
-        if (strcs[i].text == the_name) {
+        if (strcs[i].text == current_structure_name) {
             $(strcs[i]).addClass("bld");
         }
     }
 
     $(document).ready(function () {
-        $('select').formSelect();
-
-        setDiffOptions();
-
-        loadPdb(the_name, the_ending);
-	if (the_ending == "_cons.pdb"){
-	    dropdownChangeSelection('5');
-	} else {
-            dropdownChangeSelection('2');
-	}
+        buildColoringSelect(current_structure_name);
+        loadPdb(current_structure_name, coloring_suffix);
+        if (coloring_suffix == "_cons.pdb") {
+            dropdownChangeSelection('4');
+        } else {
+            dropdownChangeSelection('1');
+        }
     });
 
-	document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
+    document.getElementById('chain_list').innerHTML = "{{chains_range}}".replace(/,/g, '<br/>');  // .split('');   // availabe chains manual-mut
 
     function getURL(fname) {
         var loc = window.location;
@@ -219,69 +209,63 @@
         return command;
     }
 
-
     async function loadPdb(name, coloring) {
-        // fill html elements
-        updateInfoSection(the_name);
-        // input files
-        var c_name = name;
-        if (name == "mut_0" || name == "mut_1") {
-            c_name = name + "_1"
-            if (coloring == "_diffE.pdb" || (!two_strcs && coloring == "_cons.pdb")) {
-                coloring = "_absE.pdb";
-            } else if (coloring == "_diffHyPh.pdb") {
-                coloring = "_HyPh.pdb";
-            } else if (coloring == "_diffIF.pdb") {
-                coloring = "_IF.pdb";
-            }
-        }
-        document.getElementById('discol').innerHTML = name + coloring;
+        updateInfoSection(current_structure_name);
+
         document.getElementById('fname').value = name; // + ".pdb";
 
-        console.log(allchains)
-        console.log("color", coloring)
         var pdbFiles = [];
-
+        var clustalFiles = []
         connectorString = "";
 
-        if (two_strcs && (name == "mut_0" || name == "mut_1")) {
-            // two structures
+        if (two_strcs != '') {
+            document.getElementById('current_pdb_displayed').innerHTML = `mut_0${coloring} <br> mut_1${coloring}`;
 
-            pdbFiles.push(getURL("mut_0" + coloring))
-            pdbFiles.push(getURL("mut_1" + coloring))
+            // two structures from AlignMe
+            pdbFiles.push(getURL('mut_0' + coloring));
+            pdbFiles.push(getURL('mut_1' + coloring));
 
-            var clustalFiles = [getURL("alignment.aln")]
-		    
-		    
-            if (allchains.length != 2) {
-                // print errror message!
-            }
-            connectorString = "mut_0" + coloring + ":alignment.aln," + aln_ids[0] + "," + allchains[0] + ";mut_1" + coloring + ":alignment.aln," + aln_ids[1] + "," + allchains[1] + ";"
+            clustalFileName = 'alignment.aln';
+            clustalUrl = getURL(clustalFileName);
+            clustalFiles.push(clustalUrl);
 
+            clustainChainIds = two_strcs.split(';');
+            match_string = '{{match_string}}'.split(',');
+
+            // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile;
+            connectorString += `mut_0${coloring}:${clustalFileName},${match_string[0]},${match_string[1]};`;
+            connectorString += `mut_1${coloring}:${clustalFileName},${match_string[2]},${match_string[3]};`;
+
+        } else if (name == 'mut_0') {
+            document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
+            // wildtype structure
+            // no connector String needed, because there is no clustal file
+            var pdbFile = getURL(name + coloring);
+            pdbFiles.push(pdbFile);
 
         } else {
-            // single structure
-
-            var pdbFile = getURL(name + coloring);
-
-            pdbFiles.push(getURL(name + coloring))
-
-            var clustalFiles = []
+            document.getElementById('current_pdb_displayed').innerHTML = name + coloring;
+            // single mutated structure with a clustal file
+            var pdbFileName = `${name + coloring}`;
+            var pdbUrl = getURL(pdbFileName);
+            pdbFiles.push(pdbUrl);
 
             for (i = 0; i < allchains.length; i++) {
 
-                var clustalUrl = getURL(c_name + "_" + allchains[i] + ".clw")
-                var clustalUrlReordered = getURL(c_name + '_' + allchains[i] + '_reordered.clw')
+                var clustalUrl = getURL(name + "_" + allchains[i] + ".clw")
+                var clustalFileName = `${name}_${allchains[i]}_reordered.clw`;
+                var clustalUrlReordered = getURL(clustalFileName);
 
+                // check pdb resid sorting for proper alignment display
                 await checkChainRedidsSorted(allchains[i], name, '{{tag}}', clustalUrl)
 
-                console.log("load clustalUrl ", clustalUrlReordered)
-                if (UrlExists(clustalUrlReordered)) {
-                    console.log("Does not exist")
-                }
-                else {
+                if (!urlExists(clustalUrlReordered)) {
+                    console.log(`Reordered clustal file oes not exist - ${clustalFileName}`);
+                } else {
                     clustalFiles.push(clustalUrlReordered);
-                    connectorString += name + coloring + ":" + name + "_" + allchains[i] + "_reordered.clw," + name + "," + allchains[i] + ";"
+                    // mut_0_1_diffE.pdb:mut_0_1_A.clw,mut_0_1,A;mut_0_1_diffE.pdb:mut_0_1_B.clw,mut_0_1,B;
+                    // pdbFile:clustalFile,chainIdInClustalFile,chainIdInPdbFile;
+                    connectorString += pdbFileName + ":" + clustalFileName + ',' + name + "," + allchains[i] + ";"
                 }
             }
         }
@@ -302,9 +286,6 @@
             colorType = "interface-score";
             unit = "R.E.U."
         }
-        console.log("color type:", colorType)
-        console.log("unit:", unit)
-        console.log("string:", connectorString)
 
         const params = {
             structureUrls: pdbFiles,
@@ -331,15 +312,15 @@
     async function checkChainRedidsSorted(chain, pdbFile, tag, clustalUrl) {
         await fetch('/mutation_explorer/chain_resids_sorted', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chain: chain, pdbFile: pdbFile, tag: tag, clustalUrl: clustalUrl })
         })
-        .then(response => response.json())
-        .then(data => {
-        })
-        .catch(error => {
-            console.log('Error');
-        })
+            .then(response => response.json())
+            .then(data => {
+            })
+            .catch(error => {
+                console.log('Error');
+            })
     }
 
     $(".toggle").click(function (e) {
@@ -359,18 +340,21 @@
 
     $(".structures").click(function (e) {
         e.preventDefault();
-        the_name = $(this).text();
-        strc = the_name + the_ending;
+
+        current_structure_name = $(this).text();
+        if (current_structure_name == 'mut_0') {
+            coloring_suffix = '_absE.pdb';
+
+        }
+        strc = current_structure_name + coloring_suffix;
 
         // highlight:
         $(".structures").removeClass("bld");  // unbold all
         $(this).addClass("bld");              // bold current
 
+        buildColoringSelect(current_structure_name);
         // load:
-        loadPdb(the_name, the_ending);
-        //document.getElementById('discol').innerHTML = strc;
-
-        setDiffOptions();
+        loadPdb(current_structure_name, coloring_suffix);
     })
 
 
@@ -388,58 +372,59 @@
         $('select').formSelect();
     }
 
-
     function changeColoring() {
         id = selectedColorScheme();
-        if (id == "1") { the_ending = "_absE.pdb"; }
-        else if (id == "2") { the_ending = "_diffE.pdb"; }
-        else if (id == "3") { the_ending = "_HyPh.pdb"; }
-        else if (id == "4") { the_ending = "_diffHyPh.pdb"; }
-        else if (id == "5") { the_ending = "_cons.pdb"; }
-        else if (id == "6") { the_ending = "_IF.pdb"; }
-        else if (id == "7") { the_ending = "_diffIF.pdb"; }
-        //alert(selectedValue);
-        //document.getElementById('discol').innerHTML = the_name + the_ending;
-        loadPdb(the_name, the_ending);
+        coloring = getAllColoring();
+        suffix = `_${coloring[id]}.pdb`;
+        loadPdb(current_structure_name, suffix);
     }
 
+    function getColorSelectOption() {
+        return [
+            'Absolute energy', 'Energy difference to parent',
+            'Absolute hydrophobicity', 'Hydrophobicity difference to parent',
+            'Sequence conservation',
+            'Absolute interface binding energy', 'Interface binding energy difference to parent'
+        ]
+    }
 
-    // if mut_0.pdb is selected, there are no _diffE and _diffHyp colorings => disable select options
-    function setDiffOptions() {
-        console.log("diff")
-        if (the_name == "mut_0" || the_name == "mut_1") {
+    function buildColoringSelect(name) {
+        colorId = checkColoringOption(name);
+        colorOptions = getColorSelectOption();
 
-            // if diff color scheme currently selected, change the selection to the absolute equivalent
-            if (the_ending == "_diffE.pdb" || (!two_strcs && the_ending == "_cons.pdb")) {
-                //$("#selecter").val('1');
-                dropdownChangeSelection('1');
-            } else if (the_ending == "_diffHyPh.pdb") {
-                //$("#selecter").val('3');
-                dropdownChangeSelection('3');
-            } else if (the_ending == "_diffIF.pdb") {
-                dropdownChangeSelection('6');
-            }
+        var select = '';
+        select += `<div class="input-field">`;
+        select += `<span>Color by:</span>`;
+        select += '<select id="selecter" onchange="changeColoring();">';
 
-            // style changes have to be made after .formSelect() (called in dropdownChangeSelection()), otherwise materialize overrides them >:(
-            // opts elements become obsolete after every .formSelect()
-            opts = $(".dropdown-content:contains('Energy')")[0].children
-            $(opts[1]).css("display", "none")
-            $(opts[3]).css("display", "none")
+        for (id of colorId) {
+            select += `<option value='${id}'>${colorOptions[id]}</options>`;
+        }
 
-            if (!two_strcs) {
-                $(opts[4]).css("display", "none")
-            }
+        select += '</select>';
+        select += '</div>';
 
-        } else {
-            console.log("add opts")
-            opts = $(".dropdown-content:contains('Energy')")[0].children
-            $(opts[1]).css("display", "block")
-            $(opts[3]).css("display", "block")
+        document.getElementById('color_option_select').innerHTML = select;
+        $('select').formSelect();
+    }
 
-            if (!two_strcs) {
-                $(opts[4]).css("display", "block")
+    function getAllColoring() {
+        return ['absE', 'diffE', 'HyPh', 'diffHyPh', 'cons', 'IF', 'diffIF'];
+    }
+
+    function checkColoringOption(name) {
+        colorings = getAllColoring();
+        available = [];
+
+        for (let i = 0; i < colorings.length; i++) {
+            var c = colorings[i];
+            fileURL = getURL(`${name}_${c}.pdb`);
+            if (urlExists(fileURL)) {
+                available.push(i);
             }
         }
+
+        return available;
     }
 
     function updateInfoSection(fname) {
@@ -457,73 +442,16 @@
         });
     }
 
-    function UrlExists(url) {
+    function urlExists(url) {
         var http = new XMLHttpRequest();
         http.open('HEAD', url, false);
         http.send();
-        return http.status == 404;
+        return http.status != 404;
     }
 
-    function mutationChainCheck() {
-		var mutations = $("#mutations-input").val().replace(/\s/g, "").split(",");
-                console.log('mutations ', mutations);
-
-		var chains = "{{chains_range}}".replace(/\s/g, "").replace(/[,]$/, "").split(",");
-        console.log(chains);
-		var ranges = [];
-		for (c of chains) {
-			ranges.push(c.split(/[:-]/));
-		}
-        console.log('ranges');
-
-		for (m of mutations) {
-			if (!checkMutation(m, ranges)) {
-				return false
-			}
-		}
-
-		return true;
-	}
-
-	function checkMutation(mutation, ranges) {
-		var chain = mutation[0];
-		var position = parseInt(mutation.replace(/^\D+/g, ''));
-		for (r of ranges) {
-			if (r[0] == chain) {
-				var start = parseInt(r[1]);
-				var end = parseInt(r[2]);
-				if (start <= position && position <= end) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	function mutationSyntaxCorrect() {
-		muts = $("#mutations-input").val().replace(/ /g, "");
-		if (!muts) {
-			return true;
-		}
-		return /^([a-zA-Z]:[0-9]+[a-zA-Z])(,[a-zA-Z]:[0-9]+[a-zA-Z])*$/.test(muts);
-	}
-
-	$("#submitForm").on('submit', function (e) {
-		if (!mutationSyntaxCorrect()) {
-			e.preventDefault();
-			console.log("incorrect mutation syntax");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid syntax. See info button for more information");
-		} else if (!mutationChainCheck()) {
-			e.preventDefault();
-			console.log("incorrect mutation position (chain or residue)");
-			$("#mutations-input").addClass("invalid");
-			$("#mutations-syntax-error").html("Invalid chain or residue position. See info button for more information");
-		}
-	});
-
-
-
+    $("#submitForm").on('submit', function (e) {
+        mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}', e);
+    });
 
     /*
     function getFileName(){

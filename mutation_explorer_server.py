@@ -18,7 +18,7 @@ import smtplib, ssl
 
 # fatal error messages
 NO_MUTATIONS = "No valid mutations were defined"
-RELAXATION_FAILED = "Relaxation of initial structure failed. Check your input PDB. Calpha only traces can not be handled. RaSP requires side-chains to be present."
+RELAXATION_FAILED = "Relaxation of initial structure failed. Check your input PDB. Potentially unknown HETATMs (if this is the case, try using the 'remove hetatms' option in the 'Filter structure' button on the 'upload structure or model' page). Calpha only traces can not be handled. RaSP requires side-chains to be present."
 MUTATION_FAILED = "Mutation failed"
 STRUCTURE_NOT_IN_ALIGNMENT = "No sequence in the alignment matches the sequence of the provided structure"
 
@@ -138,9 +138,10 @@ def secure_str( string):
 
 
 def download_file(url, file_path):
-        req = requests.get(url)
-        with open(file_path, 'wb') as f:
-            f.write(req.content)
+    req = requests.get(url)
+    with open(file_path, 'wb') as f:
+        f.write(req.content)
+    return req.status_code
 
 
 def get_alphafold_id(af):
@@ -249,7 +250,8 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
     print("MV Done")
-    
+
+    # TODO:: move one level up, should not be within fixbb or rename to fixbb_rasp
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     if ifscore != "":
         calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb", ifscore)
@@ -487,7 +489,13 @@ def save_pdb_file(file_path, upload, pdb, af):
             cp_from_db(pdb,file_path)
         else:
             msg="notfound"
-            download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+            status = download_file("https://files.rcsb.org/download/" + pdb + ".pdb", file_path)
+
+            if status == 404:
+                error = True
+                error_message = 'The PDB id you provided was not found in the PDB database.'
+                return original_name, error, error_message, msg
+
         print('pdb in db:', msg)
     elif af != "":
         af_id = get_alphafold_id(af)
@@ -498,7 +506,12 @@ def save_pdb_file(file_path, upload, pdb, af):
             cp_from_db(af,file_path)
         else:
             msg="notfound"
-            download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+            status = download_file("https://alphafold.ebi.ac.uk/files/" + af_id, file_path)
+
+            if status == 404:
+                error = True
+                error_message = 'The AlphaFold id you provided was not found in the AlphaFold database.'
+                return original_name, error, error_message, msg
             
     else:
         # no structure -> error
@@ -546,11 +559,57 @@ def filter_structure(tag, outdir, file_path, chain_filter, remove_hets):
     return False
 
 def filter_chain( inpdb, fchain, outpdb):
-    with open(inpdb, "r") as f_in, open(outpdb, "w") as f_out:
+    atoms = []
+    energies = []
+    with open(inpdb, "r") as f_in:
+        count = 0
+        prev_resid = -999999
+        min_id = 9999999
+        max_id = -9999999
+        good_boy = False
         for l in f_in:
-            if l[:4] == "ATOM" and chain(l) == fchain:
+            if l[:3] == "TER" and good_boy:
+                atoms.append(l)
+                good_boy  = False
+            elif l[:4] == "ATOM" or l[:6] == "HETATM":
+                curr_resid = resid(l)
+                if curr_resid != prev_resid:
+                    prev_resid = curr_resid
+                    count += 1
+                if chain(l) == fchain:
+                    atoms.append( l)
+                    min_id = min( min_id, count)
+                    max_id = max( max_id, count)
+                    good_boy = True
+                else:
+                    good_boy = False
+            elif l[0] != '#' and len(l) > 20:
+                good_boy = False
+                c = l.split()
+                if 'label' in l and 'total' in l:
+                    energies.append(l)
+                elif c[0].find('_') != -1:
+                    energies.append(l)
+            else:
+                good_boy = False
+    with open(outpdb, "w") as f_out:
+        for l in atoms:
+            f_out.write(l)
+        count = 1
+        for l in energies:
+            if 'label' in l and 'total' in l:
                 f_out.write(l)
-           
+                continue
+            c = l.split()
+            cid = c[0].rfind( '_' )
+            myid = int(c[0][cid+1:])
+            if myid >= min_id and myid <= max_id:
+                f_out.write( c[0][:cid+1] + str(count))
+                for i in range(1,len(c)):
+                    f_out.write( ' ' + c[i])
+                f_out.write('\n')
+                count += 1
+            
 def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
@@ -573,7 +632,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
                 path = rose + "alphafold/" + af.upper() + ".pdb"
 
         print(path)
-        start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path ], "minimisation")
+        start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path], "minimisation")
     else:
 
         if (not filtered) and longmin == True:
@@ -590,8 +649,9 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
 
             # interface score for initial structure is going to be calculated later
             # because the selection for the chains was not done yet
-            # print( "calc interface from relax_initial_structure")
-            # calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb")
+            if ifscore != '':
+                print( "calc interface from relax_initial_structure")
+                calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb", ifscore)
 
             file_processing( tag, structure, name,  log_file)
 
@@ -600,7 +660,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin], "minimisation")
             msg =  "notfound"
 
-def score_structure(tag, outdir, name, structure):
+def score_structure(tag, outdir, name, structure, ifscore=''):
     logfile = "log.txt"
 
     status_update(tag, "Start+scoring+for+" + name)
@@ -617,11 +677,12 @@ def score_structure(tag, outdir, name, structure):
     # calc_rasp(tag, structure, name, logfile, path_to_store)
     # see fixbb / relax_initial_structure
 
-    # cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
-    # bash_cmd( cmd, tag)
-    # status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
+    if ifscore != '':
+        cmd = "bash -i " + app.config['SCRIPTS_PATH'] + 'pdb_rosetta_interface.sh ' + outdir + name + '.pdb ' + outdir + name + '_IF.pdb'
+        bash_cmd( cmd, tag)
+        status_update( tag, "interface+calculated+" + name + "_IF.pdb" )
     
-    file_processing(tag, structure, name, logfile)
+    file_processing(tag, structure, name, logfile, ifscore)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit(): 
@@ -632,6 +693,10 @@ def submit():
     ### get form values
 
     upload = request.files['pdbfile']
+    if upload and not allowed_file(upload.filename, {'pdb'}):
+        error_message = 'You can only upload PDB files. Please try again with the right format.'
+        return render_template('submit.html', error = error_message)
+
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
 
@@ -727,6 +792,9 @@ def submit():
 
     return redirect(url_for('mutate', tag = tag, msg=msg, minimize=minimize))
 
+
+
+
 def add_mutations(tag, mutant, inputs, ifscore=""):
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
@@ -785,22 +853,25 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
         i += 1
         if uniprot != "" and chainU != '':
             uni_file = outdir + uniprot
+            print( 'get uniprot:', uniprot, uni_file, i)
             download_uniprot( uniprot, uni_file)
             target = seq_from_fasta( uni_file)
+            print( 'mutations before:', mutations, 'target', target, chainU, outdir + parent)
             add_mutations_from_sequence( mutations, target, chainU, "uni" + str(i % 3), outdir + parent)
-
+            print( 'mutations after:', mutations)
+            
     print(__name__, 'total number of mutations:', len(mutations))
     if len(mutations) != 0:
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
-        fatal_error(tag, NO_MUTATIONS)
+        fatal_error(tag, NO_MUTATIONS)  # second layer of check for no mutation
 
-    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
 
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (fixbb)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb) ")
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
@@ -809,40 +880,36 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 @app.route('/mutate/<tag>/<msg>/<minimize>', methods=['GET', 'POST'])
 def mutate(tag,msg="",minimize="True"):
 
-    if request.method == 'GET':
-        outdir = app.config['USER_DATA_DIR'] + tag + "/"
-
-        # get chains, resid-ranges from uploaded structure
-        chains_range = get_chains_and_range( outdir + "structure.pdb")
-
-        with open( outdir + 'chains.txt', 'w') as w:
-            w.write( chains_range + '\n')
-            
-        chains = ''
-        for w in chains_range.split(",")[0:-1]:
-            w = w.strip()
-            if len(w) > 0:
-                chains += w[0]
-        print( 'chains: ', chains)
-
-        structure = ""
-        with open( outdir + 'name.log') as r:
-            structure = r.readline().strip()
-
-        # check if pdb in DB
-        status = ""
-        if msg=="found":
-            status="PDB entry " + structure + " has already been minimized in our database. No additional minimization will be performed."
-        elif msg == "notfound":
-            status = "PDB entry " + structure + " was not previously minimized in our database. Minimization will be performed."
-            
-        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
-
-
-    ###  get form values
-
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
+    # get chains, resid-ranges from uploaded structure
+    chains_range = get_chains_and_range( outdir + "structure.pdb")
+
+    with open( outdir + 'chains.txt', 'w') as w:
+        w.write( chains_range + '\n')
+        
+    chains = ''
+    for w in chains_range.split(",")[0:-1]:
+        w = w.strip()
+        if len(w) > 0:
+            chains += w[0]
+    print( 'chains: ', chains)
+
+    structure = ""
+    with open( outdir + 'name.log') as r:
+        structure = r.readline().strip()
+
+    # check if pdb in DB
+    status = ""
+    if msg=="found":
+        status="PDB entry " + structure + " has already been minimized in our database. No additional minimization will be performed."
+    elif msg == "notfound":
+        status = "PDB entry " + structure + " was not previously minimized in our database. Minimization will be performed."
+
+    if request.method == 'GET':
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
+
+    ###  get form values
     inputs = {}
 
     # manual mutations
@@ -854,6 +921,12 @@ def mutate(tag,msg="",minimize="True"):
         request.files['clustal2'],
         request.files['clustal3'],
     ]
+
+    if len(inputs['clustals']) != 0:
+        for clustal in inputs['clustals']:
+            if len(clustal.filename) != 0 and not allowed_file(clustal.filename, {'aln', 'clw'}):
+                error_message = 'You can only upload .aln or .clw files for the ClustalW files. Please try again with the right format.'
+                return render_template("mutate.html", tag = tag, error = error_message)
 
     inputs["chainCs"] = [
         request.form.get('chainC1'),
@@ -867,6 +940,12 @@ def mutate(tag,msg="",minimize="True"):
         request.files['fasta2'],
         request.files['fasta3'],
     ]
+
+    if len(inputs['fastas']) != 0:
+        for fasta in inputs['fastas']:
+            if len(fasta.filename) != 0 and not allowed_file(fasta.filename, {'fasta', 'fas', 'fa', 'fna', 'ffn', 'faa', 'mpfa', 'frn'}):
+                error_message = 'You can only upload .fasta, .fas, .fa, .fna, .ffn, .faa, .mpfa, or .frn files for the FASTA files. Please try again with the right format.'
+                return render_template("mutate.html", tag = tag, error = error_message)
 
     inputs["chainFs"] = [
         request.form.get('chainF1'),
@@ -922,10 +1001,16 @@ def mutate(tag,msg="",minimize="True"):
             else:
                 right += c
         if_score = left + "_" + right
-
+        print('manual interface definition:', if_score)
+        
     # calculate the interface score for the initial structure 
     # could not be done earlier because above selection was not known
     calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
+
+    email = request.form['email'].strip() 
+    if email:
+        results_link = app.config["SERVER_URL"]+ url_for('explore', tag = tag, filename = "mut_0_1.pdb") 
+        write_email(outdir + "mail.txt", email, results_link)
 
     # get all mutations
     i = 0
@@ -962,7 +1047,7 @@ def mutate(tag,msg="",minimize="True"):
         #print(os.path.join( app.config['USER_DATA_DIR'], tag)  +  "log.txt")
         #log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
         #bash_cmd(cmd,  log)
-        return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "Please provide a mutation")
 
     # files have to be saved in this function, out of reasons beyond my understanding
     inputs["clustal_files"] = []
@@ -1067,7 +1152,7 @@ def vcf_calculation(tag, inputs):
             path = rose + "alphafold/" + alphafold.strip().upper() + ".pdb"
 
             print("Store " + path)
-            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt",longmin, path, ifscore], "minimisation")
+            start_thread(fixbb, [tag, "structure.pdb", "mut_0_resfile.txt", "mut_0", "log.txt", longmin, path, ifscore], "minimisation")
             error_msg = "Minimization of initial structure using Rosettas fixbb failed. Check your input PDB."
             print( 'fixbb started for initial upload\n')
         else:
@@ -1096,7 +1181,7 @@ def vcf_calculation(tag, inputs):
 
     # mutate
     helper_files_from_mutations( mutations,  outdir + 'mut_0.pdb',  outdir + 'mut_0_1_resfile.txt',  outdir + 'mut_0_1.clw',  outdir + 'info/mut_0_1.txt')
-    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt", ifscore], "mutti") # thread isnt needed anymore
+    start_thread(fixbb, [tag, 'mut_0.pdb', 'mut_0_1_resfile.txt', 'mut_0_1.pdb', "log.txt", False, '', ifscore], "mutti") # thread isnt needed anymore
 
     # check if mutation successful
     # if wait( outdir + 'mut_0_1.pdb', 1, WAIT_MUTATION) == False:
@@ -1118,6 +1203,11 @@ def vcf():
     inputs = {}
 
     vcf = request.files['vcf']
+
+    if vcf and not allowed_file(vcf.filename, {'vcf'}):
+        error_message = 'You can only upload .vcf files. Please try again with the right format.'
+        return render_template('vcf.html', error = error_message)
+
     vcf_file = vcf.filename
     if vcf_file == "":
         return render_template("vcf.html", error = "no filename was given")
@@ -1217,7 +1307,7 @@ def interface_one_structure(tag, mutant, inputs):
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
 
     # start mutation calculation
-    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore)
+    fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
 
     # check mutation success
     if wait(mutant, 1, WAIT_MUTATION) == False:
@@ -1228,7 +1318,7 @@ def interface_one_structure(tag, mutant, inputs):
 
     if not waitID(pid):
         fatal_error(tag, MUTATION_FAILED + " (3)")
-
+        
 def interface_two_structures(tag, inputs):
     # TODO: errors
 
@@ -1259,6 +1349,7 @@ def interface_two_structures(tag, inputs):
     ifscore = ''
     if ifscore_calculation:
         ifscore = 'all'
+        status_update( tag,  'calc+interface+score')
 
     #inputs["connector_string"] = "mut_0.pdb:mut_0_1.clw," + base_clustal_id + "," + base_chain + ";mut_1.pdb:mut_0_1.clw," + target_clustal_id + "," + target_chain
     
@@ -1268,14 +1359,17 @@ def interface_two_structures(tag, inputs):
         os.rename( outdir+ "tmp.pdb", outdir + "structure.pdb" )
     if target_chain != '':
         status_update( tag, "filter+target+chain")
-        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp.pdb")
-        os.rename( outdir+ "tmp.pdb", outdir + "structure2.pdb" )
+        filter_chain( outdir + "structure2.pdb", target_chain, outdir + "tmp2.pdb")
+        os.rename( outdir+ "tmp2.pdb", outdir + "structure2.pdb" )
     
     if not minimize:
+        status_update( tag, "score+base+structure")
         score_structure(tag, outdir, "mut_0", "structure.pdb", ifscore)
+        status_update( tag, "score+target+structure")
         score_structure(tag, outdir, "mut_1", "structure2.pdb", ifscore)
     else:
-        # relax provided structure                                                                                                                                                                 
+        # relax provided structure
+        status_update( tag, "relax+base+structure")  
         # minimize structures
         relax_initial_structure(outdir, tag, base_msg, base_filtered, longmin, base_pdb, base_af, "mut_0", "structure.pdb", ifscore)
 
@@ -1286,6 +1380,7 @@ def interface_two_structures(tag, inputs):
 
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
+        status_update( tag, "relax+target+structure")  
 
         relax_initial_structure(outdir, tag, target_msg, target_filtered, longmin, target_pdb, target_af, "mut_1", "structure2.pdb", ifscore)
 
@@ -1304,7 +1399,6 @@ def interface_two_structures(tag, inputs):
 
     # get clustal ids, chains, sequence ids
     pdb_match, base_noncanonical_residues = find_pdb_in_alignment(clustal, base_strc, chain=base_chain, clustal_id=base_clustal_id)
-    # Nikola: this is never true: if pdb_match is None:
     if pdb_match == ["",""]:
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     base_clustal_id, base_chain = pdb_match
@@ -1315,16 +1409,21 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get base seq id in clustal")    
     base_seq_id = get_seq_id(clustal, base_clustal_id)
     if base_seq_id is None:
-        status_update( "no+base+seq+in+alignment")
+        status_update( tag, "no+base+seq+in+alignment")
         return
 
+    status_update( tag, 'base+ids+matched')
+    
     dev_status( tag, "find target pdb in alignment")
 
     pdb_match, target_noncanonical_residues = find_pdb_in_alignment(clustal, target_strc, chain=target_chain, clustal_id=target_clustal_id)
     if pdb_match == ["",""]:
-        status_update( "structure not in alignment")
+        status_update( tag, "structure not in alignment")
         fatal_error(tag, STRUCTURE_NOT_IN_ALIGNMENT)
     target_clustal_id, target_chain = pdb_match
+
+    match_string = base_clustal_id + ',' + base_chain + ',' + target_clustal_id + ',' + target_chain
+    write_alignment_match(outdir, match_string)
 
     if target_noncanonical_residues:
         status_update(tag, "mut_1.pdb containes noncanonical residues, which are ignored")
@@ -1332,12 +1431,14 @@ def interface_two_structures(tag, inputs):
     dev_status( tag, "get target seq id in clustal")    
     target_seq_id = get_seq_id(clustal, target_clustal_id)
     if target_seq_id is None:
-        status_update( "no+target+seq+in+alignment")
+        status_update( tag, "no+target+seq+in+alignment")
         return
 
     if base_seq_id == target_seq_id:
         fatal_error(tag, NO_MUTATIONS)
 
+    status_update( tag, 'target+ids+matched')
+    status_update( tag, 'superimpose')
     dev_status(tag, "superimpose")
 
     # superimpose
@@ -1347,6 +1448,7 @@ def interface_two_structures(tag, inputs):
         superimpose(tag, target_strc, target_chain, base_strc, base_chain, clustal)
 
     dev_status(tag, "calc conservation")
+    status_update(tag, 'calc+conservation')
 
     # calculate conservation
     calc_conservation(tag, base_strc, clustal, base_chain, base_seq_id, "log.txt")
@@ -1355,6 +1457,7 @@ def interface_two_structures(tag, inputs):
 
     dev_status(tag, "finished calculation")
 
+    
 @app.route('/interface_post', methods=["GET", "POST"])
 def interface_post():
     if request.method == 'GET':
@@ -1611,6 +1714,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     if filename == "":
         filename = "mut_0.pdb"
         print( 'filename now:', filename)
+
     with open( out + tag + "/info/" + filename[:-4] + ".txt") as r:
         parent = r.readline().strip()
         energy = r.readline().strip()
@@ -1618,6 +1722,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
         for l in r:
             mutations += ',' + l.strip()
     outdir = out + tag + "/"
+
     if parent == "none":
         chains = get_chains(outdir + filename)
     else:
@@ -1629,14 +1734,19 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
     print( __name__, filename , tag, chains)
 
     two_structures = os.path.isfile(out + tag + "/mut_1.pdb")
+    match_string = ''
     # assuming that this is only true when coming from AlignMe ...
     if two_structures:
         chains += get_chains( out + tag + "/mut_1.pdb")
         two_structures = get_alignment_ids( out + tag + "/alignment.aln")
+        match_string = read_txt_file(outdir, 'alignment.txt')
+    else:
+        two_structures = ''
+
     print("###############")
     print("###############")
     print(out + "mut_1.pdb")
-    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, chains_range = chains_range) #, connector_string = connector_string)
+    return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, match_string = match_string, chains_range = chains_range) #, connector_string = connector_string)
 
 @app.route('/chain_resids_sorted', methods=['POST'])
 def chain_resids_sorted():
@@ -2005,7 +2115,7 @@ def write_clustal( s1, s2, filename):
 
 def add_mutations_from_sequence( mutations, target, chain, idy, parent):
     print("add_mutations_from_sequence")
-    print("idy: ", idy)
+    print("idy: ", idy, 'chain:', chain, 'target:', target, 'parent:', parent, 'mutations:', mutations)
     h1 = idy
     h2 = os.path.basename(parent)[:-4]
     outdir = os.path.dirname( parent) + '/'
@@ -2037,6 +2147,7 @@ def seq_from_fasta( filename):
     return head,seq
 
 def write_fasta( filename, seq, header=""):
+    print( 'write_fasta:', filename, seq, header)
     with open(filename,'w') as w:
         w.write('>' + header + '\n')
         w.write(seq + '\n')
@@ -2318,10 +2429,10 @@ def wait( filename, step, maxw):
     return False
         
 def download_uniprot( unid, filename):
-    link = "https://www.uniprot.org/uniprot/" + secure_filename(unid) + '.fasta'
+    link = "https://rest.uniprot.org/uniprotkb/" + secure_filename(unid) + '.fasta'
     req = requests.get(link)
     with open(filename, "w") as f:
-        f.write(req.content)
+        f.write(req.text)
 
 def get_chains( fname):
     chains = {}
@@ -2391,6 +2502,25 @@ def open_chains_range_file(outdir):
         
     return chains_range
 
+def read_txt_file(outdir, filename):
+    string = ''
+    try:
+        with open(outdir + filename) as r:
+            string = r.read()
+    except FileNotFoundError:
+        print("File not found " + filename)
+    except Exception as e:
+        print("An error occurred while trying to read a file " + filename)
+        
+    return string
+
+def write_alignment_match(outdir, string):
+    try:
+        with open( outdir + 'alignment.txt', 'w') as w:
+            w.write(string)
+    except Exception as e:
+        print("An error occurred while trying to write the alignment match string into a file.")
+
 def get_chain_letters(raw_ranges):
     ranges = raw_ranges.split(",")
     letters = []
@@ -2401,6 +2531,10 @@ def get_chain_letters(raw_ranges):
         if letter not in letters:
             letters.append(letter)
     return letters
+
+def allowed_file(filename, extensions):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in extensions
 
 def get_energy( fname):
     print( __name__, 'get', fname)
