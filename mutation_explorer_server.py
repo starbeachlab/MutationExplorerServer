@@ -384,6 +384,7 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
         if waitID(pid):
             print("start waiting for conserved file")
             shutil.copy(cons, structure)
+        sendTestTsp(tag)
      #   if wait( cons, 1, WAIT_SUPERIMPOSE):
      #       shutil.copy( cons, structure )
             
@@ -441,6 +442,20 @@ def file_processing( tag, structure, out_file_name, logfile, ifscore=""):
 
     cmd =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
     bash_cmd(cmd, tag)
+
+    cmd =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
+
+    sendTestTsp(tag)
+
+
+def sendTestTsp(tag):
+    cmd = "bash"
+    my_id = bash_cmd(cmd, tag)
+    print("Check id: " + my_id)
+    if(not waitID(my_id)):
+        error_message = "Calculating energy values for the visualization failed. This is most likely due to an error related to non canonical residues in the structure."
+        fatal_error(tag, error_message)
+        return
 
 def create_user_dir():
     # generate tag
