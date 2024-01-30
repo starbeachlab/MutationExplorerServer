@@ -865,40 +865,36 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 @app.route('/mutate/<tag>/<msg>/<minimize>', methods=['GET', 'POST'])
 def mutate(tag,msg="",minimize="True"):
 
-    if request.method == 'GET':
-        outdir = app.config['USER_DATA_DIR'] + tag + "/"
-
-        # get chains, resid-ranges from uploaded structure
-        chains_range = get_chains_and_range( outdir + "structure.pdb")
-
-        with open( outdir + 'chains.txt', 'w') as w:
-            w.write( chains_range + '\n')
-            
-        chains = ''
-        for w in chains_range.split(",")[0:-1]:
-            w = w.strip()
-            if len(w) > 0:
-                chains += w[0]
-        print( 'chains: ', chains)
-
-        structure = ""
-        with open( outdir + 'name.log') as r:
-            structure = r.readline().strip()
-
-        # check if pdb in DB
-        status = ""
-        if msg=="found":
-            status="PDB entry " + structure + " has already been minimized in our database. No additional minimization will be performed."
-        elif msg == "notfound":
-            status = "PDB entry " + structure + " was not previously minimized in our database. Minimization will be performed."
-            
-        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
-
-
-    ###  get form values
-
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
 
+    # get chains, resid-ranges from uploaded structure
+    chains_range = get_chains_and_range( outdir + "structure.pdb")
+
+    with open( outdir + 'chains.txt', 'w') as w:
+        w.write( chains_range + '\n')
+        
+    chains = ''
+    for w in chains_range.split(",")[0:-1]:
+        w = w.strip()
+        if len(w) > 0:
+            chains += w[0]
+    print( 'chains: ', chains)
+
+    structure = ""
+    with open( outdir + 'name.log') as r:
+        structure = r.readline().strip()
+
+    # check if pdb in DB
+    status = ""
+    if msg=="found":
+        status="PDB entry " + structure + " has already been minimized in our database. No additional minimization will be performed."
+    elif msg == "notfound":
+        status = "PDB entry " + structure + " was not previously minimized in our database. Minimization will be performed."
+
+    if request.method == 'GET':
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
+
+    ###  get form values
     inputs = {}
 
     # manual mutations
@@ -1036,7 +1032,7 @@ def mutate(tag,msg="",minimize="True"):
         #print(os.path.join( app.config['USER_DATA_DIR'], tag)  +  "log.txt")
         #log = open( os.path.join( app.config['USER_DATA_DIR'], tag)  + "log.txt", 'a')
         #bash_cmd(cmd,  log)
-        return render_template("mutate.html", tag = tag, error = "Please provide a mutation")
+        return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "Please provide a mutation")
 
     # files have to be saved in this function, out of reasons beyond my understanding
     inputs["clustal_files"] = []
