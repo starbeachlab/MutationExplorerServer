@@ -4,91 +4,99 @@
 
 {% block head %}
 <style>
-  #input-list li {
-  margin-left: 1em;
-  padding-left: 1em;
+    #input-list li {
+        margin-left: 1em;
+        padding-left: 1em;
         list-style-type: disc !important;
     }
 </style>
 {% endblock %}
 
 <center>
-<!--<h1 style="font-variant:small-caps">MutationExplorer</h1>-->
-<!--<div><img src="static/img/workflow.png" width="100%;"></div>-->
-<div><img src="static/img/graphicalAbstract.png" width="50%"></div>
+    <!--<h1 style="font-variant:small-caps">MutationExplorer</h1>-->
+    <!--<div><img src="static/img/workflow.png" width="100%;"></div>-->
+    <div><img src="static/img/graphicalAbstract.png" width="50%"></div>
 </center>
 
 
 <p>
-  The server lets users mutate proteins in
-  various ways and study mutation effects in 3D.
-  The only required inputs are a structural model and a list of mutations of
-  interest.
-  Alternatively, the user can upload human SNPs in the VCF format.
-  <br>
-  You can click on the       <span class="center-align toggle-card"> <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">i</button> </span> buttons at each field in the forms to get further information.
-  <!-- Modal Structure -->
-  <div id="modal3" class="modal">
+    The server lets users mutate proteins in
+    various ways and study mutation effects in 3D.
+    The only required inputs are a structural model and a list of mutations of
+    interest.
+    Alternatively, the user can upload human SNPs in the VCF format.
+    <br>
+    You can click on the <span class="center-align toggle-card"> <button data-target="modal3"
+            class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">i</button> </span>
+    buttons at each field in the forms to get further information.
+    <!-- Modal Structure -->
+<div id="modal3" class="modal">
     <div class="modal-content">
-      <h4>Happy mutating!</h4>
-      <p> </p>
+        <h4>Happy mutating!</h4>
+        <p> </p>
     </div>
     <div class="modal-footer">
-	    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
-  </div>
+</div>
 
 </p>
-  <br><br><br>
+<br><br><br>
 <h4>Main steps</h4>
 <p> <b>Either:</b>
-  <ul id="input-list"><li> create an alignment on <a href="https://www.bioinfo.mpg.de/AlignMe//AlignMePW.html">AlignMe webserver</a></li>
+<ul id="input-list">
+    <li> create an alignment on <a href="https://www.bioinfo.mpg.de/AlignMe//AlignMePW.html">AlignMe webserver</a></li>
     <li> forward the results to <span style="font-variant:small-caps">MutationExplorer</span></li>
     <li> select base and target sequence </li>
     <li> upload base (and optionally target) structure </li>
-    <li> get homology model (or optionally superimposed models)</li></ul>
-  <b>Or:</b>
-  <ul id="input-list"><li> upload human SNPs in VCF format</li></ul>
-  <b>Or:</b>
-  <ul id="input-list">
+    <li> get homology model (or optionally superimposed models)</li>
+</ul>
+<b>Or:</b>
+<ul id="input-list">
+    <li> upload human SNPs in VCF format</li>
+</ul>
+<b>Or:</b>
+<ul id="input-list">
     <li> upload structure </li>
-    <li> define mutations </li></ul>
-  <b>Always:</b>
-  <ul id="input-list">  
+    <li> define mutations </li>
+</ul>
+<b>Always:</b>
+<ul id="input-list">
     <li> explore: mutate again and again ... </li>
     <li> mutation forecast using RaSP </li>
     <li> color by: &nbsp; absolute/differences &nbsp; &nbsp; energy/hydrophobicity/conservation</li>
-  </ul>
+</ul>
 </p>
 
 <h4> Structure upload </h4>
 
 <p>
-  Structures can be uploaded in three different ways:
-  <ul id="input-list">
+    Structures can be uploaded in three different ways:
+<ul id="input-list">
     <li> PDB ID, </li>
     <li> AlphaFold ID </li>
     <li> upload local PDB file </li>
-  </ul>
+</ul>
 </p>
 
 <h4> Define mutations </h4>
 
 <p>
-  Mutations can be defined in three different ways:
-  <ul id="input-list">
+    Mutations can be defined in three different ways:
+<ul id="input-list">
     <li> key or paste into GUI, using a simple syntax: [chain]:[residue number][target mutation], example:
-”A:12G,B:134T". The residue number has to be present in and match the uploaded PDB</li>
+        ”A:12G,B:134T". The residue number has to be present in and match the uploaded PDB</li>
     <li> upload alignment in ClustalW format </li>
     <li> upload target sequence either by pasting the sequence, uploading a FASTA file or specifying a Uniprot ID </li>
-  </ul>
+</ul>
 </p>
 
 <h4> Mutation syntax </h4>
 <ul id="input-list">
-  <li> a comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
-  <li> example: 'A:23G,B:123A'</li>
-  <li> this mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the residue with residue ID 123 to alanine</li> 
+    <li> a comma separated list of CHAIN ':' RESIDUE-ID TARGET-AA-TYPE</li>
+    <li> example: 'A:23G,B:123A'</li>
+    <li> this mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the residue with
+        residue ID 123 to alanine</li>
 </ul>
 
 
@@ -99,12 +107,12 @@
 <h4> Expected time requirements </h4>
 
 <p>
-  Actual times depend on the size of the system and may vary significantly.
-  <ul id="input-list">
+    Actual times depend on the size of the system and may vary significantly.
+<ul id="input-list">
     <li> initial basic minimization: 1-3 min </li>
-    <li> per round of mutations: ~2 min  </li>
-    <li> VCF processing (plus minimization):  5 min  </li>
-  </ul>
+    <li> per round of mutations: ~2 min </li>
+    <li> VCF processing (plus minimization): 5 min </li>
+</ul>
 </p>
 
 <p> Details can be found in the FAQs. </p>
