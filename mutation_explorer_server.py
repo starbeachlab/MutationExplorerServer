@@ -250,7 +250,8 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
     print("MV Done")
-    
+
+    # TODO:: move one level up, should not be within fixbb or rename to fixbb_rasp
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
     if ifscore != "":
         calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb", ifscore)
@@ -848,14 +849,14 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
     if len(mutations) != 0:
         helper_files_from_mutations( mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile)
     else:
-        fatal_error(tag, NO_MUTATIONS)
+        fatal_error(tag, NO_MUTATIONS)  # second layer of check for no mutation
 
     fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
 
     pid = getLastID(outdir)
 
     if not waitID(pid):
-        fatal_error(tag, MUTATION_FAILED + " (fixbb)")
+        fatal_error(tag, MUTATION_FAILED + " (fixbb) ")
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
