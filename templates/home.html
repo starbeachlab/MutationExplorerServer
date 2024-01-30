@@ -9,6 +9,35 @@
         padding-left: 1em;
         list-style-type: disc !important;
     }
+
+    .bld {
+        font-weight: 600;
+    }
+
+    .true-list {
+        padding-left: revert !important;
+    }
+
+    .true-list li {
+        list-style-type: disc !important;
+    }
+
+    .mut-ex {
+        font-variant: small-caps;
+    }
+
+    .collapsible-header .mut-ex {
+        margin: 0 0.4rem;
+    }
+
+    .collapsible-body {
+        text-align: justify;
+    }
+
+    .custom-header {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
 </style>
 {% endblock %}
 
@@ -20,16 +49,45 @@
 
 
 <p>
-    The server lets users mutate proteins in
-    various ways and study mutation effects in 3D.
-    The only required inputs are a structural model and a list of mutations of
-    interest.
-    Alternatively, the user can upload human SNPs in the VCF format.
-    <br>
-    You can click on the <span class="center-align toggle-card"> <button data-target="modal3"
-            class="btn modal-trigger grey lighten-2" title="Further information" style="margin:5px;">i</button> </span>
+    The server lets users mutate proteins in various ways and study mutation effects in 3D.
+    You can evolve a protein over many mutation rounds within the viewer under consideration of the mutational effect on
+    the structure.
+    The only required inputs are a structural model and at least one mutation of interest or a target
+    sequence/alignment. Alternatively, the user can upload human SNPs in the VCF format and obtains a visualization of
+    the (de-)stabilizing effect of those mutations on the protein structure.
+</p>
+
+<p>
+    <b>Go ahead & try it out!</b>
+    You can easily just try out the server and explore or follow one of your tutorial.
+</p>
+
+<p>
+    If you don't know hat input is
+    expected, you can click on the
+    <span class="center-align toggle-card">
+        <button data-target="modal3" class="btn modal-trigger grey lighten-2" title="Further information"
+            style="margin:5px;">i</button>
+    </span>
     buttons at each field in the forms to get further information.
-    <!-- Modal Structure -->
+</p>
+
+<p>
+    Find several tutorials about the usage of the server in our tutorials tab. For more detailed explanation about the
+    methods and the server, incl. interpretation of the results, check out the documentation. Frequently asked questions
+    can be found in the FAQ. If you want to reach out to us, you find the information at the tab "Contacts".
+    <!-- TODO Contact Page Link -->
+</p>
+
+<!-- <p>
+    <b><span style="font-variant:small-caps">MutationExplorer</span> biggest strength - on the fly exploration of
+        mutational effects on protein stability</b>
+    Within our mange page, the mutation explorer, you can select a model and further mutate this using the mutation
+    window. See the
+    <a href="{{url_for('examples')}}">example</a>
+    page for some inspiration or try it out with your own use-case.
+</p> -->
+
 <div id="modal3" class="modal">
     <div class="modal-content">
         <h4>Happy mutating!</h4>
@@ -40,8 +98,235 @@
     </div>
 </div>
 
+<p>
+    <span style="font-variant:small-caps">MutationExplorer</span> is freely available to all users without any login
+    requirement.
 </p>
-<br><br><br>
+
+<ul class="collapsible">
+    <li>
+        <div class="collapsible-header custom-header grey lighten-4">
+            General philosophy of the &nbsp;<span style="font-variant:small-caps">MutationExplorer</span>
+        </div>
+        <div class="collapsible-body">
+            <center>
+                <img src="static/img/server2b.png" width="100%;">
+            </center>
+            <b style="font-size: larger;">
+                <span style="font-variant:small-caps">MutationExplorer</span> - exploring the effect of mutations on the
+                structure
+            </b>
+            <p>
+                The <span style="font-variant:small-caps">MutationExplorer</span> maps variants onto the protein
+                3D structure which allows to interactively explore the effects of mutations with respect to stability
+                and function.
+                Often wwPDB structures contains
+                mutations and can not intuitively be mapped to its native sequence, sequences of structures changed to
+                close or remote homologs or structures designed interactive while inspecting the structure. With the
+                <span style="font-variant:small-caps">MutationExplorer</span> this is now easily possible and even
+                visualises the effect of the variant on the
+                protein structures stability.
+            </p>
+            <b style="font-size: larger;">
+                Energy minimization - the key to high quality
+            </b>
+            <p>
+                The minimization is crucial for the quality of the outcome. The better the structure is energetically
+                minimized, the more reliable the results will be.
+            </p>
+            <p>
+                <b>Minimizations via the <span style="font-variant:small-caps">MutationExplorer</span></b><br>
+                We offer a 'long' and 'short' side-chain only optimization. Find out more in the documentation.
+            </p>
+            <p>
+                <b>Database of pre-minimized structures from the Protein Databank (PDB)</b><br>
+                Since the minimization is essential for correctly highlighting the energetic impact of mutations, but
+                takes a substantial amount of time to perform, we calculated a database of pre-minimized structures from
+                the PDB. Currently our database contains 45,000 models.
+            </p>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header custom-header grey lighten-5">
+            Mutational tools - under he the hood of &nbsp;<span style="font-variant:small-caps">MutationExplorer</span>
+        </div>
+        <div class="collapsible-body">
+            <b style="font-size: larger;">
+                Mutational effects
+            </b>
+            <p>
+                We use a fast Rosetta fixbb function to calculate the energy difference between wild-type and variant
+                structure. This &Delta;&Delta;G is displayed in our Explorer. Fin out more in the documentation.
+            </p>
+
+            <b style="font-size: larger;">
+                RaSP - bringing exploration to full bloom
+            </b>
+
+            <p>
+                RaSP is a new deep-learning-based tool that rapidly estimates protein stability changes. RaSP
+                predictions strongly correlate to scores from Rosetta calculations which demand longer compute times,
+                especially if not only one or a few mutations are calculated but a full site-saturation library (SSL).
+                By using this, we can get any mutation at each position of the protein for further mutational
+                consideration and exploration within the viewer.
+            </p>
+            <p>
+                With RaSP, MutationExplorer presents the user with a quick initial estimation of a mutation’s
+                (de)stabilizing effect, without having to wait for the longer full minimization process.
+            </p>
+
+            <b style="font-size: larger;">
+                Include ensembl information via VCF files
+            </b>
+            <p>
+                <!-- add short intro about ensembl info and what happens under the hood - e.g. fetch of the protein structure from AF2, mutation, ... -->
+                Under the hood, the sequence data will be translated into mutations, an AlphaFold structure will be
+                generated of the associated protein and the variants will be highlighted.
+            </p>
+
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header custom-header grey lighten-4">
+            <span style="font-variant:small-caps">MutationExplorer</span>&nbsp; serves many applications - see a
+            selection
+        </div>
+        <div class="collapsible-body">
+            <b style="font-size: larger;">
+                Highlights & common applications
+            </b>
+            <p>
+                Within the tutorials, we will show use-cases of the <span
+                    style="font-variant:small-caps">MutationExplorer</span>, among others
+
+            <ul>
+                <li>Visualize human sequencing information and their effect on the protein level.</li>
+                <li>Mutation of individual structures from the wwPDB, UniProt or Molecular Dynamics snapshots.</li>
+                <li>See the mutational effect when transforming the sequence of a structure into a close or distant
+                    homolog via sequence alignment or input sequences.</li>
+                <li>Modify your protein-protein interface to increase or decrease binding affinity.</li>
+            </ul>
+            Finally, all input ends in the main stage - the <span
+                style="font-variant:small-caps">MutationExplorer</span> result window,
+            where the effects can be visualized on the structure and explored for further mutations.
+            </p>
+
+            <b style="font-size: larger;">
+                Homology modeling of multiple states of a protein
+            </b>
+            <p>
+                What AlphaFold is not able to do is to model different states of a protein. This can be achieved using
+                <span style="font-variant:small-caps">MutationExplorer</span>. For many classes and families of
+                proteins, multiple states are available in the PDB.
+                Different states can be modeled By selecting different PDBs as base structure and adding a target
+                sequence or alignment.
+            </p>
+
+            <b style="font-size: larger;">
+                Backmutating PDB structures to wildtype sequence, e.g. for dockings and Molecular Dynamics simulations
+            </b>
+            <p>
+                Structures deposited in the PDB are very often modified in order to solve them experimentally. Using
+                <span style="font-variant:small-caps">MutationExplorer</span>, it is a simple two-step process to
+                mutate them back to their native sequence. Thus it
+                is common step for simulating proteins to back-mutate PDB.
+            </p>
+
+            <b style="font-size: larger;">
+                Multi-state modeling of homologs via Molecular Dynamics simulation ensembles
+            </b>
+            <p>
+                Molecular dynamics simulation can generate ensembles of functionally relevant states. <span
+                    style="font-variant:small-caps">MutationExplorer</span>
+                maps those ensembles to close or distant homologs. For close homologs, an alignment will be
+                automatically generated internally. Alternatively, a pre-calculated sequence alignment can be provided.
+                Where more refined alignments are required, the server accepts results forwarded from the AlignMe
+                website
+                <a href="https://doi.org/10.1093/nar/gkac391">https://doi.org/10.1093/nar/gkac391</a>
+                Such sequence alignments carry nuanced details and <span
+                    style="font-variant:small-caps">MutationExplorer</span> drills down to reveal them all.
+            </p>
+
+            <b style="font-size: larger;">
+                Aiding design for experimental studies for protein characterization
+            </b>
+            <p>
+                When designing proteins, the effect of the variant is often only known after applying of an external
+                software, via multiple design rounds. After each of those, the structures can be inspected. The power of
+                the <span style="font-variant:small-caps">MutationExplorer</span> lies in the possibility to do
+                this directly in the viewer and select novels rounds
+                of mutations immediatley and due to their influence on the structure.
+            </p>
+
+            <b style="font-size: larger;">
+                (De-) Stabilize a protein-protein interface
+            </b>
+            <p>
+                3D mapping of energies is not limited to monomers. Over single or multiple rounds of mutations, protein
+                complexes or protein-protein interfaces can flexibly be designed to achieve (de)stabilization. The
+                effect of each design choice can be explored visually.
+            </p>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header custom-header grey lighten-5">
+            General remarks
+        </div>
+        <div class="collapsible-body">
+            <b style="font-size: larger;">
+                Runtime
+            </b>
+            <p>
+                Runtime might vary on the protein length, whether the structure has already been minimized or if RaSP
+                has been selected. In general, the pre-process until you reach the visualization page will require the
+                most waiting time. After that, the exploration will not require further waiting time. Find more
+                information in the Documentation or FAQ.
+            </p>
+
+            <b style="font-size: larger;">
+                Limitations
+            </b>
+            <p>
+                A full list of limitations can be found in the documentation. Of importance is that the <span
+                    style="font-variant:small-caps">MutationExplorer</span> at its current state does not take extra
+                care about membrane proteins, hetero atoms such as water, ions or ligands and non-standard amino acids
+                incl. disulfid bridges.
+            </p>
+            <p>
+                Further, the interpretation of proline and glycine mutations should be handled with care as the selected
+                Rosetta protocol is not suited for the necessary flexibility of those modifications.
+            </p>
+            <p>
+                The <span style="font-variant:small-caps">MutationExplorer</span> is its current state not able to
+                complete a homology model by modeling missing parts in the PDB, e.g. when a sequence alignment has been
+                provided.
+            </p>
+            <p>
+                Finally, the uploaded structure file can not be in CIF format and partial AlphaFold models for
+                transcripts with more than 2,700 amino acids are not supported. We also caution that for large
+                structures our default protocols for minimizations might be insufficient. Users should definitely
+                minimize these on their local computer before upload (see <a>Tutorial</a>).
+                <!-- TODO Link Tutorial -->
+            </p>
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header custom-header grey lighten-4">
+
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+</ul>
+
+
+<!-- <br><br><br>
 <h4>Main steps</h4>
 <p> <b>Either:</b>
 <ul id="input-list">
@@ -119,6 +404,6 @@
 
 <br>
 <br>
-<br>
+<br> -->
 
 {% endblock %}
