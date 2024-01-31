@@ -3109,7 +3109,3 @@ def get_alignment_ids(filename, tag):
             
     return idstr
 
-
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
