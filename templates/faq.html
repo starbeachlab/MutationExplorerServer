@@ -47,43 +47,54 @@
         <div class="collapsible-header grey lighten-4">
             How do I upload structures?
         </div>
-        <div class="collapsible-body"><span>
-                At the top of the main web page, click the <strong>upload structure and mutations</strong> menu button.
+        <div class="collapsible-body">
+            <p>
+                At the top of the main web page, click the <a href="{{url_for('submit')}}">upload structure and
+                    mutations</a> menu button.
                 This displays a form which offers three ways to upload a structure:
-                <ul class="true-list">
-                    <li>from the Protein Databank(PDB)</li>
-                    <li>from the AlphaFold-EBI website</li>
-                    <li>or from your local machine</li>
-                </ul>
+            </p>
+            <ul class="true-list">
+                <li>from the Protein Databank(PDB)</li>
+                <li>from the AlphaFold-EBI website</li>
+                <li>or from your local machine</li>
+            </ul>
+            <p>
                 To use an AlphaFold model, enter either:
-                <ul class="true-list">
-                    <li>the UniProt ID (e.g. <kbd>Q969P0</kbd>)</li>
-                    <li>the full AlphaFold ID (e.g. <kbd>AF-Q969P0-F1</kbd>)</li>
-                    <li>or the full filename (e.g. <kbd>AF-Q969P0-F1-model_v4.pdb</kbd>).</li>
-                </ul>
+            </p>
+            <ul class="true-list">
+                <li>the UniProt ID (e.g. <kbd>Q969P0</kbd>)</li>
+                <li>the full AlphaFold ID (e.g. <kbd>AF-Q969P0-F1</kbd>)</li>
+                <li>or the full filename (e.g. <kbd>AF-Q969P0-F1-model_v4.pdb</kbd>).</li>
+            </ul>
+            <p>
                 (UniProt and AlphaFold IDs are automatically extended to download the corresponding AlphaFold model.)
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             Can I upload data from sequencing experiments?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Yes, you can upload files in VCF format (<a
                     href="https://docs.gdc.cancer.gov/Data/File_Formats/VCF_Format/">https://docs.gdc.cancer.gov/Data/File_Formats/VCF_Format/</a>).
-                <br>
-                <br>
+            </p>
+            <p>
                 However, only human SNP data can be evaluated currently.
-                Further restrictions are listed on screen under <strong>upload vcf</strong>.
-            </span></div>
+                Further restrictions are listed on screen under <a href="{{url_for('vcf')}}">upload vcf</a>.
+            </p>
+            </span>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             How are VCF uploads processed?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 VCF files are forwarded to the ENSEMBL Variant Effect Predictor (GRCh38 version 105).
                 The returned missense variants are filtered to retain only ENST transcript IDs that directly
                 cross-reference to curated UniProtKB/Swiss-Pro UniProt IDs.
@@ -92,9 +103,142 @@
                 From the UniProt ID, the AlphaFold model is automatically selected.
                 The model and its computed missense variants are together submitted to <span
                     class="mut-ex">MutationExplorer</span>.
-            </span></div>
+            </p>
+        </div>
     </li>
 
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            How do I know if my structure has already been minimized and is in the database?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                During mutation selection after structure upload or specification, a message is displayed whether the
+                structure has already been minimized:
+            </p>
+            <ul class="true-list">
+                <li>PDB entry <code>PDB ID</code> has already been minimized in our database. No additional minimization
+                    will be performed.</li>
+                <li>PDB entry <code>PDB ID</code> was not previously minimized in our database. Minimization will be
+                    performed.</li>
+            </ul>
+            <p>
+                It is not possible to overwrite the minimization in the database.
+            </p>
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-4">
+            Will all uploaded structures be saved into the database or only public structures?
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+            How can I delete an uploaded (non-public) structure?
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            Can a structure that is within the database be overwritten?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                No, structures within the database can not be overwritten.
+            </p>
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+</ul>
+
+<h5>Minimization</h5>
+
+<ul class="collapsible">
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            How are the structures minimized?
+        </div>
+        <div class="collapsible-body">
+
+            <p> The minimizations we offer as 'long' and 'short' are both only side-chain optimizations.
+                However, we recommend you to perform the following minimization. It is optimizing also the backbone
+                in a
+                limited way (due to '-relax:constrain_relax_to_start_coords'). A free backbone minimization might be
+                leading
+                to problems for e.g. membrane proteins. </p>
+
+            <div class="codebox">
+                <code>
+                      PATH_TO_ROSETTA/relax.static.linuxgccrelease   -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2  -nstruct 20 -in:file:s  INPUT.pdb -out:pdb -out:prefix  OUTDIR/
+                    </code>
+            </div>
+
+            <p>
+                This commandline will create 20 models, from which you should select the one with the lowest energy.
+                Each PDB
+                contains a line starting with 'pose'. In this line you want the last value, which is the total
+                energy.
+            </p>
+
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+            What is the difference between fast and slow minimization in the input mask?
+        </div>
+        <div class="collapsible-body">
+            <p>
+
+            </p>
+        </div>
+    </li> -->
+
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            How are the structures in the database minimized?
+        </div>
+        <div class="collapsible-body">
+            The structures in the data base are minimised with the option "long".
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+            What happens when I remove chains in a structure that is already present in the database?
+        </div>
+        <div class="collapsible-body">
+            <p>
+
+            </p>
+        </div>
+    </li> -->
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
 </ul>
 
 <h5>Mutations</h5>
@@ -104,61 +248,68 @@
         <div class="collapsible-header grey lighten-4">
             How can I define mutations?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Once you submit a structure, you are forwarded to the mutation definition page.
                 Three options are offered for defining mutations (click on the field to open the actual sub-form):
+            </p>
+
+            <ul class="true-list">
+                <li>Define any number of mutations <em>manually</em> using the simple syntax explained via the info
+                    button text (also in an FAQ below). There is also an info button <em>available PDB chains</em> which
+                    lists all possible residue IDs for the existing chains. </li>
+                <li>Upload a sequence alignment (ClustalW format) </li>
+                <li>Provide a target sequence and select the chain in the PDB to which the target sequence belongs.
+                    You can extend the form to have three input fields for each of theseupload methods:</li>
                 <ul class="true-list">
-                    <li>Define any number of mutations <em>manually</em> using the simple syntax explained via the info
-                        button text (also in an FAQ below).</li>
-                    <li>Upload a sequence alignment (ClustalW format) </li>
-                    <li>Provide a target sequence and select the chain in the PDB to which the target sequence belongs.
-                        You can extend the form to have three input fields for each of theseupload methods:</li>
-                    <ul class="true-list">
-                        <li>
-                            <b>Fasta file upload</b>:
-                            The fasta file should only contain one sequence and must beassigned to one of the chains.
-                            For each chain, only one sequence can be assigned.
-                        </li>
-                        <li>
-                            <b>Paste sequence</b>:
-                            The sequences must have the same length as the protein chain it is assigned to.
-                        </li>
-                        <li>
-                            <b>UniProt ID</b>:
-                            The sequence will be retrieved directly from the UniProt website.
-                        </li>
-                    </ul>
+                    <li>
+                        <b>Fasta file upload</b>:
+                        The fasta file should only contain one sequence and must beassigned to one of the chains.
+                        For each chain, only one sequence can be assigned.
+                    </li>
+                    <li>
+                        <b>Paste sequence</b>:
+                        The sequences must have the same length as the protein chain it is assigned to.
+                    </li>
+                    <li>
+                        <b>UniProt ID</b>:
+                        The sequence will be retrieved directly from the UniProt website.
+                    </li>
                 </ul>
+            </ul>
 
-                <br>
+            <p>
+                <b>There is no limit to the number of simultaneous mutations which can be explored.</b>
+            </p>
 
-                <span class="bld">There is no limit to the number of simultaneous mutations which can be explored.
-                </span>
-            </span></div>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             What is the syntax for manually defining mutations?
         </div>
-        <div class="collapsible-body"><span>
-                Each amino acid mutation must be input in the simple yet strict format <var>X:nnnA</var> where:
-                <ul class="true-list">
-                    <li><var>X</var> is the chain as given in the PDB file, followed by the ":" separator</li>
-                    <li><var>nnn</var> is the residue number </li>
-                    <li><var>A</var> is the one letter code of the new (standard) amino acid to which you are mutating
-                        the residue.</li>
-                </ul>
-                <br>
+        <div class="collapsible-body">
+            <p>
+                Each amino acid mutation must be input in the simple yet strict format <code>X:nnnA</code> where:
+            </p>
+            <ul class="true-list">
+                <li><code>X</code> is the chain as given in the PDB file, followed by the <code>:</code> separator</li>
+                <li><code>nnn</code> is the residue number </li>
+                <li><code>A</code> is the one letter code of the new (standard) amino acid to which you are mutating
+                    the residue.</li>
+            </ul>
+            <p>
                 Separate multiple mutations with commas. Do not enter spaces.
-                <br>
-                <br>
+            </p>
+            <p>
                 Example: <kbd>A:12G,B:123W</kbd> defines two simultaneous mutations:
-                <ul class="true-list">
-                    <li>Chain A residue 12 will be mutated to glycine.</li>
-                    <li>Chain B residue 123 will be mutated to tryptophan.</li>
-                </ul>
-            </span></div>
+            </p>
+            <ul class="true-list">
+                <li>Chain A residue 12 will be mutated to glycine.</li>
+                <li>Chain B residue 123 will be mutated to tryptophan.</li>
+            </ul>
+        </div>
     </li>
 
     <li>
@@ -166,11 +317,11 @@
             How do I know which positions are possible for manually defining mutations?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 In the <em>Manual mutation definition</em> tab you can find a button <em>available PDB chains</em>.
                 A window will open in which you will find all possible chains and their ranges on which mutations are
                 possible.
-            </span>
+            </p>
         </div>
     </li>
 
@@ -178,81 +329,92 @@
         <div class="collapsible-header grey lighten-5">
             How do I use an alignment to define mutations?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 There are two reasons for using alignments.
-                First, an alignment can define potentially many more mutations, more efficiently, than a manual input.
+                First, an alignment can more easily define potentially many more mutations, more efficiently, than a
+                manual input.
                 Second, the differences in structure and energy provide deep insights into the alignment itself.
                 Only aligned positions can be used to define mutations.
                 Gaps cannot be translated into mutations.
                 Thus, one sequence in the alignment must exactly match one chain in your PDB.
-                <br>
-                It’s easy to upload an alignment. Click <strong>upload structure and mutations</strong>, upload a
-                structure and then select to upload an alignment file in ClustalW format.
-            </span></div>
+            </p>
+            <p>
+                It’s easy to upload an alignment. Click <a href="{{url_for('submit')}}">upload structure and
+                    mutations</a>, upload a structure and then select to upload an alignment file in ClustalW format.
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             Is it possible to mutate peptides?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Yes, it is.
                 <span class="mut-ex">MutationExplorer</span> has no restrictions concerning the size of uploaded
                 proteins.
                 However, when interpreting calculated energies, be mindful of limitations (see FAQ ”Limitations”).
+                <!-- TODO Add Limitations -->
                 Energies in flexible regions should be interpreted with particular care, andshorter peptides are more
                 likely to be flexible.
                 Moreover, every protein conformation is just one snapshot.
                 The smaller the peptide, the more likely a given conformation might not well represent the effect of
                 mutation vis-à-vis an alternate conformations.
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             Is it possible to mutate transmembrane proteins?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 In general, yes. However, the Rosetta energy function that we use is optimized for soluble proteins and
                 does not consider the lipid bilayer.
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             What about nonstandard amino acids, lipids, ions?
         </div>
-        <div class="collapsible-body"><span>
-                Currently, nonstandard amino acids are not supported as mutation targets.
-                Nevertheless, nonstandard amino acids occur frequently in the PDB (along with all manner of non-amino
-                acid molecular species).
-                <span class="mut-ex">MutationExplorer</span> will consider nonstandard source residues when performing
-                mutations.
-                However, we recommend removal of ions or water molecules so that variant residues can fit more easily
-                into the structure.
-                In general, small molecules such as lipids, drugs, ions, or water, are not included in <span
+        <div class="collapsible-body">
+            <p>
+                Currently, nonstandard amino acids are not supported as mutation targets. Further limitations apply to
+                disulfid bonds. Nevertheless, nonstandard amino acids occur frequently in the PDB (along with all manner
+                of non-amino acid molecular species). <span class="mut-ex">MutationExplorer</span> will consider hetero
+                atoms such as water, ions or ligands when performing mutations. However, we recommend removal of ions or
+                water molecules so that variant residues can fit more easily into the structure. In general, small
+                molecules such as lipids, drugs, ions, or water, are not included in <span
                     class="mut-ex">MutationExplorer</span> calculations.
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             How do you mutate a mutant (perform multiple rounds of mutations)?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Once you have performed your first mutations, the results will be displayed along with a window where
-                you can enter further mutations to the mutated structure.
-                <ol>
-                    <li>
-                        In the <em>Select</em> region, select the variant you want to mutate.
-                        The displayed protein is mutated in the next step.
-                    </li>
-                    <li>
-                        In the <em>Mutate</em> section, define any number of mutations.
-                        As always, you will use the <var>X:nnnA</var> mutation syntax explained in the FAQ above.
-                    </li>
-                </ol>
-            </span></div>
+                you can enter further mutations to the variant structure.
+            </p>
+            <ol>
+                <li>
+                    In the <em>Select</em> region, select the variant you want to mutate.
+                    The displayed protein is mutated in the next step.
+                </li>
+                <li>
+                    In the <em>Mutate</em> section, define any number of mutations.
+                    As always, you will use the <code>X:nnnA</code> mutation syntax explained in the FAQ above.
+                </li>
+            </ol>
+        </div>
     </li>
 
     <li>
@@ -260,13 +422,49 @@
             Is it possible to mutate the same residue multiple times?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 Yes, it is possible to mutate one and the same amino acid several times in succession.
                 However, it still leads to errors from time to time.
                 If you encounter an error, you can send us your job id with your error by e-mail.
-            </span>
+            </p>
         </div>
     </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            Can I run without defining a mutation in the input?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                No, this is currently not possible but might be added in the future. If you want to simulate such a
+                behavior, add a silent mutation.
+            </p>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            Why do I see an energy difference when making silent mutations?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                Every time we perform the mutations and calculate the energy, the structure will be relaxed. this can
+                lead to changes in rotamers, which can affect the total energy of the structure. Those should normally
+                only be minor.
+            </p>
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+
+        </div>
+        <div class="collapsible-body">
+            <p>
+
+            </p>
+        </div>
+    </li> -->
 
 </ul>
 
@@ -277,62 +475,84 @@
         <div class="collapsible-header grey lighten-4">
             According to which values can the structure be colored?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 From the <strong>Color by</strong> drop-down in the <em>Select</em> area (top left in the result page),
                 you can choose the following colorings:
-                <ul class="true-list">
-                    <li>Absolute rosetta energy</li>
-                    <li>Energy difference to parent</li>
-                    <li>Absolute hydrophobicity</li>
-                    <li>Hydrophobicity difference to parent</li>
-                    <li>Absolute interface score energy</li>
-                    <li>Interface score energy difference to parent</li>
-                    <li>Conservation</li>
-                </ul>
+            </p>
+            <ul class="true-list">
+                <li>Absolute rosetta energy</li>
+                <li>Energy difference to parent</li>
+                <li>Absolute hydrophobicity</li>
+                <li>Hydrophobicity difference to parent</li>
+                <li>Absolute interface score energy</li>
+                <li>Interface score energy difference to parent</li>
+                <li>Conservation</li>
+            </ul>
+            <p>
                 For energy values, the color scale ranges from blue (negative values) over white (zero) to red (positive
                 values).
                 Restated, red represents increased energy from mutation(s), blue represents decreased energy, and white
-                conveys no energetic change. <br>
+                conveys no energetic change.
+            </p>
+            <p>
                 For hydrophobicity coloring, the color scale ranges from blue (negative) over white (zero) to yellow
                 (positive).
-                Yellow indicates a hydrophobic residue, blue hydrophilic. <br>
+                Yellow indicates a hydrophobic residue, blue hydrophilic.
+            </p>
+            <p>
                 The color scales are shown in detail below in the tab "What are the values of the color scale?".
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             What is your naming convention for structures?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 <samp>mut_0.pdb</samp> is the original protein without mutation.
                 Subsequent naming reflects the tree-like progress of explorations which grow from the <samp>mut_0</samp>
                 root.
                 You can select any listed file to mutate it.
-                <ul class="true-list">
-                    <li><samp>mut_0_1</samp> is the first mutation of the original protein.</li>
-                    <li><samp>mut_0_1_1</samp> would be a further mutation of the first mutant (<samp>mut_0_1</samp>).
-                    </li>
-                    <li><samp>mut_0_2</samp> is the second independent mutation of the original protein
-                        <samp>mut_0</samp>.</li>
-                </ul>
-            </span></div>
+            </p>
+            <ul class="true-list">
+                <li><samp>mut_0_1</samp> is the first mutation of the original protein.</li>
+                <li><samp>mut_0_1_1</samp> would be a further mutation of the first mutant (<samp>mut_0_1</samp>).
+                </li>
+                <li><samp>mut_0_2</samp> is the second independent mutation of the original protein
+                    <samp>mut_0</samp>.
+                </li>
+            </ul>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             Why is not possible to display energy differences for mut_0.pdb?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 The energy difference can only be displayed for mutants.
                 <samp>mut_0.pdb</samp> is the original protein and has no parent protein to which it could be compared
                 to.
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <!-- <li>
         <div class="collapsible-header grey lighten-4">
             What are the visible areas in the result window?
+        </div>
+        <div class="collapsible-body"><span>
+
+        </span></div>
+    </li> -->
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-4">
+            
         </div>
         <div class="collapsible-body"><span>
 
@@ -349,19 +569,19 @@
             How can I change the representation of the structures?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 Currently, we only offer a cartoon representation for the structures.
                 We want to include more representations in the future.
-            </span>
+            </p>
         </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
-            I don’t see an alignment?
+            I don’t see an alignment - why?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 If you do not see an alignment at the bottom, this may be due to two possible sources of error.
                 At least one sequence in the clustal file must be identical or part of the sequence of a chain in the
                 uploaded structure.
@@ -369,95 +589,82 @@
                 The second source of error could be that our internal matching did not work properly.
                 If you do not see an alignment, please send us an e-mail with your job ID so that we can solve the
                 problem.
-            </span>
+            </p>
         </div>
     </li>
 
-    <!-- <li>
+    <li>
         <div class="collapsible-header grey lighten-4">
             What do I do if the wrong structure is highlighted when hovering over the sequence in the Alignment View
             tab?
         </div>
         <div class="collapsible-body">
-            <span>
-                The structures and the sequences are matched automatically in the beginning.
-                Therefore it can occur, that the wrong sequence in the clustal file is matched to the structure.
-                You can fix this by manually rematching the sequence in the <strong>Manual Rematch Structre</strong>
-                tab.
-                <ol>
-                    <li>In the left column, select which sequence from which clustal file you want to match.</li>
-                    <li>In the right column, select the chain of the structure the sequence in the left column is to be
-                        matched to.</li>
-                    <li>Select <strong>Apply Matching</strong>.</li>
-                </ol>
-                To assist the matching, the longest common sequence is highlighted.
-                You can only match sequences, where one is a complete subsequence of the other.
-                <br><br>
-                You can find a more detailed description on how to manually rematch a clustal sequence to a chain within
-                a structure on the tutorial page under <strong>Rematch clustal sequences to a structure</strong>.
-            </span>
+            <p>
+                This is an error that should not occur. However, if it does, there seems to be a problem with the
+                internal matching of the structure to the alignment. Please send us your Job ID so that we can find the
+                error.
+            </p>
         </div>
-    </li> -->
+    </li>
 
-    <!-- <li>
+    <li>
         <div class="collapsible-header grey lighten-5">
             What do I do if the mutation sphere is located on a wrong amino acid?
         </div>
         <div class="collapsible-body">
-            <span>
-                This can occur if the automatic matching of the clustal sequence is matched to the wrong structure
-                chain.
-                This can be fixed by rematching the sequences manually.
-                Read the FAQ section: "What do I do if the wrong structure is highlightes when hovering over the
-                sequence in the <strong>Alignment View</strong> tab?".
-            </span>
+            <p>
+                This is a bug related to the question directly above. Something went wrong in the internal matching,
+                resulting in the wrong amino acid being highlighted as the mutation site. Please send us your Job ID so
+                that we can find a solution.
+            </p>
         </div>
-    </li> -->
+    </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             What are the values of the color scales?
         </div>
         <div class="collapsible-body">
-            <span>
-                <strong>Energy and hydrophobicity</strong><br>
-
-                The default color scale ranges from <var>-2</var> over <var>0</var> to <var>+2</var>.
+            <p>
+                <b>Energy and hydrophobicity</b><br>
+                The default color scale ranges from <em>-2</em> over <em>0</em> to <em>+2</em>.
                 You can change the intervals for the color scale in the <strong>Change Visualization</strong> tab.
-                <br><br>
-                <center>
-                    <div>
-                        <figure>
-                            <img src="static/img/faq/scaleBWR.png" width="60%;">
-                            <figcaption>Energy color scale</figcaption>
-                        </figure>
-                    </div>
-                </center>
-                <center>
+            </p>
+
+            <center>
+                <div>
                     <figure>
-                        <div><img src="static/img/faq/scaleBWY.png" width="60%;"></div>
-                        <figcaption>Hydrophobicity color scale</figcaption>
+                        <img src="static/img/faq/scaleBWR.png" width="100%;">
+                        <figcaption>Energy color scale</figcaption>
                     </figure>
-                </center>
+                </div>
+            </center>
+            <center>
+                <figure>
+                    <div><img src="static/img/faq/scaleBWY.png" width="100%;"></div>
+                    <figcaption>Hydrophobicity color scale</figcaption>
+                </figure>
+            </center>
 
-                <strong>Interface score</strong>
-
-                <center>
-                    <div><img src="static/img/faq/scale_interface_score.png" width="60%;"></div>
-                </center>
-
-                <strong>Conservation</strong>
-
-                <ul class="true-list">
-                    <li>red - gap</li>
-                    <li>dark blue - a mutation between amino acid groups</li>
-                    <li>light blue - a mutation withing an amino acid group</li>
-                    <li>white - no mutation/identical</li>
-                </ul>
-                <center>
-                    <div><img src="static/img/faq/scaleCons.png" width="60%;"></div>
-                </center>
-            </span>
+            <p>
+                <b>Interface score</b><br>
+                The interface score has 5 different bins:
+            </p>
+            <center>
+                <div><img src="static/img/faq/scale_interface_score.png" width="100%;"></div>
+            </center>
+            <p>
+                <b>Conservation</b>
+            </p>
+            <ul class="true-list">
+                <li>red - gap</li>
+                <li>dark blue - a mutation between amino acid groups</li>
+                <li>light blue - a mutation withing an amino acid group</li>
+                <li>white - no mutation/identical</li>
+            </ul>
+            <center>
+                <div><img src="static/img/faq/scaleCons.png" width="100%;"></div>
+            </center>
         </div>
     </li>
 
@@ -466,10 +673,13 @@
             Can I change the interval of the color scale?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 You can change the intervals for the color scale (energy and hydrophobicity) in the <strong>Change
                     visualization</strong> tab.
-            </span>
+            </p>
+            <p>
+                You cannot change the color scale for the conservation and interface score.
+            </p>
         </div>
     </li>
 
@@ -478,19 +688,40 @@
             How can I open the RaSP prediction window?
         </div>
         <div class="collapsible-body">
-            <span>
+            <p>
                 You can open the RaSP window for a specific amino acid with <samp>Ctrl + right click</samp> or by
                 switching on the RaSP selection mode.
                 This can be done by activating the button in the top left hand corner of the viewer.
-                When the selection mode is on, you can just select an amino acid with a <samp>right click</samp> and the
+                When the selection mode is on, you can just select an amino acid with a <samp>left click</samp> and the
                 window will open.
-                <ul class="true-list">
-                    <li>red - off</li>
-                    <li>green - on</li>
-                </ul>
-            </span>
+            <ul class="true-list">
+                <li>red - off</li>
+                <li>green - on</li>
+            </ul>
+            </p>
         </div>
     </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            Why do I see some weird residues in the structure?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                Normally, those are hetero atoms that have not been removed. If you observe some other strange
+                visualizations, please reach out to us.
+            </p>
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+        </div>
+        <div class="collapsible-body">
+            <p>
+            </p>
+        </div>
+    </li> -->
 
 </ul>
 
@@ -499,24 +730,65 @@
 <ul class="collapsible">
 
     <li>
+        <div class="collapsible-header grey lighten-5">
+            How does the interface score work?
+        </div>
+        <div class="collapsible-body">
+            <b> Binding score </b><br>
+            InterfaceAnalyzer calculates the <b>binding energy</b> by scoring the input structure twice: first, as a
+            complex, and second, after moving the two sides of the interface away from each other, exposing the
+            interface. The idea is that energy score of the residues that are interacting with residues on the other
+            side of the interface is going to change after those residues are exposed.
+            The Rosetta energy scores of the unbound state are then subtracted from the scores of the bound one. Both
+            the bound (input structure provided by user) and unbound structures have their side chains optimized prior
+            to scoring. Since side chain optimization is stochastic, the mover is run 3 times, and the median score is
+            taken for every residue.
+            <br><br>
+            
+            <b> Interface selection </b><br>
+            InterfaceAnalyzerMover which we use for the binding score calculation takes as an input a list of all chains
+            in the structure, with interface sides separated by <kdb>_</kdb>. For example, for the protein complex with
+            chains A, B, and C, you can select interfaces <kdb>A_BC</kdb>, <kdb>B_AC</kdb>, and <kdb>C_AB</kdb>. Which
+            side is which does not affect the score, so <kdb>A_BC</kdb> is the same as <kdb>BC_A</kdb>.
+            You can specify the interface yourself choosing which chains goes to which side, or you can choose an <b>All
+                vs all</b> mode, which will result in great increase of the runtime. In this mode, the InrefaceAnalyzer
+            is run separately for every chain, consecutively specifying one of the chains as the left side of the
+            interface, with all other chains being assigned as the right side. Thus, the user can see binding dG values
+            for all of the interface residues for the entire structure.
+            <br><br>
+            
+            <b> Calculation time </b><br>
+            1. If you provide the interface, <b>the addition to the overall running time</b> should be under 5 minutes,
+            depending on the number of chains and the size of the structure.
+            2. If you choose the all vs all option to see all possible interfaces in the structure, the running time
+            heavily depends on the number of chains, because IntefaceAnalyzer will run for every chain separately. Our
+            estimate runtime for a complex with averagely sized (~300 residue) chains is about N_chains * 5, <b>plus the
+                overall running time</b>.
+        </div>
+    </li>
+
+    <li>
         <div class="collapsible-header grey lighten-4">
             Does <span class="mut-ex">MutationExplorer</span> handle multichain proteins?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Yes.
                 <span class="mut-ex">MutationExplorer</span> always performs calculations in global protein complex
                 context.
                 You must take care to match alignments to specific chains, and specify the correct chain ID when
                 inputting manual mutations.
                 (Presently, VCF inputs are only displayed automatically on single-chain AlphaFold models).
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             How are the energies calculated?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Rosetta performs the mutation and calculates the energy of a structure as a the sum of energies computed
                 for each residue.
                 In the difference coloring, we see the mutant (mutated result structure) minus the WT (parent structure)
@@ -525,14 +797,16 @@
                 For qualitative values that reflect experimental data, other, more time-intensive protocols should be
                 used, e.g.
                 <a href="https://pubmed.ncbi.nlm.nih.gov/36173174/">https://pubmed.ncbi.nlm.nih.gov/36173174/</a>
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             Why do some of my mutations exhibit high energies?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 <span class="mut-ex">MutationExplorer</span> is a platform which must calculate and present energy
                 differences
                 to users in near real-time.
@@ -541,7 +815,8 @@
                 which cannot be resolved without more exhaustive sampling and relaxation techniques. In
                 particular, mutations of residues from or to proline or glycine tend to greatly challenge
                 Rosetta’s minimizer.
-            </span></div>
+            </p>
+        </div>
     </li>
 
 
@@ -549,29 +824,36 @@
         <div class="collapsible-header grey lighten-5">
             Why do some distant residues have a change in energy?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 When a mutation is introduced, side-chain optimization is not limited to immediately adjacent residues.
                 As the minimizer descends the energy landscape of the entire protein, distant side-chains can be
                 re-oriented by the algorithm.
-            </span></div>
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-4">
             Which parameters were used in the examples?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 Each example includes all settings and files needed to re-run and replicate the example outputs.
-                The three examples in the first row demonstrate <strong>upload structure and mutations</strong>.
-                The fourth example in the second row demonstrates <strong>upload vcf</strong>.
-            </span></div>
+                The three examples in the first row demonstrate <a href="{{url_for('submit')}}">upload structure
+                    and
+                    mutations</a>.
+                The fourth example in the second row demonstrates <a href="{{url_for('vcf')}}">upload vcf</a>.
+            </p>
+        </div>
     </li>
 
     <li>
         <div class="collapsible-header grey lighten-5">
             Where can I find more information about the tools used on the server, i.e. MDsrv/mol*/Rosetta?
         </div>
-        <div class="collapsible-body"><span>
+        <div class="collapsible-body">
+            <p>
                 MDsrv: <br>
                 <a
                     href="https://proteininformatics.informatik.uni-leipzig.de/mdsrv">https://proteininformatics.informatik.uni-leipzig.de/mdsrv</a>
@@ -587,9 +869,86 @@
                 <br>
                 Varient Effect Predictor:<br>
                 <a href="https://www.ensembl.org/info/docs/tools/vep/">https://www.ensembl.org/info/docs/tools/vep/</a>
-            </span></div>
+            </p>
+        </div>
     </li>
 </ul>
+
+<h5>General</h5>
+
+<ul class="collapsible">
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            How long will a run take?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                Actual times depend on the size of the system and may vary significantly.
+            </p>
+            <ul class="true-list">
+                <li>initial basic minimization: 1-3 min</li>
+                <li>per round of mutations: \~2 min</li>
+                <li>VCF processing (plus minimization): 5 min</li>
+                <li>RaSP: \~10-15 minutes, depending on file size</li>
+            </ul>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            How long will my session be stored?
+        </div>
+        <div class="collapsible-body">
+            Sessions are not deleted.
+        </div>
+    </li>
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-5">
+            What license does the server run under?
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+    <!-- <li>
+        <div class="collapsible-header grey lighten-4">
+            How can I delete a session?
+        </div>
+        <div class="collapsible-body">
+
+        </div>
+    </li> -->
+
+    <li>
+        <div class="collapsible-header grey lighten-5">
+            Where is the source-code available?
+        </div>
+        <div class="collapsible-body">
+            <p>
+                <a
+                    href="https://github.com/starbeachlab/MutationExplorerServer">https://github.com/starbeachlab/MutationExplorerServer</a>
+            </p>
+            <p>
+                It is also possible to add issues if something is not working.
+            </p>
+        </div>
+    </li>
+
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            Where can I download all input files for the tutorials and examples?
+        </div>
+        <div class="collapsible-body">
+            Next to each example you will find an info text with all the inputs and imports used to create the example.
+            If files have been uploaded, they are also available for download via a button.
+        </div>
+    </li>
+
+</ul>
+
 
 <!-- <li>
     <div class="collapsible-header grey lighten-4">
