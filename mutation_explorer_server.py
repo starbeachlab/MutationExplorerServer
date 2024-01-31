@@ -28,6 +28,23 @@ READ_WRITE_FAILED = 'While reading or writing files, something went wrong. '
 FILE_NOT_FOUND = 'File not found. '
 UNEXPECTED = 'An unexpected error occured. '
 
+STATUS_UPDATE_FAILED = 'Something went wrong during the status update.'
+FIXBB_FAILED = 'Error in fixbb'
+COPY_FAILED = 'Something went wrong while copying or moving a file.'
+INTERFACE_SCORE_FAILED = 'There was an error during the interface score calculation.'
+RASP_FAILED = 'There was an error during the RaSP calculation.'
+RASP_CP_FAILED = 'Something went wrong while copying the RaSP files.'
+SUPERIMOPSE_FAILED = 'There was an error during the superimposing of the structures.'
+CONSERVATION_FAILED = 'There was an error during the conservation calculation.'
+ENERGY_FILE_FAILED = 'There was an error while writing the energy to the b factor.'
+ENERGY_DIFF_FAILED = 'There was an error while calculating the energy difference between two files.'
+HYDRO_FILE_FAILED = 'There was an error while writing the hydrophobicity to the b factor.'
+HYDRO_DIFF_FAILED = 'There was an error while calculating the hydrophobicity difference between two files.'
+INTERFACE_SCORE_DIFF_FAILED = 'There wasn an error while calculating the difference of the interface score between two files.'
+ENERGY_APPEND_FAILED = 'There was an error while handling the energy files.'
+SCORE_FAILED = 'There was an error while scoring the structure.'
+VCF_FAILED = 'There was an error during the vcf calculation.'
+
 
 # wait times before error is returned (in seconds)
 # could be useful to adjust for minimization option
