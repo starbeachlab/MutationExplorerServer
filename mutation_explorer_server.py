@@ -3088,3 +3088,8 @@ def get_alignment_ids(filename, tag):
         fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + filename)
             
     return idstr
+
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
