@@ -1,0 +1,868 @@
+{% extends "base.html" %}
+
+
+{% block head %}
+
+<style>
+    .bld {
+        font-weight: 600;
+    }
+
+    .true-list {
+        padding-left: revert !important;
+    }
+
+    .true-list li {
+        list-style-type: disc !important;
+    }
+
+    .mut-ex {
+        font-variant: small-caps;
+    }
+
+    .collapsible-header .mut-ex {
+        margin: 0 0.4rem;
+    }
+
+    .collapsible-body {
+        text-align: justify;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<center>
+    <br>
+    <h3>Documentation</h3>
+    <br>
+    <br>
+</center>
+
+<center>
+
+    <br>
+
+    <h5>General philosophy and key elements of the <span class="mut-ex">MutationExplorer</span></h5>
+    <img src="static/img/server2b.png" width="100%;">
+
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                <span class="mut-ex">MutationExplorer</span> - exploring the effect of mutations on the structure
+            </div>
+            <div class="collapsible-body">
+                The <span class="mut-ex">MutationExplorer</span> maps variants onto the protein 3D structure which
+                allows to interactively explore the effects of mutations with respect to stability and function. Often
+                wwPDB structures contains mutations and can not intuitively be mapped to its native sequence, sequences
+                of structures changed to close or remote homologs or structures designed interactive while inspecting
+                the structure. With the <span class="mut-ex">MutationExplorer</span> this is now easily possible and
+                even visualises the effect of the variant on the protein structures stability.
+            </div>
+        </li>
+    </ul>
+
+    <br>
+
+    <h5>Structure file preparation</h5>
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Energy minimization - the key to high quality
+            </div>
+            <div class="collapsible-body">
+                <p></p>
+                The minimization is crucial for the quality of the outcome. The better the structure is energetically
+                minimized, the more reliable the results will be.
+                </p>
+                <p>
+                    We continuously pre-minimize structures from the PDB using the command-line described below. If you
+                    specify a PDB ID that is contained in our database, the pre-minimized structure is used.
+                </p>
+                <p>
+                    If the used structure is not available in our database, we offer two modes of side-chain
+                    minimization: a short and a long one. The short one should take a few minutes, depending on the size
+                    of the protein. The long one may take some hours for large proteins. It is strongly recommended to
+                    use the long minimization, despite the significant waiting period. The minimization will start after
+                    submission of the mutations. There is also a notification if the structure has already been
+                    minimized. It is not possible to overwrite the minimization in the database.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                AlphaFold and your own models
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Structures from predictive tools such as AlphaFold and ESMfold are not pre-minimized and you should
+                    follow the steps below. Please note that the minimization has to be performed with the same energy
+                    functions than we use in the <span class="mut-ex">MutationExplorer</span>, namely Rosetta.
+                </p>
+                <p>
+                    You can use any of the following options: Either use one of the two structure minimization options
+                    we provide on the website or do it yourself via a local installation of Rosetta or via the ROSIE
+                    server.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Minimizations via the <span class="mut-ex">MutationExplorer</span>
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    We offer a <em>long</em> and <em>short</em> side-chain only optimization.<br>
+
+                    For both minimizations, we use the Rosetta fixbb function
+                </p>
+
+                <div class="codebox">
+                    <code>
+                        PATH_TO_ROSETTA/fixbb.static.linuxgccrelease -use_input_sc -resfile INPUT.res -nstruct 1 -linmem_ig 10 -in:file:s INPUT.pdb -out:pdb -out:prefix OUTDIR/
+                    </code>
+                </div>
+
+                <p>
+                    The only difference between the long and the short optimization is the usage of more rotamers in the
+                    <em>long</em> optimization via <code>-ex1 -ex2</code>
+                </p>
+                <p>
+                    Although the minimizations provided in the webserver are sufficient to get a first idea about
+                    mutation effects, we recommend you to perform a more through minimization, as described in the
+                    following. Please note that the structures within our database have been minimized using the more
+                    through approach below.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Do it yourself!
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    In the following, we suggest a more thorough minimization, which goes beyond a simple side-chain
+                    optimizations. It optimizes the backbone in a limited way (via the
+                    <code>-relax:constrain\_relax\_to\_start\_coords</code> option). This does not allow a completely
+                    free backbone
+                    minimization as this might be leading to problems such as larger structural backbone permutations.
+                    Further, we recommend the more thorough relax function with a current energy score.
+                </p>
+                <div class="codebox">
+                    <code>
+                        PATH_TO_ROSETTA/relax.static.linuxgccrelease -relax:fast true -relax:cartesian true -score:weights ref2015_cart -use_input_sc -optimization::default_max_cycles 200 -linmem_ig 10 -relax:constrain_relax_to_start_coords -ex1 -ex2 -nstruct 20 -in:file:s INPUT.pdb -out:pdb -out:prefix OUTDIR/
+                    </code>
+                </div>
+                <p>
+                    This commandline will create 20 models, from which you should select the one with the lowest energy.
+                    Each PDB contains a line starting with <em>pose</em>. In this line you want the last value, which is
+                    the
+                    total energy. This resulting structure can then directly be used in the <span
+                        class="mut-ex">MutationExplorer</span> without requirement of further minimization.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                ROSIE server
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    There is a way to perform the structure minimization without a local Rosetta installation by using
+                    the ROSIE 2 server (<a href="https://r2.graylab.jhu.edu/">https://r2.graylab.jhu.edu/</a>). It
+                    requires that you have a GitHub account with
+                    your academic email address linked and verified. Once you are logged in, you can select
+                    <em>Rosetta</em>
+                    from the Rosie apps list. There, you need to upload your PDB structure and paste the following into
+                    the <em>Rosetta flags file</em> field:
+                </p>
+                <div class="codebox">
+                    <code>
+                        -in:file:s input.pdb
+                        -in:file:fullatom
+                        -constrain_relax_to_start_coords
+                        -relax:ramp_constraints false
+                        -nstruct 6
+                        -out:suffix _Relaxed
+                        #rosie type serial
+                        #rosie tasks 6
+                    </code>
+                </div>
+                <p>
+                    The job will run for about 2-4 hours, depending on the protein size. Once it is done, you can go to
+                    <em>job files</em> and find <em>score\_Relaxed.sc</em>. You can open it on the website, if you do
+                    so, you need to
+                    select <em>raw</em> in the <em>view as</em> options. In the <em>total score</em> column, find the
+                    row with the lowest
+                    energy score and look up the name in the <em>description</em> column. Then download the
+                    <em>input\_relaxed</em>
+                    .pdb file with the respective number. This is the file you are going to use as an input to the <span
+                        class="mut-ex">MutationExplorer</span>.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Database of pre-minimized structures from the Protein Databank (PDB)
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Since the minimization is essential for correctly highlighting the energetic impact of mutations,
+                    but takes a substantial amount of time to perform, we calculated a database of pre-minimized
+                    structures from the PDB. Currently our database contains 45,000 models. You will be notified if your
+                    PDB ID was found in our database or has to be calculated.
+                </p>
+            </div>
+        </li>
+
+    </ul>
+
+    <br>
+
+    <h5>Mutational tools - under he the hood of <span class="mut-ex">MutationExplorer</span></h5>
+
+    <ul class="collapsible">
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+                Mutational effects
+            </div>
+            <div class="collapsible-body">
+                Text to be added about fixbb and how we calculate the energy difference - in simple words...
+            </div>
+        </li> -->
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                RaSP - bringing exploration to full bloom
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    RaSP is a new deep-learning-based tool that rapidly estimates protein stability changes. RaSP
+                    predictions strongly correlate to scores from Rosetta calculations which demand longer compute
+                    times.
+                </p>
+                <p>
+                    With RaSP, <span class="mut-ex">MutationExplorer</span> presents the user with a quick initial
+                    estimation of a mutation’s (de)stabilizing effect, without having to wait for the longer full
+                    minimization process.
+                </p>
+                <p>
+                    RaSP will calculate all mutations for all amino acids in a chain within ~10 minutes.
+                </p>
+                <p>
+                    If this option is selected, you can press the Ctrl key and left-click on the residue in the viewer.
+                    This will open a frame with 20 energy estimates. Be aware that this is an approximation but can be
+                    used for further guidance and selection of amino acids.
+                </p>
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+                Include ensembl information via CVF files
+            </div>
+            <div class="collapsible-body">
+                add what this is good for/motivation, workflow of what's happening under the hood, e.g. Alphafold predition, also...
+            </div>
+        </li> -->
+
+    </ul>
+
+    <br>
+
+    <h5>Interpretation of the results</h5>
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Interpretation of the results
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    The more negative a energy or difference is, the more stabilizing effect has a residue onto the
+                    structure. Within the viewer, we annotate stabilizing mutations or residues in blue, while
+                    destabilizing residues are highlighted in red. As a general rule, exposed residue such as the very
+                    N- or C-terminus can provide little stabilization to the structure and will therefore often be
+                    annotated as destabilizing.
+                </p>
+                <p>
+                    Optimization towards completely rigid structures might cause problems to the function of the
+                    protein, which often requires some flexibility.
+                </p>
+                <p>
+                    Destabilization of some parts of the protein do not necessarily lead to un- or miss-folding but can
+                    also cause degradation as specific degron motifs are exposed.
+                </p>
+                <!-- % Please add here some more (brain fried) -->
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+
+            </div>
+        </li> -->
+    </ul>
+
+    <br>
+
+    <h5>Getting started with <span class="mut-ex">MutationExplorer</span></h5>
+
+    <ul class="collapsible">
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Manual mutation syntax
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Define a list of point amino acid substitutions with the following syntax:
+                </p>
+                <ul class="true-list">
+                    <li>A comma separated list of: <code>CHAIN : RESIDUE-ID TARGET-AA-TYPE</code></li>
+                    <li>Example: <code>A:23G,B:123A</code> <br>
+                        <em>This mutates the residue in chain A with the PDB residue ID 23 to glycine and in chain B the
+                            residue with residue ID 123 to alanine.</em>
+                    </li>
+                </ul>
+                <p>
+                    Note that the all mutations will be done in the same model, multiple individual mutations are best
+                    done via the explorer interface
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Sequence Alignment
+            </div>
+            <div class="collapsible-body">
+                You can mutate the model that you uploaded in previous step using a sequence alignment in ClustalW
+                format. One of the sequences in the alignment has to match <b>exactly one sequence</b> in the PDB or be
+                a subsequence of it that you uploaded in previous step. Since one alignment is associated with one
+                chain, you can upload up to three alignments. If you need to mutate more than three chains, you can
+                upload target sequences for the other chains or define mutations manually.
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Target Sequence
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Provide the sequence for each chain of the uploaded PDB that it will be mutated to. The target chain
+                    sequences as a chain of one-letter sequences can be provided as FASTA files (top), pasted directly
+                    (center) or directly fetched from UniProtKB (bottom). For each sequence, select the corresponding
+                    PDB chain from the dropdown menu. You can also combine different uploads for multi-chain proteins
+                    (e.g. Fasta for Chain A, Paste sequence for Chain B). Please ensure that the uploaded/pasted
+                    sequences <b>exactly</b> match the sequence in length (check your PDB!) and avoid sequence offsets
+                    resulting in mutation of all residues.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Using VCF files (sequencing data)
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    VCF, the tab-delimited Variant Call Format, is incredibly powerful and flexible. As example of the
+                    minimal input format used to upload SNPs to <span class="mut-ex">MutationExplorer</span>, see the
+                    sample file <a
+                        href="https://proteinformatics.uni-leipzig.de/mutation_explorer/downloads/rtel1/rtel1.vcf">RTEL1.vcf</a>,
+                    described in our manuscript. This tutorial lists the steps you will take to upload RTEL1.vcf and
+                    replicate the example page <a
+                        href="https://proteinformatics.uni-leipzig.de/mutation_explorer/examples/rtel1/">RTEL1 <span
+                            class="mut-ex">MutationExplorer</span> results</a>.
+                </p>
+                <p>
+                    <b>Step-by-step guide</b>
+                </p>
+                <ol>
+                    <li>From the home page, click on <b>upload vcf</b> and you will see a new form with a detailed
+                        explanation of <span class="mut-ex">MutationExplorer</span> VCF workflow and limitations.</li>
+                    <li>Select <em>long minimization</em> to replicate the energy values of our example page. Or,
+                        <em>quick</em> is OK if numerical precision is not a concern. <em>None</em> is fastest, but
+                        energetic calculations will be meaningless. Click the <b><em>i</em></b> at right for more
+                        details.
+                    </li>
+                    <li>Click the <b>check</b> under “RaSP” if you wish to skip this stability prediction calculation.
+                        Click the <b><em>i</em></b> at right for more details.</li>
+                    <li>Click <b>submit</b> to start the calculations. The webpage tab at the top of the browser window
+                        will immedately indicate a refresh in progress. Very soon you are transported to a new page
+                        showing <em>Status of Job <code>nnnnn</code></em>. Be patient as the calculation proceeds. It is
+                        a good idea to right-click on <em>Result Page</em> for later references. However, this URL will
+                        not be active until the various calculations complete. At that time, you will be automatically
+                        redirected to this same <em>Result Page</em>. Your patience will be well rewarded.</li>
+                </ol>
+
+                <p>
+                    <b>Troubleshooting your VCF uploads</b><br>
+
+                    The processes between the submission of your VCF file, and the display of an AlphaFold model are
+                    complex. Your VCF upload will be processed by the Ensembl Variant Effect Predictor (VEP), running
+                    locally on the <span class="mut-ex">MutationExplorer</span> server. If your results are unexpected,
+                    we recommend you paste your VCF file into the public VEP website: <a
+                        href="https://ensembl.org/Tools/VEP">https://ensembl.org/Tools/VEP</a>. This is the fastest way
+                    to ensure that your VCF file is properly tab-delimited and contains the minimum required columns and
+                    headers. The raw output from the website should also list protein missense variants.
+                </p>
+                <p>
+                    While seeing missense variants from the public VEP website is encouraging, other difficulties may
+                    remain. For example:
+                </p>
+                <ul class="true-list">
+                    <li><span class="mut-ex">MutationExplorer</span> can only analyze one protein at a time. You will
+                        need to split your VCF file and make separate runs, if your VCF file generates missense
+                        variations for multiple genes.</li>
+                    <li>The VEP often returns Ensembl transcript Ids which do not map to Swiss-Prot curated, canonical
+                        UniProt transcript IDs. Without a UniProt ID, <span class="mut-ex">MutationExplorer</span>
+                        cannot retrieve an AlphaFold model. You may manually check cross-references between ENST…
+                        transcript IDs and Uniprot IDs at <a href="https://ensembl.org/">ensembl.org</a> and <a
+                            href="https://uniprot.org/">uniprot.org</a>, respectively.</li>
+                    <li>Inputting GRCh37/hg19 genomic positions, which are indistinguishably formatted, will result in
+                        wildly incorrect results. You must first “liftover” such coordinates, by converting your VCF
+                        coordinates to BED format, then submitting them to <a
+                            href="https://genome.ucsc.edu/cgi-bin/hgLiftOver">https://genome.ucsc.edu/cgi-bin/hgLiftOver</a>.
+                        As you use these kinds of tools, remember that <span class="mut-ex">MutationExplorer</span>
+                        requires GRCh38.</li>
+                </ul>
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+
+            </div>
+        </li> -->
+    </ul>
+
+    <br>
+
+    <h5>The main stage: <span class="mut-ex">MutationExplorer</span> result window</h5>
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                General
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    In the explorer view, you will be presented with information about your set of mutations, relative
+                    per-residue energies and visualization of the protein.
+                </p>
+                <p>
+                    <b>Left side (info bar):</b>
+                </p>
+                <ul class="true-list">
+                    <li><b>Select</b>
+                        <ul class="true-list">
+                            <li><b>Tree View:</b> Outlines the mutations that were performed, where <samp>mut_0</samp>
+                                will be
+                                the unmutated, minimized PDB file that serves as the basis of mutations. You can select
+                                entries
+                                in the tree view for individual mutations.</li>
+                            <li><b>Color by Dropdown menu:</b> provides different coloration methods (absolute energy,
+                                energy
+                                difference to parent, absolute hydrophobicity, difference in hydrophobicity to parent,
+                                conservation, absolute interface score, difference in interface score to parent) for the
+                                coloration of the protein in the main window.</li>
+                            <li><b>Download all button:</b> pack all PDB files into a ZIP archive for downloading.</li>
+                        </ul>
+                    </li>
+                    <li><b>Mutate</b>
+                        <ul class="true-list">
+                            <li><b>Enter mutations field:</b> allows for further mutations to be entered, with the root
+                                being
+                                the currently active protein (printed in bold in the tree view). The "info" field onm
+                                the bottom
+                                provides info on the currently selected protein.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <b>Info</b>
+                        <ul class="true-list">
+                            <li>Table Showing information about your current selection: Total Energy (Rosetta Energy
+                                units),
+                                the
+                                parent structure, introduced mutations and the exploration ID.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>
+                    <b>Right side (main window):</b>
+                </p>
+                <ul class="true-list">
+                    <li>Mol* visualization of the protein with a blue-white-red color gradient, where blue represents
+                        negative values and red positive values in the default color setting. The mutated residues are
+                        highlighted with a red translucent sphere. Hovering over the cartoon will highlight residues and
+                        display a tooltip with further information in the bottom right corner.</li>
+                    <li>MDSrv Window: By default, shows a sequence alignment of your root and mutated protein with the
+                        currently mutated residue highlighted in red. Hovering over cartoon residues will also highlight
+                        the residue in the alignment and vice-versa. It will further display a tool-tip on the right
+                        side with information about the highlighted residue.</li>
+
+                </ul>
+                <p>
+                    Clicking on any highlighted residue will zoom in, showing the selected residue and its surroundings
+                    in a ball-and-stick view. Different carbon colors indicate protein chains, otherwise atoms are
+                    colors by type. Dashed lines indicate residue-residue interactions like hydrogen bonds.
+                </p>
+
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Adding mutations
+            </div>
+            <div class="collapsible-body">
+                <ul class="true-list">
+                    <li>In the tree view, click on the protein to serve as the root for your next mutation, e.g.
+                        <samp>mut_0_1</samp>, which is the first mutation entered in the webpage.
+                    </li>
+                    <li>In the <b>Mutate</b> field, enter the mutations to be added to the protein. Click on the
+                        <em>info</em> box for more informations.
+                    </li>
+                    <li>Click on <b>submit</b> and wait for your new protein to be added. The waiting message shows the
+                        name of the new mutation. In the tree, the new mutated protein will appear indented under the
+                        selected root.</li>
+                </ul>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Adjusting visualization
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    You can adjust the metric that serves as the basis for coloration in the \textit{"Color by:"}
+                    Dropdown menu. By default, the colormap will be from -2 to 2 in a blue-white-red gradient
+                </p>
+                <ul class="true-list">
+                    <li>Click on the <b>Change Visualization</b> tab in the bottom right of the main window to adjust
+                        the color scale range and the mutation markers. </li>
+                    <li>First select for which structure you want to change the range of the color scale by choosing the
+                        corresponding file in the Structure drop-down menu. On the left and right side of the color
+                        scale, change the numbers and confirm with enter. The color scale will be adjusted upon clicking
+                        <b>Apply</b> below the scale.
+                    </li>
+                    <li>The mutation marker color and size can be adjusted via the slider and color window. The marker
+                        can be turned off by clicking on <b>On</b> in the Show Field, setting it to <b>Off</b>.
+                    <li>It is possible to hide all mutation spheres at once. Click the <b>Disable all mutation
+                            spheres</b> button in the Mutation Markers panel. To show all mutation spheres again, click
+                        the <b>Enable all mutation spheres</b> button.</li>
+                    <li>If you are importing multiple structures into a scene, it may be beneficial to hide a specific
+                        structure. Select the structure you want to hide from the Structure drop-down menu. Then click
+                        the <b>Hide Structure</b> button at the bottom. To make the structure visible again, simply
+                        click the <b>Show Structure</b> button.</li>
+                </ul>
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+
+            </div>
+        </li> -->
+    </ul>
+
+    <br>
+
+    <h5>Further applications</h5>
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Homology modeling of multiple states of a protein
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    What AlphaFold is not able to do is to model different states of a protein. This can be achieved
+                    using <span class="mut-ex">MutationExplorer</span>. For many classes and families of proteins,
+                    multiple states are available in the PDB. Different states can be modeled By selecting different
+                    PDBs as base structure and follow these steps:
+                </p>
+                <ul class="true-list">
+                    <li>Under <a href="{{url_for('submit')}}">upload structure and mutations</a> enter the PDB ID of the
+                        base structure or upload a model from your machine.</li>
+                    <li>Ideally select the long minimization (for homology modeling the RaSP option can be disabled) and
+                        click the <em>next</em> button.</li>
+                    <li>For uploading the sequence to which you want to modify the base structure to there are multiple
+                        choices:</li>
+                    <ul class="true-list">
+                        <li>Paste or upload it under <em>target sequence</em> (when the target is rather similar to your
+                            base structure / template).</li>
+                        <li>If your target sequence has an Uniprot ID you can enter that.</li>
+                        <li>You will have to indicate to which chain in the base structure the sequence shall be applied
+                            (available chains are listed).</li>
+                        <li>If it is a very remote relationship, follow the AlignMe procedure.</li>
+                        <!-- TODO proper link to tutorial alignme -->
+                        <li>For other cases either also use AlignMe, or upload an alignment from another source via
+                            “sequence alignment”.</li>
+                        <!-- TODO proper alignme link -->
+                    </ul>
+                </ul>
+                <p>
+                    The part that cannot be done by <span class="mut-ex">MutationExplorer</span> is the minimization of
+                    the model. The user can choose between different possibilities, e.g. using Rosetta as explained
+                    above, or by performing MD simulations and many others. Whatever approach the user choosed, it
+                    requires sufficient sampling and thus has to be done locally.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Backmutating PDB structures to wildtype sequence for MD simulations
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Structures deposited in the PDB are very often modified in order to solve them experimentally. Using
+                    <span class="mut-ex">MutationExplorer</span>, it is a simple two-step process to mutate them back to
+                    their native sequence. Thus it is common step for simulating proteins to back-mutate PDB.
+                </p>
+                <p>
+                    However, it should be noted that at its current state <span class="mut-ex">MutationExplorer</span>
+                    is not able to complete the structure by modeling missing parts in the PDB.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Multi-state modeling of homologs via Molecular Dynamics simulation ensembles
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Molecular dynamics simulation can generate ensembles of functionally relevant states. <span
+                        class="mut-ex">MutationExplorer</span> maps those ensembles to close or distant homologs. For
+                    close homologs, an alignment will be automatically generated internally. Alternatively, a
+                    pre-calculated sequence alignment can be provided. Where more refined alignments are required, the
+                    server accepts results forwarded from the AlignMe website <a
+                        href="https://doi.org/10.1093/nar/gkac391">https://doi.org/10.1093/nar/gkac391</a>. Such
+                    sequence alignments carry nuanced details and <span class="mut-ex">MutationExplorer</span> drills
+                    down to reveal them all.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Aiding design for experimental studies for protein characterization
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    When designing proteins, the effect of the variant is often only known after applying of an external
+                    software, via multiple design rounds. After each of those, the structures can be inspected. The
+                    power of the <span class="mut-ex">MutationExplorer</span> lies in the possibility to do this
+                    directly in the viewer and select novels rounds of mutations immediatley and due to their influence
+                    on the structure.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                (De-) Stabilize a protein-protein interface
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    3D mapping of energies is not limited to monomers. Over single or multiple rounds of mutations,
+                    protein complexes or protein-protein interfaces can flexibly be designed to achieve
+                    (de)stabilization. The effect of each design choice can be explored visually.
+                </p>
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+
+            </div>
+        </li> -->
+    </ul>
+
+    <br>
+
+    <h5>Methods / code sources</h5>
+
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Structure minimization
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    We use the following Rosetta code to minimize the structure. The basis is the fixbb function, while
+                    the resfile does not contain any indicated mutation.
+                </p>
+                <div class="codebox">
+                    <code>
+                        PATH_TO_ROSETTA/fixbb.static.linuxgccrelease -use_input_sc -in:file:s path_to_structure -resfile path_to_empty_res_file -nstruct 1 -linmem_ig 10 -out:pdb -out:prefix prefix -ex1 -ex2
+                    </code>
+                </div>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                Mutation
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    We use the following Rosetta code to mutate the structure. The basis is the fixbb function.
+                </p>
+                <div class="codebox">
+                    <code>
+                        PATH_TO_ROSETTA/fixbb.static.linuxgccrelease -use_input_sc -in:file:s path_to_structure -resfile path_to_empty_res_file -nstruct 1 -linmem_ig 10 -out:pdb -out:prefix prefix
+                    </code>
+                </div>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                VCF processing
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    The VCF processing code can be found at:
+                </p>
+                <div class="codebox">
+                    <code>
+                        vcf2rosetta.py VCF_file
+                    </code>
+                </div>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-4">
+                RaSP
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Details about the RaSP software can be found here: <a
+                        href="https://doi.org/10.1101/2022.07.14.500157">https://doi.org/10.1101/2022.07.14.500157</a>
+                </p>
+                <p>
+                    The RaSP software code can be found on GitHub: <a
+                        href="https://github.com/KULL-Centre/papers/tree/main/2022/ML-ddG-Blaabjerg-et-al">https://github.com/KULL-Centre/papers/tree/main/2022/ML-ddG-Blaabjerg-et-al</a>
+                </p>
+                <div class="codebox">
+                    <code>
+                        calc-rasp.sh output.pdb chainID out_file_name output_directory
+                    </code>
+                </div>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Mol* viewer
+            </div>
+            <div class="collapsible-body">
+                Structure predictions are visualized in <span class="mut-ex">MutationExplorer</span> with an adapted and
+                extended version of Mol* <a
+                    href="https://doi.org/10.1093/nar/gkab314">https://doi.org/10.1093/nar/gkab314</a>, the successor of
+                the NGL Viewer <a href="https://doi.org/10.1093/nar/gkv402">https://doi.org/10.1093/nar/gkv402</a>.
+                The extensions of Mol* from MDsrv <a
+                    href="https://doi.org/10.1093/nar/gkac398">https://doi.org/10.1093/nar/gkac398</a> have been
+                incorporated into <span class="mut-ex">MutationExplorer</span> so that sequence alignments are
+                integratively displayed near structure visualizations. The adapted Mol* viewer can be found on GitHub.
+            </div>
+        </li>
+
+        <!-- <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+
+            </div>
+        </li> -->
+    </ul>
+
+    <br>
+
+    <h5>General remarks</h5>
+    
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Limitations
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    Currently, <span class="mut-ex">MutationExplorer</span> has no potentials targeted for membrane
+                    proteins available. Especially for residues facing the membrane, a special score-function and
+                    preparation is desired. Other residues, especially those outside of the membrane can be investigated
+                    with <span class="mut-ex">MutationExplorer</span> without limitations.
+                </p>
+                <p>
+                    Moreover, some mutations are generally challenging for Rosetta, foremost those from or to proline.
+                    Mutations from glycine may require conformational adaptation beyond the protocols used here, but
+                    proteins may be more flexible.
+                    <!-- % Are non-standard amino acids included in the forcefield? Are disulfide bridge-disrupting mutations now possible? -->
+                </p>
+                <p>
+                    Ligands can only be handled as far as they are included in Rosetta’s energy/scoring functions.
+                </p>
+                <p>
+                    <span class="mut-ex">MutationExplorer</span> cannot handle very large structures, such as CryoEM
+                    structures available only in CIF format. Partial AlphaFold models for transcripts with more than
+                    2,700 amino acids are not supported. We also caution that for large structures our default protocols
+                    for minimizations might be insufficient. Users should definitely minimize these on their local
+                    computer before upload. For this purpose, we recommend using the according Tutorial command lines.
+                    <!-- TODO propr link to tutorial -->
+                </p>
+            </div>
+        </li>
+    </ul>
+
+    <h5>Happy mutating!</h5>
+
+</center>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('.collapsible').collapsible();
+    });
+
+</script>
+{% endblock %}

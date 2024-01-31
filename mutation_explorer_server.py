@@ -2053,6 +2053,9 @@ def faq():
 def tutorial():
     return render_template("tutorial.html")
 
+@app.route('/documentation')
+def documentation():
+    return render_template('documentation.html')
 
 @app.route('/downloads/<tag>/<filename>')
 def download(tag, filename):
