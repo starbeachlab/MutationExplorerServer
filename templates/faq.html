@@ -730,6 +730,44 @@
 <ul class="collapsible">
 
     <li>
+        <div class="collapsible-header grey lighten-5">
+            How does the interface score work?
+        </div>
+        <div class="collapsible-body">
+            <b> Binding score </b><br>
+            InterfaceAnalyzer calculates the <b>binding energy</b> by scoring the input structure twice: first, as a
+            complex, and second, after moving the two sides of the interface away from each other, exposing the
+            interface. The idea is that energy score of the residues that are interacting with residues on the other
+            side of the interface is going to change after those residues are exposed.
+            The Rosetta energy scores of the unbound state are then subtracted from the scores of the bound one. Both
+            the bound (input structure provided by user) and unbound structures have their side chains optimized prior
+            to scoring. Since side chain optimization is stochastic, the mover is run 3 times, and the median score is
+            taken for every residue.
+            <br><br>
+            
+            <b> Interface selection </b><br>
+            InterfaceAnalyzerMover which we use for the binding score calculation takes as an input a list of all chains
+            in the structure, with interface sides separated by <kdb>_</kdb>. For example, for the protein complex with
+            chains A, B, and C, you can select interfaces <kdb>A_BC</kdb>, <kdb>B_AC</kdb>, and <kdb>C_AB</kdb>. Which
+            side is which does not affect the score, so <kdb>A_BC</kdb> is the same as <kdb>BC_A</kdb>.
+            You can specify the interface yourself choosing which chains goes to which side, or you can choose an <b>All
+                vs all</b> mode, which will result in great increase of the runtime. In this mode, the InrefaceAnalyzer
+            is run separately for every chain, consecutively specifying one of the chains as the left side of the
+            interface, with all other chains being assigned as the right side. Thus, the user can see binding dG values
+            for all of the interface residues for the entire structure.
+            <br><br>
+            
+            <b> Calculation time </b><br>
+            1. If you provide the interface, <b>the addition to the overall running time</b> should be under 5 minutes,
+            depending on the number of chains and the size of the structure.
+            2. If you choose the all vs all option to see all possible interfaces in the structure, the running time
+            heavily depends on the number of chains, because IntefaceAnalyzer will run for every chain separately. Our
+            estimate runtime for a complex with averagely sized (~300 residue) chains is about N_chains * 5, <b>plus the
+                overall running time</b>.
+        </div>
+    </li>
+
+    <li>
         <div class="collapsible-header grey lighten-4">
             Does <span class="mut-ex">MutationExplorer</span> handle multichain proteins?
         </div>
@@ -906,15 +944,6 @@
         <div class="collapsible-body">
             Next to each example you will find an info text with all the inputs and imports used to create the example.
             If files have been uploaded, they are also available for download via a button.
-        </div>
-    </li>
-
-    <li>
-        <div class="collapsible-header grey lighten-5">
-
-        </div>
-        <div class="collapsible-body">
-
         </div>
     </li>
 
