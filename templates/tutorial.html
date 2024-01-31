@@ -413,7 +413,203 @@
 
         <li>
             <div class="collapsible-header grey lighten-5">
-                Tutorial 3: Upload VCF (sequencing data)
+                Tutorial 3: Select structures from UniProt IDs and mutations via a sequence alignment
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    <span style="font-size: larger; font-weight: bold;">Model upload via UniProt ID</span>
+                    <br><br>
+
+                    For this tutorial, we will select UniProt accession <b>AGRL1_RAT</b> with <b>ID O88917</b>.
+                    Therefore, fill in the ID, select a long minimization and check for the RaSP Model. The input form
+                    should look like this:
+                    <center>
+                        <img src="static/img/tutorial/tut4_upload.png" width="60%" />
+                    </center>
+                    Press the
+                    <span class="center-align toggle-card">
+                        <button data-target="modal3" class="waves-effect waves-light btn modal-trigger"
+                            title="Next: input mutations" style="margin:5px;">
+                            Next: input mutations
+                        </button>
+                    </span>
+                    button to proceed to the define mutations tab.
+                    <br>
+                    In the meantime, an AlphaFold structure will be
+                    fetched and a minimization will be performed if the ID is not yet in the database.
+                </p>
+
+                <p>
+                    <span style="font-size: larger; font-weight: bold;">Define mutations via a target sequence</span>
+                    <br><br>
+                    Next, we fill select the field <b>Target sequence</b> where we will inset a sequence via the upload
+                    or paste option.
+                </p>
+                <p>
+                    In general, the user needs to provide the sequence for each chain of the uploaded PDB to be mutated.
+                    The target chain sequences as a chain of one-letter sequences can be provided as FASTA files (top),
+                    pasted directly (center) or directly fetched from UniProtKB (bottom). For each sequence, select the
+                    corresponding PDB chain from the dropdown menu. You can also combine different uploads for
+                    multi-chain proteins (e.g. Fasta for Chain A, Paste sequence for Chain B). Please ensure that the
+                    uploaded/pasted sequences <b>exactly</b> match (or is a subsequence of) the sequence in length
+                    (check your PDB!) and avoid sequence offsets resulting in mutation of all residues.
+                </p>
+                <p>
+                    In this tutorial, the sequence is a modification of <b>O94910|AGRL1_HUMAN</b>, including:
+                </p>
+                <ul class="true-list">
+                    <li>E701del</li>
+                    <li>P1349del</li>
+                    <li>G1360del</li>
+                    <li>V1146_P1189insAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</li>
+                </ul>
+                <p>
+                    It is not possible to specify the
+                    UniProt ID <b>O94910</b> directly, as we need to ensure that the input sequence has the same length
+                    as the sequence in the input structure (<b>O88917|AGRL1_RAT</b>).
+                    <!-- Please download the sequence here (O94910-mod.fasta). -->
+                </p>
+
+                <p>
+                    If the sequence has been pasted in, it will look like the following picture:
+                    <center>
+                        <img src="static/img/tutorial/tut4_fasta.png" width="80%" />
+                    </center>
+                </p>
+                <p>
+                    Next, press
+                    <span class="center-align toggle-card">
+                        <button data-target="modal3" class="waves-effect waves-light btn modal-trigger"
+                            title="submit and launch explorer" style="margin:5px;">
+                            submit and launch explorer
+                        </button>
+                    </span>
+                    .
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Tutorial 4: Perform interface mutations
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    In this tutorial, we want to show how to generate interface mutations, e.g. to modify the interface
+                    of two different proteins. It will give us the binding score of the 2 proteins. The example we will
+                    use is the structure 3SN6, where a beta-adrenergic receptor is interacting with the Gs-protein.
+                    Please note, that it is not possible to modify DNA/RNA or substrate interactions.
+                </p>
+                <p>
+                    First, select 3SN6 in your structure upload, remove the hetero atoms via the filter structure option
+                    and remove chains B, G and N.
+                    <center>
+                        <img src="static/img/tutorial/tut5_filter.png" width="80%" />
+                    </center>
+                    Now select a long Minimization and calculate the RaSP model. Your input form should look like the
+                    following:
+                    <center>
+                        <img src="static/img/tutorial/tut5_upload.png" width="60%" />
+                    </center>
+                </p>
+                <p>
+                    Press
+                    <span class="center-align toggle-card">
+                        <button data-target="modal3" class="waves-effect waves-light btn modal-trigger"
+                            title="Next: input mutations" style="margin:5px;">
+                            Next: input mutations
+                        </button>
+                    </span> to proceed.
+                    <br>
+                    Now we will select the "Interface Score Definition" tab. There you have 3 options:
+                </p>
+                <ul class="true-list">
+                    <li>No calculation</li>
+                    <li>Define manual calculation</li>
+                    <li>Complete calculation</li>
+                </ul>
+                <p>
+                    We will in this tutorial define the interface manually. If you want to have further explanation
+                    about the other modes, check out the FAQ or Documentation.
+                    <br>
+                    For this, select Chain R and N to be on the Left and Chain A, B and G on the Right.
+                    <center>
+                        <img src="static/img/tutorial/tut5_interface_score.png" width="80%" />
+                    </center>
+                </p>
+                <p>
+                    Next, press
+                    <span class="center-align toggle-card">
+                        <button data-target="modal3" class="waves-effect waves-light btn modal-trigger"
+                            title="submit and launch explorer" style="margin:5px;">
+                            submit and launch explorer
+                        </button>
+                    </span>
+                    <br>
+                    This run will take approximately 40 minutes before you are forwarded to the result page. You can
+                    speed up the process by not checking RaSP calculations.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Tutorial 5: Homology modeling of multiple states of a protein
+            </div>
+            <div class="collapsible-body">
+                <p>
+                    What AlphaFold is not able to do is to model different states of a protein. This can be achieved
+                    using <span class="mut-ex">MutationExplorer</span>. For many classes and families of proteins,
+                    multiple states are available in the PDB. Different states can be modeled By selecting different
+                    PDBs as base structure and follow these steps:
+                </p>
+                <ul class="true-list">
+                    <li>
+                        Under <b>upload structure and mutations</b> enter the PDB ID of the base structure or upload a
+                        model from your machine
+                    </li>
+                    <li>
+                        Ideally select the long minimization (for homology modeling the RaSP option can be disabled) and
+                        click the <b>next</b> button
+                    </li>
+                    <li>
+                        For uploading the sequence to which you want to modify the base structure to there are multiple
+                        choices:
+                        <ul class="true-list">
+                            <li>
+                                Paste or upload it under <b>target sequence</b> (when the target is rather similar to
+                                your base structure / template)
+                            </li>
+                            <li>
+                                If your target sequence has an Uniprot ID you can enter that
+                            </li>
+                            <li>
+                                You will have to indicate to which chain in the base structure the sequence shall be
+                                applied (available chains are listed)
+                            </li>
+                            <li>
+                                If it is a very remote relationship, follow the AlignMe tutorial further down
+                            </li>
+                            <li>
+                                for other cases either also use AlignMe, or upload an alignment from another source via
+                                <b>sequence alignment</b>
+                                <!-- TODO proper link -->
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>
+                    The part that cannot be done by <span class="mut-ex">MutationExplorer</span> is the minimization of
+                    the model. The user can choose between different possibilities, e.g. using Rosetta as explained
+                    above, or by performing MD simulations and many others. Whatever approach the user choosed, it
+                    requires sufficient sampling and thus has to be done locally.
+                </p>
+            </div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+                Tutorial 6: Upload VCF (sequencing data)
             </div>
             <div class="collapsible-body">
                 <p>
@@ -584,7 +780,7 @@
 
         <li>
             <div class="collapsible-header grey lighten-4">
-                Tutorial 4: Start from the AlignMe webserver - discover sequence alignments in 3D
+                Tutorial 7: Start from the AlignMe webserver - discover sequence alignments in 3D
             </div>
             <div class="collapsible-body"><span>
                     <a href="https://www.bioinfo.mpg.de/AlignMe/AlignMePW.html">AlignMe</a> is a software package and
@@ -644,6 +840,17 @@
                         <li> you can move the structures independently by ... MICHELLE </li>
                     </ul>
                 </span></div>
+        </li>
+
+        <li>
+            <div class="collapsible-header grey lighten-5">
+
+            </div>
+            <div class="collapsible-body">
+                <p>
+
+                </p>
+            </div>
         </li>
 
     </ul>
