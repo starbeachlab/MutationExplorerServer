@@ -440,7 +440,8 @@
                 </p>
 
                 <p>
-                    <span style="font-size: larger; font-weight: bold;">Define mutations via a target sequence</span>
+                    <span style="font-size: larger; font-weight: bold;">Define mutations via a target sequence, fasta
+                        file or UniProt ID</span>
                     <br><br>
                     Next, we fill select the field <b>Target sequence</b> where we will inset a sequence via the upload
                     or paste option.
@@ -450,26 +451,26 @@
                     The target chain sequences as a chain of one-letter sequences can be provided as FASTA files (top),
                     pasted directly (center) or directly fetched from UniProtKB (bottom). For each sequence, select the
                     corresponding PDB chain from the dropdown menu. You can also combine different uploads for
-                    multi-chain proteins (e.g. Fasta for Chain A, Paste sequence for Chain B). Please ensure that the
-                    uploaded/pasted sequences <b>exactly</b> match (or is a subsequence of) the sequence in length
-                    (check your PDB!) and avoid sequence offsets resulting in mutation of all residues.
+                    multi-chain proteins (e.g. Fasta for Chain A, Paste sequence for Chain B).
+                    You do not need to ensure that the sequences are a perfect match - but note that alignment errors
+                    can occure. For the best results, please ensure that the
+                    uploaded/pasted sequences are not too distant in sequence space to the sequence of the structure.
                 </p>
                 <p>
-                    In this tutorial, the sequence is a modification of <b>O94910|AGRL1_HUMAN</b>, including:
+                    In this tutorial, the sequence originates from <b>O94910|AGRL1_HUMAN</b>. It is also possible to
+                    specify the UniProt ID <b>O94910</b> directly.
+                    <!-- You can download the sequence here (O94910.fasta). -->
                 </p>
-                <ul class="true-list">
+                <!-- <ul class="true-list">
                     <li>E701del</li>
                     <li>P1349del</li>
                     <li>G1360del</li>
                     <li>V1146_P1189insAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</li>
-                </ul>
+                </ul> -->
                 <p>
-                    It is not possible to specify the
-                    UniProt ID <b>O94910</b> directly, as we need to ensure that the input sequence has the same length
-                    as the sequence in the input structure (<b>O88917|AGRL1_RAT</b>).
-                    <!-- Please download the sequence here (O94910-mod.fasta). -->
+                    Alternatively, past in the UniProt ID <b>O94910</b> or upload the fasta file. Note that a rough
+                    alignment will be performed. No additional amino acids will be inserted into the structure.
                 </p>
-
                 <p>
                     If the sequence has been pasted in, it will look like the following picture:
                     <center>
@@ -497,12 +498,13 @@
                 <p>
                     In this tutorial, we want to show how to generate interface mutations, e.g. to modify the interface
                     of two different proteins. It will give us the binding score of the 2 proteins. The example we will
-                    use is the structure 3SN6, where a beta-adrenergic receptor is interacting with the Gs-protein.
+                    use is the structure <b>3SN6</b>, where a beta-adrenergic receptor is interacting with the
+                    Gs-protein.
                     Please note, that it is not possible to modify DNA/RNA or substrate interactions.
                 </p>
                 <p>
-                    First, select 3SN6 in your structure upload, remove the hetero atoms via the filter structure option
-                    and remove chains B, G and N.
+                    First, select <b>3SN6</b> in your structure upload, remove the hetero atoms via the filter structure
+                    option and remove chains <b>B</b>, <b>G</b> and <b>N</b>.
                     <center>
                         <img src="static/img/tutorial/tut5_filter.png" width="80%" />
                     </center>
@@ -532,9 +534,9 @@
                     We will in this tutorial define the interface manually. If you want to have further explanation
                     about the other modes, check out the FAQ or Documentation.
                     <br>
-                    For this, select Chain R and N to be on the Left and Chain A, B and G on the Right.
+                    For this, select Chain <b>R</b> to be on the <b>Right</b> and Chain <b>A</b> on the <b>Left</b>.
                     <center>
-                        <img src="static/img/tutorial/tut5_interface_score.png" width="80%" />
+                        <img src="static/img/tutorial/tut6_mutation_def.png" width="80%" />
                     </center>
                 </p>
                 <p>
