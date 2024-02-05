@@ -1140,10 +1140,7 @@ def mutate(tag,msg="",minimize="True"):
                 right += c
         if_score = left + "_" + right
         print('manual interface definition:', if_score)
-        
-    # calculate the interface score for the initial structure 
-    # could not be done earlier because above selection was not known
-    calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
+
 
     email = request.form['email'].strip() 
     if email:
@@ -1207,6 +1204,13 @@ def mutate(tag,msg="",minimize="True"):
         else:
             inputs["fasta_files"].append("")
 
+        
+    # calculate the interface score for the initial structure 
+    # could not be done earlier because above selection was not known
+
+    
+    start_thread(calc_interface_initial_structure, [tag, outdir, minimize, if_score], "init_interface")    
+    #calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
 
     ### start calculations
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
@@ -2354,7 +2358,11 @@ def mutation_parent_file( mutations, parent, mutfile, tag):
             
 def helper_files_from_mutations( mutations, parent, resfile, align, mutfile, tag):
     mutations_to_resfile( mutations, resfile, tag)
+    print("give the threads some time to terminate")
+    time.sleep(5)
     mutation_parent_file( mutations, parent, mutfile, tag)
+    print("give the threads some time to terminate")
+    time.sleep(5)
     alignment_from_mutations( mutations, parent, align, mutfile, tag)
 
 
@@ -2838,7 +2846,6 @@ def open_chains_range_file(outdir, tag):
             chains_range = chains_range[:-1]
             print("chain_range ", chains_range)
     except FileNotFoundError:
-        print("File for chain ranges not found.")
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + outdir + "chains.txt")
     except IOError:
         fatal_error(tag, READ_FAILED + outdir + "chains.txt")
@@ -2854,7 +2861,6 @@ def read_txt_file(outdir, filename, tag):
         with open(outdir + filename) as r:
             string = r.read()
     except FileNotFoundError:
-        print("File not found " + filename)
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + outdir + filename)
     except IOError:
         fatal_error(tag, READ_FAILED + outdir + filename)
