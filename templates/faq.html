@@ -541,6 +541,18 @@
         </div>
     </li>
 
+    <li>
+        <div class="collapsible-header grey lighten-4">
+            What do I do if my structure is no longer visible?
+        </div>
+        <div class="collapsible-body">
+            If your structure was visible before, try reloading the page, toggling which structure should be visible, or
+            changing the coloring.
+            If our structure was never visible, some files may be missing.
+            Please write us your Job ID so we can investigate further.
+        </div>
+    </li>
+
     <!-- <li>
         <div class="collapsible-header grey lighten-4">
             What are the visible areas in the result window?
@@ -744,7 +756,7 @@
             to scoring. Since side chain optimization is stochastic, the mover is run 3 times, and the median score is
             taken for every residue.
             <br><br>
-            
+
             <b> Interface selection </b><br>
             InterfaceAnalyzerMover which we use for the binding score calculation takes as an input a list of all chains
             in the structure, with interface sides separated by <kdb>_</kdb>. For example, for the protein complex with
@@ -756,7 +768,7 @@
             interface, with all other chains being assigned as the right side. Thus, the user can see binding dG values
             for all of the interface residues for the entire structure.
             <br><br>
-            
+
             <b> Calculation time </b><br>
             1. If you provide the interface, <b>the addition to the overall running time</b> should be under 5 minutes,
             depending on the number of chains and the size of the structure.
@@ -950,20 +962,7 @@
 </ul>
 
 
-<!-- <li>
-    <div class="collapsible-header grey lighten-4">
-        What do I do if my structure is no longer visible?
-    </div>
-    <div class="collapsible-body">
-        <span>
-    Undo any difference colorings that you applied to the original protein ’mut 0’.
-    Since
-    ’mut 0 ’ lacks a parent structure for comparison, difference colorings (ex. of energies or
-    hydrophobicities) can result in the ’mut 0 ’ protein atoms colored the same as the 
-    background. Hence, the atoms disappear.
-        </span>
-    </div>
-    </li> -->
+
 
 <!--  NOT BEFORE ACCEPTED !!!
     <li>
@@ -987,15 +986,6 @@
             A
         </span></div>
     </li>-->
-
-<!-- <li>
-        <div class="collapsible-header grey lighten-5">
-        What do I do if my structure is no longer visible?
-        </div>
-        <div class="collapsible-body"><span>
-    Undo any difference colorings that you applied to the original protein ’mut 0’. Since ’mut 0 ’ lacks a parent structure for comparison, difference colorings (ex. of energies or hydrophobicities) can result in the ’mut 0 ’ protein atoms colored the same as the background. Hence, the atoms disappear.
-        </span></div>
-    </li> -->
 
 
 <br>

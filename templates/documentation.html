@@ -288,21 +288,22 @@
             </div>
             <div class="collapsible-body">
                 <p>
-                    The more negative a energy or difference is, the more stabilizing effect has a residue onto the
-                    structure. Within the viewer, we annotate stabilizing mutations or residues in blue, while
-                    destabilizing residues are highlighted in red. As a general rule, exposed residue such as the very
-                    N- or C-terminus can provide little stabilization to the structure and will therefore often be
-                    annotated as destabilizing.
+                    The more negative a residue's energy is, the more stabilizing its effect onto the structure.
+                    Similarly, mutations that lower the energy are considered stabilising. Within the viewer, we
+                    annotate stabilizing mutations or residues in blue, while destabilizing residues are highlighted in
+                    red. As a general rule, exposed residue such as the very N- or C-terminus are often very flexible
+                    and therefore structure-based stability calculations may not be suitable in those regions.
                 </p>
                 <p>
-                    Optimization towards completely rigid structures might cause problems to the function of the
-                    protein, which often requires some flexibility.
+                    Depending on the design goal, it is worth keeping in mind that flexibility is often required for
+                    function, and hence optimization towards completely rigid structures might cause problems to the
+                    function of the protein. For scaffold proteins where the main function is structure or stability,
+                    this is not an issue.
                 </p>
-                <p>
+                <!-- <p>
                     Destabilization of some parts of the protein do not necessarily lead to un- or miss-folding but can
                     also cause degradation as specific degron motifs are exposed.
-                </p>
-                <!-- % Please add here some more (brain fried) -->
+                </p> -->
             </div>
         </li>
 
@@ -750,13 +751,35 @@
             </div>
             <div class="collapsible-body">
                 <p>
-                    The VCF processing code can be found at:
+                    We process your <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3137218/">VCF</a> format file
+                    by submitting it, unmodified, to the <a href="https://pubmed.ncbi.nlm.nih.gov/34791404/">ENSEMBL</a>
+                    Variant Effect Predictor <a href="https://pubmed.ncbi.nlm.nih.gov/27268795/">(VEP)</a>.
+                </p>
+                <p>
+                    Our wrapper script:
                 </p>
                 <div class="codebox">
                     <code>
                         vcf2rosetta.py VCF_file
                     </code>
                 </div>
+                <p>
+                    invokes vep with a command line that includes references to our local ENSEMBL cache files and these
+                    flags
+                </p>
+                <div class="codebox">
+                    <code>
+                        vep -i your_input_file.vcf --format vcf  --no_progress --buffer_size 100000  --check_existing --symbol --protein --uniprot --domains --canonical --biotype --coding_only --vcf --db_version 105 --assembly GRCh38 --no_stats -o stdout
+                    </code>
+                </div>
+                <p>
+                    From the extensive vep raw output, the wrapper script extracts revealed missense variants and
+                    impacted ENSEMBL transcript identifiers. For display in <span
+                        class="mut-ex">MutationExplorer</span>, we retain only variants on transcripts which
+                    cross-reference to Swiss-Prot curated, canonical, <a
+                        href="https://academic.oup.com/nar/article/51/D1/D523/6835362">Uniprot</a> protein IDs, which
+                    which we retrieve alphafold models.
+                </p>
             </div>
         </li>
 
@@ -810,7 +833,7 @@
     <br>
 
     <h5>General remarks</h5>
-    
+
     <ul class="collapsible">
         <li>
             <div class="collapsible-header grey lighten-5">
