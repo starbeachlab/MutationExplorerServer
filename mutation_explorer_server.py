@@ -298,6 +298,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
 
 
 
+
     sendTestTsp(tag, COPY_FAILED)
 
     # TODO:: move one level up, should not be within fixbb or rename to fixbb_rasp
@@ -305,7 +306,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     if ifscore != "":
         calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb", ifscore)
     file_processing( tag, structure, out_file_name, logfile, ifscore)
-    print("File processing")
+    print("File processing done")
 
 
 def calc_interface( tag, in_file, out_file, parameter):
@@ -599,6 +600,7 @@ def save_pdb_file(file_path, upload, pdb, af, tag):
                 os.rename( file_path[:-4] + '.tmp', file_path )
                 #order_pdb_resids( file_path[:-4] + '.tmp', file_path )
         except FileNotFoundError:
+            print("save pdb")
             fatal_error(tag, READ_WRITE_FAILED + FILE_NOT_FOUND + file_path)
         except IOError:
             fatal_error(tag, READ_WRITE_FAILED + file_path)
@@ -671,6 +673,7 @@ def filter_chain( inpdb, fchain, outpdb, tag):
                 else:
                     good_boy = False
     except FileNotFoundError:
+        print("filter_chain")
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + f_in)
     except IOError:
         fatal_error(tag, READ_FAILED + f_in)
@@ -949,6 +952,7 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 
     if not waitID(pid):
         fatal_error(tag, RELAXATION_FAILED + " from add_mutations()")
+    time.sleep(10)
 
     # get all mutations
     i = 0
@@ -2094,6 +2098,7 @@ def tutorial():
 @app.route('/documentation')
 def documentation():
     return render_template('documentation.html')
+
 
 @app.route('/contact')
 def contact():
