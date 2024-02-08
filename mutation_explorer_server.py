@@ -285,6 +285,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     status_update(tag, status)
 
     sendTestTsp(tag, FIXBB_FAILED)
+    print("give the threads some time to terminate")
+    time.sleep(10)
+
     if(path_to_store != ""):
         cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
         pid = bash_cmd(cmd, tag)
@@ -294,9 +297,6 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     print("MV Done")
 
 
-    if(path_to_store != ""):
-        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        pid = bash_cmd(cmd, tag)
 
     sendTestTsp(tag, COPY_FAILED)
 
