@@ -2095,7 +2095,6 @@ def tutorial():
 def documentation():
     return render_template('documentation.html')
 
-
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
