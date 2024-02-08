@@ -29,7 +29,7 @@ FILE_NOT_FOUND = 'File not found. '
 UNEXPECTED = 'An unexpected error occured. '
 
 STATUS_UPDATE_FAILED = 'Something went wrong during the status update.'
-FIXBB_FAILED = 'Error in fixbb'
+FIXBB_FAILED = 'Error in fixbb\n'
 COPY_FAILED = 'Something went wrong while copying or moving a file.'
 INTERFACE_SCORE_FAILED = 'There was an error during the interface score calculation.'
 RASP_FAILED = 'There was an error during the RaSP calculation.'
@@ -135,6 +135,7 @@ def fatal_error(tag, msg):
 
     with open(outdir + "fatal.log", "a") as f:
         f.write(msg)
+    send_error_mail(tag)
 
     exit(1)
 
@@ -274,20 +275,30 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     cmd = "" + app.config['ROSETTA_PATH'] + "fixbb.static.linuxgccrelease -use_input_sc -in:file:s " + out + structure + " -resfile " + out + resfile + ' -nstruct 1  -linmem_ig 10 -out:pdb -out:prefix ' + out
     if longmin == True:
         cmd += " -ex1 -ex2  "
-    bash_cmd(cmd, tag)
+    pid = bash_cmd(cmd, tag)
+
+
+
     print("rosetta done")       
 
     status = "fixbb+for+" + out_file_name + "+done"
     status_update(tag, status)
 
-
+    sendTestTsp(tag, FIXBB_FAILED)
     if(path_to_store != ""):
         cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        bash_cmd(cmd, tag)
+        pid = bash_cmd(cmd, tag)
 
     cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
     print("MV Done")
+
+
+    if(path_to_store != ""):
+        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+        pid = bash_cmd(cmd, tag)
+
+    sendTestTsp(tag, COPY_FAILED)
 
     # TODO:: move one level up, should not be within fixbb or rename to fixbb_rasp
     calc_rasp(tag, structure,out_file_name,logfile, path_to_store)
@@ -301,6 +312,9 @@ def calc_interface( tag, in_file, out_file, parameter):
     cmd = "bash -i " + app.config['SCRIPTS_PATH'] + "pdb_rosetta_interface.sh " + in_file + " " + out_file + " " + parameter
     print(cmd)
     bash_cmd(cmd, tag)
+
+
+    sendTestTsp(tag, INTERFACE_SCORE_FAILED)
 
     # should only be true once it is done!
     status = "Interface+calculation+for+" + in_file.split('/')[-1] + "+out+" + out_file.split('/')[-1] + "+done"
@@ -337,14 +351,17 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
                 cmd =  "bash -i " + app.config['RASP_PATH'] + "calc-rasp.sh " + out + out_file_name + ".pdb " + chain + " " + out_file_name + " " + out + " " + out + "rasp-error_" + chain + ".log" 
                 print(cmd)
                 bash_cmd(cmd, tag)
+
+                sendTestTsp(tag, RASP_FAILED)
            
 
                 if(path_to_store != ""):
                     cmd = "cp -d " + out + "cavity_pred_" + out_file_name + "_" + chain + ".csv " + path_to_store + "_" + chain + ".csv"
                     print(cmd)
                     bash_cmd(cmd, tag)
+                    sendTestTsp(tag, RASP_CP_FAILED)
         
-
+ 
 
                 status = "RaSP+calculation+for+" + out_file_name + "+with+chain+" + chain + "+done"
                 status_update(tag, status)
@@ -431,7 +448,7 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
         if waitID(pid):
             print("start waiting for conserved file")
             shutil.copy(cons, structure)
-        sendTestTsp(tag)
+        sendTestTsp(tag, CONSERVATION_FAILED)
      #   if wait( cons, 1, WAIT_SUPERIMPOSE):
      #       shutil.copy( cons, structure )
             
@@ -492,15 +509,15 @@ def file_processing( tag, structure, out_file_name, logfile, ifscore=""):
 
     cmd =  app.config['SCRIPTS_PATH'] + "pdb_rosetta_energy_append.py " + out + out_file_name + ".pdb " + out + "info/" + out_file_name + ".txt"
 
-    sendTestTsp(tag)
+    sendTestTsp(tag, ENERGY_DIFF_FAILED)
 
 
-def sendTestTsp(tag):
+def sendTestTsp(tag, error):
     cmd = "bash"
     my_id = bash_cmd(cmd, tag)
     print("Check id: " + my_id)
     if(not waitID(my_id)):
-        error_message = "Calculating energy values for the visualization failed. This is most likely due to an error related to non canonical residues in the structure."
+        error_message = error
         fatal_error(tag, error_message)
         return
 
@@ -1123,10 +1140,7 @@ def mutate(tag,msg="",minimize="True"):
                 right += c
         if_score = left + "_" + right
         print('manual interface definition:', if_score)
-        
-    # calculate the interface score for the initial structure 
-    # could not be done earlier because above selection was not known
-    calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
+
 
     email = request.form['email'].strip() 
     if email:
@@ -1190,6 +1204,13 @@ def mutate(tag,msg="",minimize="True"):
         else:
             inputs["fasta_files"].append("")
 
+        
+    # calculate the interface score for the initial structure 
+    # could not be done earlier because above selection was not known
+
+    
+    start_thread(calc_interface_initial_structure, [tag, outdir, minimize, if_score], "init_interface")    
+    #calc_interface_initial_structure(tag, outdir, minimize, ifscore=if_score)
 
     ### start calculations
     mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
@@ -2074,6 +2095,10 @@ def tutorial():
 def documentation():
     return render_template('documentation.html')
 
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
 @app.route('/downloads/<tag>/<filename>')
 def download(tag, filename):
     if tag.isdigit():
@@ -2332,7 +2357,11 @@ def mutation_parent_file( mutations, parent, mutfile, tag):
             
 def helper_files_from_mutations( mutations, parent, resfile, align, mutfile, tag):
     mutations_to_resfile( mutations, resfile, tag)
+    print("give the threads some time to terminate")
+    time.sleep(5)
     mutation_parent_file( mutations, parent, mutfile, tag)
+    print("give the threads some time to terminate")
+    time.sleep(5)
     alignment_from_mutations( mutations, parent, align, mutfile, tag)
 
 
@@ -2695,7 +2724,6 @@ def waitID(myid):
 
     while(state):
         cmd = 'tsp -s ' + str(myid)
-        # print(cmd)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
         #print(pid)
         if("finished" in pid):
@@ -2817,7 +2845,6 @@ def open_chains_range_file(outdir, tag):
             chains_range = chains_range[:-1]
             print("chain_range ", chains_range)
     except FileNotFoundError:
-        print("File for chain ranges not found.")
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + outdir + "chains.txt")
     except IOError:
         fatal_error(tag, READ_FAILED + outdir + "chains.txt")
@@ -2833,7 +2860,6 @@ def read_txt_file(outdir, filename, tag):
         with open(outdir + filename) as r:
             string = r.read()
     except FileNotFoundError:
-        print("File not found " + filename)
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + outdir + filename)
     except IOError:
         fatal_error(tag, READ_FAILED + outdir + filename)
@@ -2966,7 +2992,33 @@ def send_email(fil):
         finally:
             server.quit() 
 
+def send_error_mail(tag):
+  
+        smtp_server = app.config['SMTP_SERVER']
+        port = 587
+        sender_user = app.config['SENDER_LOGIN']
+        sender_email = app.config['SENDER_MAIL']
+        password = app.config['MAIL_PASSWORD']
+        receiver = ""
+        message = "Subject: MutationExplorer failed! \n\n"
+        message = message + tag
 
+
+        
+        context = ssl.create_default_context()
+        receiver_email = "daniel@informatik.uni-leipzig.de"
+        try:
+            server = smtplib.SMTP(smtp_server,port)
+            server.ehlo() 
+            server.starttls(context=context) 
+            server.ehlo()
+            server.login(sender_user, password)
+            server.sendmail(sender_email, receiver_email, message)
+            os.remove(fil)
+        except Exception as e:
+            print(e)
+        finally:
+            server.quit() 
 
 
 
