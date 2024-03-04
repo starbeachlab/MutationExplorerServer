@@ -285,6 +285,9 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     status_update(tag, status)
 
     sendTestTsp(tag, FIXBB_FAILED)
+    print("give the threads some time to terminate")
+    time.sleep(10)
+    print("beauty sleep ends")
     if(path_to_store != ""):
         cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
         pid = bash_cmd(cmd, tag)
@@ -294,9 +297,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     print("MV Done")
 
 
-    if(path_to_store != ""):
-        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        pid = bash_cmd(cmd, tag)
+
 
     sendTestTsp(tag, COPY_FAILED)
 
@@ -305,7 +306,7 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     if ifscore != "":
         calc_interface( tag, out + out_file_name + ".pdb" , out+out_file_name + "_IF.pdb", ifscore)
     file_processing( tag, structure, out_file_name, logfile, ifscore)
-    print("File processing")
+    print("File processing done")
 
 
 def calc_interface( tag, in_file, out_file, parameter):
@@ -378,7 +379,7 @@ def superimpose(tag, align_structure, align_chain, template_structure, template_
     # wait for superimposed structure
    # if not wait(tmp, 1, WAIT_SUPERIMPOSE):
     #return
-    if(not waitID(pid)):
+    if(not waitID(pid, tag)):
         error_message = "Superimposing failed!."
         fatal_error(tag, error_message)
         return
@@ -409,7 +410,7 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
         
     # wait for mutant structure  ### why in here? 
     print("ID Again " + my_id)
-    if(not waitID(my_id)):
+    if(not waitID(my_id, tag)):
         error_message = "Conservation calculation failed due to previous errors. Most likely the RaSP or Rosetta interface score calculation failed. RaSP would fail on PDBs containing no side-chain atoms."
         fatal_error(tag, error_message)
         return
@@ -445,7 +446,7 @@ def mutant_calc_conservation(tag, structure, logfile, my_id):
         print( "mutant_calc_conservation:", c, sid )
         pid = calc_conservation(tag, structure, chain_alignment, c, sid, logfile)
         # cp structure + "cons.pdb" into structure
-        if waitID(pid):
+        if waitID(pid, tag):
             print("start waiting for conserved file")
             shutil.copy(cons, structure)
         sendTestTsp(tag, CONSERVATION_FAILED)
@@ -516,7 +517,7 @@ def sendTestTsp(tag, error):
     cmd = "bash"
     my_id = bash_cmd(cmd, tag)
     print("Check id: " + my_id)
-    if(not waitID(my_id)):
+    if(not waitID(my_id, tag)):
         error_message = error
         fatal_error(tag, error_message)
         return
@@ -599,6 +600,7 @@ def save_pdb_file(file_path, upload, pdb, af, tag):
                 os.rename( file_path[:-4] + '.tmp', file_path )
                 #order_pdb_resids( file_path[:-4] + '.tmp', file_path )
         except FileNotFoundError:
+            print("save pdb")
             fatal_error(tag, READ_WRITE_FAILED + FILE_NOT_FOUND + file_path)
         except IOError:
             fatal_error(tag, READ_WRITE_FAILED + file_path)
@@ -671,6 +673,7 @@ def filter_chain( inpdb, fchain, outpdb, tag):
                 else:
                     good_boy = False
     except FileNotFoundError:
+        print("filter_chain")
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + f_in)
     except IOError:
         fatal_error(tag, READ_FAILED + f_in)
@@ -945,10 +948,12 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
     print( 'wait for parent to exist\n')
     ### wait for mut_0.pdb to exist
 
-    pid = getLastID(outdir, tag)
+    pid = getLastID(outdir, tag)   
 
-    if not waitID(pid):
+    if not waitID(pid,tag, 60):
         fatal_error(tag, RELAXATION_FAILED + " from add_mutations()")
+    time.sleep(10)
+    print('Start adding mutations!')
 
     # get all mutations
     i = 0
@@ -993,7 +998,7 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 
     pid = getLastID(outdir, tag)
 
-    if not waitID(pid):
+    if not waitID(pid, tag):
         fatal_error(tag, MUTATION_FAILED + " (fixbb) ")
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
@@ -1255,7 +1260,7 @@ def vcf_calculation(tag, inputs):
     pid = bash_cmd(cmd, tag)
     print(outdir +  vcf_file[:-4] + '_missense.csv')
     # wait for missense file
-    if(waitID(pid)) == False:
+    if(waitID(pid, tag)) == False:
         return render_template("vcf.html", error="No missense was found.")
     # if wait( outdir +  vcf_file[:-4] + '_missense.csv', 1, WAIT_VCF) == False:
     #     return render_template("vcf.html", error = "No missense was found.")
@@ -1346,7 +1351,7 @@ def vcf_calculation(tag, inputs):
 
     pid = getLastID(outdir, tag)
 
-    if not waitID(pid):
+    if not waitID(pid, tag):
         fatal_error(tag, RELAXATION_FAILED)
 
     # wait for relaxation
@@ -1362,7 +1367,7 @@ def vcf_calculation(tag, inputs):
     #     fatal_error(tag, MUTATION_FAILED + " (2)")
     pid = getLastID(outdir, tag)
 
-    if not waitID(pid):
+    if not waitID(pid, tag):
         fatal_error(tag, MUTATION_FAILED + " (fixbb in vcf pipeline)")
 
 @app.route('/vcf', methods=['GET', 'POST'])
@@ -1458,7 +1463,7 @@ def interface_one_structure(tag, mutant, inputs):
     # wait for mut_0.pdb
     pid = getLastID(outdir, tag)
 
-    if not waitID(pid):
+    if not waitID(pid, tag):
         fatal_error(tag, error_msg)
 
     # wait for mut_0.pdb
@@ -1490,7 +1495,7 @@ def interface_one_structure(tag, mutant, inputs):
     # check mutation success
     pid = getLastID(outdir, tag)
 
-    if not waitID(pid):
+    if not waitID(pid, tag):
         fatal_error(tag, MUTATION_FAILED + " (3)")
         
 def interface_two_structures(tag, inputs):
@@ -1549,7 +1554,7 @@ def interface_two_structures(tag, inputs):
 
         pid = getLastID(outdir, tag)
 
-        if not waitID(pid):
+        if not waitID(pid, tag):
             fatal_error(tag, "Relaxation of base structure failed. Does the selected chain has ATOMs in the PDB?")
 
         #if(not wait(outdir + "mut_0.pdb", 1, WAIT_RELAXATION)):
@@ -1560,7 +1565,7 @@ def interface_two_structures(tag, inputs):
 
         pid = getLastID(outdir, tag)
 
-        if not waitID(pid):
+        if not waitID(pid, tag):
             fatal_error(tag, "Relaxation of target structure failed. Does the selected chain has ATOMs in the PDB?")
 
         #if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
@@ -2094,6 +2099,7 @@ def tutorial():
 @app.route('/documentation')
 def documentation():
     return render_template('documentation.html')
+
 
 @app.route('/contact')
 def contact():
@@ -2721,18 +2727,29 @@ def mutations_from_alignment(clustal, base_structure, tag, base_clustal_id="", t
 
     return mutations, noncanonical_residues
 
-def waitID(myid):
+def waitID(myid, tag, delay = 0.1):
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
     print('wait for process: ', myid)
     state = True
 
     while(state):
+        time.sleep(1)
         cmd = 'tsp -s ' + str(myid)
         pid = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
-        #print(pid)
         if("finished" in pid):
-            return state
+            print('Sleeping for ' + str(delay))
+            time.sleep(delay)
+            print('Sleeping done for ' + str(delay))
+            tmpID = getLastID(outdir, tag)
+            if(tmpID != myid):
+                print('Change ID to ' + tmpID)
+                myid = tmpID
+                continue
+            else:
+                return state
         if(not ("queued" in pid or "running" in pid)):
             return False
+
 
 
 
