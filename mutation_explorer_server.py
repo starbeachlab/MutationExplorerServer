@@ -2407,6 +2407,9 @@ def add_mutations_from_sequence( mutations, target, chain, idy, parent, tag):
     pdb_seq = pdb2seq(parent, tag)
     write_fasta(f1 ,target ,tag, h1)
     write_fasta(f2, pdb_seq[chain][0], tag, h2)
+    if target == pdb_seq[chain][0]:
+        print('target and parent is the same, no mutation')
+        return
     cmd = "python3  " + app.config['SCRIPTS_PATH'] + "seq_align.py " + f1 + ' ' + f2 + ' ' + f3 + ' clw'
     print(cmd)
     p = subprocess.check_output( cmd.split())
