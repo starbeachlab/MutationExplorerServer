@@ -135,7 +135,7 @@ def fatal_error(tag, msg):
 
     with open(outdir + "fatal.log", "a") as f:
         f.write(msg)
-    send_error_mail(tag)
+    send_error_mail(tag, msg)
 
     exit(1)
 
@@ -3012,7 +3012,7 @@ def send_email(fil):
         finally:
             server.quit() 
 
-def send_error_mail(tag):
+def send_error_mail(tag, error):
   
         smtp_server = app.config['SMTP_SERVER']
         port = 587
@@ -3021,7 +3021,8 @@ def send_error_mail(tag):
         password = app.config['MAIL_PASSWORD']
         receiver = ""
         message = "Subject: MutationExplorer failed! \n\n"
-        message = message + tag
+        message = message + tag + '\n'
+        message = message + error
 
 
         
