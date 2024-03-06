@@ -1503,8 +1503,30 @@ def interface_one_structure(tag, mutant, inputs):
         status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
 
 
+    ### calculation
+
     # helpers
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile, tag)
+
+    # get chains, resid-ranges from uploaded structure
+    chains_range = get_chains_and_range( outdir + "structure.pdb", tag)
+
+    try: 
+        with open( outdir + 'chains.txt', 'w') as w:
+            w.write( chains_range + '\n')
+    except FileNotFoundError:
+        fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + outdir + 'chains.txt')
+    except IOError:
+        fatal_error(tag, WRITE_FAILED + outdir + 'chains.txt')
+    except Exception as e:
+        fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + outdir + 'chains.txt')
+        
+    chains = ''
+    for w in chains_range.split(",")[0:-1]:
+        w = w.strip()
+        if len(w) > 0:
+            chains += w[0]
+    print( 'chains: ', chains)
 
     # start mutation calculation
     fixbb(tag, parent, resfile, mutant, "log.txt", ifscore=ifscore)
@@ -1591,6 +1613,27 @@ def interface_two_structures(tag, inputs):
 
         #if(not wait(outdir + "mut_1.pdb", 1, WAIT_RELAXATION)):
         #    fatal_error(tag, RELAXATION_FAILED)
+
+
+    # get chains, resid-ranges from uploaded structure
+    chains_range = get_chains_and_range( outdir + "structure.pdb", tag)
+
+    try: 
+        with open( outdir + 'chains.txt', 'w') as w:
+            w.write( chains_range + '\n')
+    except FileNotFoundError:
+        fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + outdir + 'chains.txt')
+    except IOError:
+        fatal_error(tag, WRITE_FAILED + outdir + 'chains.txt')
+    except Exception as e:
+        fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + outdir + 'chains.txt')
+        
+    chains = ''
+    for w in chains_range.split(",")[0:-1]:
+        w = w.strip()
+        if len(w) > 0:
+            chains += w[0]
+    print( 'chains: ', chains)
 
     base_strc = outdir + "mut_0.pdb"
     target_strc = outdir + "mut_1.pdb"
