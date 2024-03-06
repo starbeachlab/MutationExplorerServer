@@ -1322,6 +1322,29 @@ def vcf_calculation(tag, inputs):
 
     status_update(tag, "Start+Calculation")
 
+
+
+    # get chains, resid-ranges from uploaded structure
+    chains_range = get_chains_and_range( outdir + "structure.pdb", tag)
+
+    try: 
+        with open( outdir + 'chains.txt', 'w') as w:
+            w.write( chains_range + '\n')
+    except FileNotFoundError:
+        fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + outdir + 'chains.txt')
+    except IOError:
+        fatal_error(tag, WRITE_FAILED + outdir + 'chains.txt')
+    except Exception as e:
+        fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + outdir + 'chains.txt')
+        
+    chains = ''
+    for w in chains_range.split(",")[0:-1]:
+        w = w.strip()
+        if len(w) > 0:
+            chains += w[0]
+    print( 'chains: ', chains)
+
+
     # relax structure
     if minimize:
         if msg != "found":
@@ -1479,8 +1502,6 @@ def interface_one_structure(tag, mutant, inputs):
     if noncanonical_residues:
         status_update(tag, "mut_0.pdb containes noncanonical residues, which are ignored")
 
-
-    ### calculation
 
     # helpers
     helper_files_from_mutations(mutations, outdir + parent, outdir + resfile, outdir + align, outdir + mutfile, tag)
