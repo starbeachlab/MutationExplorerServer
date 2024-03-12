@@ -731,6 +731,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
     else:
 
         if (not filtered) and longmin == True:
+            print("using minimized")
             shutil.copyfile( outdir + structure, outdir + name + ".pdb")
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
@@ -747,7 +748,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             if ifscore != '':
                 print( "calc interface from relax_initial_structure")
                 calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb", ifscore)
-
+            print("start file processing")
             file_processing( tag, structure, name,  log_file)
 
         else:
@@ -1009,6 +1010,15 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 def mutate(tag,msg="",minimize="True"):
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
+    if request.method == 'POST':
+            print("debug!")
+            if request.form.get('submit') == "launch explorer without mutations":
+                print("debug")
+                mutant = "mut_0.pdb"
+                return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+
+
+
 
     # get chains, resid-ranges from uploaded structure
     chains_range = get_chains_and_range( outdir + "structure.pdb", tag)
@@ -2066,7 +2076,7 @@ def load_explore_page(out, tag, filename):  #, connector_string = ""):
 
     print("###############")
     print("###############")
-    print(out + "mut_1.pdb")
+
     return render_template("explore.html", tag = tag, structures = structures, parent=parent, mutations = mutations, filename=filename , chains = chains, energy=energy, two_structures = two_structures, match_string = match_string, chains_range = chains_range) #, connector_string = connector_string)
 
 @app.route('/chain_resids_sorted', methods=['POST'])
@@ -3112,7 +3122,7 @@ def send_error_mail(tag, error):
             server.ehlo()
             server.login(sender_user, password)
             server.sendmail(sender_email, receiver_email, message)
-            os.remove(fil)
+            #os.remove(fil)
         except Exception as e:
             print(e)
         finally:

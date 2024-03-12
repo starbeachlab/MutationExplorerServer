@@ -166,9 +166,13 @@
 
     filename = "{{filename}}";
     let coloring_suffix = "_diffE.pdb"; // defautl coloring
-
+    //This is not necessary?
     if (filename == "") {
         filename = "mut_0.pdb";
+        coloring_suffix = "_absE.pdb";
+    }
+    
+    if (filename == "mut_0.pdb") {
         coloring_suffix = "_absE.pdb";
     }
 
