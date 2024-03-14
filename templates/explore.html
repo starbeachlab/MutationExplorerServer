@@ -450,7 +450,9 @@
     }
 
     $("#submitForm").on('submit', function (e) {
+        document.getElementById("subm").disabled = true; 
         mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}', e);
+        document.getElementById("subm").disabled = false; 
     });
 
     /*
