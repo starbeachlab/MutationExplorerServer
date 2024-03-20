@@ -215,7 +215,8 @@
         document.getElementById('fname').value = name; // + ".pdb";
 
         var pdbFiles = [];
-        var clustalFiles = []
+        var pdbParent = '';
+        var clustalFiles = [];
         connectorString = "";
 
         if (two_strcs != '') {
@@ -268,6 +269,10 @@
                     connectorString += pdbFileName + ":" + clustalFileName + ',' + name + "," + allchains[i] + ";"
                 }
             }
+
+            // parent pdb, structure current pdb was mutated from
+            var file = name.substr(0, name.length-2);
+            var pdbParent = getURL(`${file}.pdb`);
         }
 
         // TODO: set units
@@ -287,6 +292,8 @@
             unit = "R.E.U."
         }
 
+        // console.log('connectorString ', connectorString);
+
         const params = {
             structureUrls: pdbFiles,
             alignmentUrls: clustalFiles,
@@ -296,6 +303,7 @@
             unit: unit,
             min: '-2',
             max: '2',
+            parentUrl: pdbParent,
         }
 
         // wait until loadViewer is defined
