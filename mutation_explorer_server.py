@@ -1976,17 +1976,18 @@ def info(tag, filename, two_structures=""):
 
     ediff = '-'
     if filename.count('_') > 1:
-
+        index = filename.rfind('_')
+        new_filename = filename[:index]
         try:
-            with open( path + filename[:-2] + ".txt") as r:
+            with open( path + new_filename + ".txt") as r:
                 lines = r.readlines()
                 ediff = str( round( float(lines[-1]) - float(energy), 2) )
         except FileNotFoundError:
-            fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + path + filename[:-2] + ".txt")
+            fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + path + new_filename + ".txt")
         except IOError:
-            fatal_error(tag, READ_FAILED + path + filename[:-2] + ".txt")
+            fatal_error(tag, READ_FAILED + path + new_filename + ".txt")
         except Exception as e:
-            fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + path + filename[:-2] + ".txt")
+            fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + path + new_filename + ".txt")
         
                 
     name_file = "/name.log"
