@@ -271,7 +271,8 @@
             }
 
             // parent pdb, structure current pdb was mutated from
-            var file = name.substr(0, name.length-2);
+            var lastIndex = name.lastIndexOf('_');
+            var file = name.substr(0, name.lastIndex);
             var pdbParent = getURL(`${file}.pdb`);
         }
 
