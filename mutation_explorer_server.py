@@ -2514,7 +2514,7 @@ def seq_from_fasta(filename, tag):
             for l in r:
                 if l[0] == '>':
                     return head,seq
-                seq += l.strip()
+                seq += l.strip().replace(" ", "")
     except FileNotFoundError:
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + filename)
     except IOError:
