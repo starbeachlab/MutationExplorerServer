@@ -984,8 +984,8 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
             print( 'get uniprot:', uniprot, uni_file, i)
             download_uniprot( uniprot, uni_file, tag)
             target = seq_from_fasta( uni_file, tag)
-            print( 'mutations before:', mutations, 'target', target, chainU, outdir + parent)
-            add_mutations_from_sequence( mutations, target, chainU, "uni" + str(i % 3), outdir + parent, tag)
+            print( 'mutations before:', mutations, 'target', target[1], chainU, outdir + parent)
+            add_mutations_from_sequence( mutations, target[1], chainU, "uni" + str(i % 3), outdir + parent, tag)
             print( 'mutations after:', mutations)
             
     print(__name__, 'total number of mutations:', len(mutations))
@@ -2514,13 +2514,13 @@ def seq_from_fasta(filename, tag):
             for l in r:
                 if l[0] == '>':
                     return head,seq
-                seq += l.strip().replace(" ", "")
+                seq += l.strip()
     except FileNotFoundError:
         fatal_error(tag, READ_FAILED + FILE_NOT_FOUND + filename)
     except IOError:
         fatal_error(tag, READ_FAILED + filename)
     except Exception as e:
-        fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + filename)
+        fatal_error(tag, READ_FAILED + str(UNEXPECTED) + str(e) + ' ' + filename)
 
     return head,seq
 
@@ -2530,7 +2530,7 @@ def write_fasta(filename, seq, tag, header=""):
     try:
         with open(filename,'w') as w:
             w.write('>' + header + '\n')
-            w.write(seq + '\n')
+            w.write(str(seq) + '\n')
     except FileNotFoundError:
         fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + filename)
     except IOError:
