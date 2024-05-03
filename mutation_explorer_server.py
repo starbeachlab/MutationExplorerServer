@@ -15,6 +15,15 @@ from scripts import check_pdb
 import smtplib, ssl
 
 
+import json
+import plotly
+
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from datetime import datetime
+
+
 
 # fatal error messages
 NO_MUTATIONS = "No valid mutations were defined"
@@ -3259,4 +3268,69 @@ def get_alignment_ids(filename, tag):
         fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + filename)
             
     return idstr
+
+@app.route('/stats',  methods=['GET', 'POST'])
+def stats():
+
+
+# Get a list of directories in the current directory
+    path = '/scratch/mutationexplorer/data/'
+    dirs = os.listdir( path )
+    print(dirs)
+    directories = [d for d in os.listdir('../data/')]
+    print(directories)
+
+# Get modification times for each directory and store in a dictionary
+    mod_times = {}
+    for directory in directories:
+        mod_time = os.path.getmtime(path+directory)
+        mod_times[directory] = datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d')
+
+# Count occurrences of modification times
+    counted_mod_times = {}
+    for mod_time in mod_times.values():
+        counted_mod_times[mod_time] = counted_mod_times.get(mod_time, 0) + 1
+
+    counts= []
+    dates = []
+# Print the counted modification times
+    for mod_time, count in sorted(counted_mod_times.items()):
+        print(f"{count} {mod_time}")
+        counts.append(count)
+        dates.append(mod_time)
+
+
+  
+    graphs = [
+
+
+        dict(
+            data=[
+                dict(
+                    x=dates,
+                    y=counts,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Created Sessions per Day'
+            )
+        )
+
+       
+    ]
+
+    # Add "ids" to each of the graphs to pass up to the client
+    # for templating
+    ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
+
+    # Convert the figures to JSON
+    # PlotlyJSONEncoder appropriately converts pandas, datetime, etc
+    # objects to their JSON equivalents
+    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template('stats.html',
+                           ids=ids,
+                           graphJSON=graphJSON)
+
 
