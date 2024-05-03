@@ -3274,7 +3274,7 @@ def stats():
 
 
 # Get a list of directories in the current directory
-    path = '/scratch/mutationexplorer/data/'
+    path = '../data/'
     dirs = os.listdir( path )
     print(dirs)
     directories = [d for d in os.listdir('../data/')]
