@@ -21,7 +21,7 @@ import plotly
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime as dt
 
 
 
@@ -3284,7 +3284,7 @@ def stats():
     mod_times = {}
     for directory in directories:
         mod_time = os.path.getmtime(path+directory)
-        mod_times[directory] = datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d')
+        mod_times[directory] = dt.fromtimestamp(mod_time).strftime('%Y-%m-%d')
 
 # Count occurrences of modification times
     counted_mod_times = {}
