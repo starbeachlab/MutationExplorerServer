@@ -3274,10 +3274,10 @@ def stats():
 
 
 # Get a list of directories in the current directory
-    path = '../data/'
+    path = app.config['USER_DATA_DIR']
     dirs = os.listdir( path )
     print(dirs)
-    directories = [d for d in os.listdir('../data/')]
+    directories = [d for d in os.listdir(app.config['USER_DATA_DIR'])]
     print(directories)
 
 # Get modification times for each directory and store in a dictionary
