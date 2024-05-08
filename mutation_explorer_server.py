@@ -22,6 +22,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime as dt
+from subprocess import check_output
 
 
 
@@ -3269,6 +3270,23 @@ def get_alignment_ids(filename, tag):
             
     return idstr
 
+def count_mutant_pdbs(directories):
+    path = app.config['USER_DATA_DIR']
+    var = ""
+    for directory in directories:
+        if os.path.isdir(path+directory):
+            print(directory)
+            files = [file for file in os.listdir(path+directory) if file.startswith("mut_") and file[-5] in "0123456789"]
+            count = len(files)
+            print(count)
+            var += f"{count} "
+    var_list = var.split()
+    counts = {item: var_list.count(item) for item in var_list}
+    sorted_counts = sorted(counts.items(), key=lambda x: x[0])
+    for count, freq in sorted_counts:
+        print(f"{freq} {count}")
+    return sorted_counts
+
 def getProteins(directories):
         
         names = []
@@ -3342,13 +3360,27 @@ def stats():
 
 
     sorted_names = getProteins(directories);
+
     print(sorted_names)
     names = []
     times = []
 
+    
+
+
     for name, count in sorted_names:
         names.append(name)
         times.append(count)
+
+
+    sorted_counts = count_mutant_pdbs(directories)
+    numbers = []
+    counted_numbers = []
+
+    for name, count in sorted_counts:
+        numbers.append(name)
+        counted_numbers.append(count)
+
     graphs = [
 
 
@@ -3373,7 +3405,19 @@ def stats():
                 ),
             ],
             layout=dict(
-                title='Created Sessions per Day'
+                title='Mutated Proteins'
+            )
+        ),
+        dict(
+            data=[
+                dict(
+                    x=numbers,
+                    y=counted_numbers,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Mutations per Session'
             )
         ),
 
