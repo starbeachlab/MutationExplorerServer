@@ -3269,6 +3269,47 @@ def get_alignment_ids(filename, tag):
             
     return idstr
 
+def getProteins(directories):
+        
+        names = []
+
+        # Get a list of directories in the current directory
+       
+        path = app.config['USER_DATA_DIR']
+
+        # Iterate over each directory
+        for directory in directories:
+            directory = path+directory
+            # Print the directory path
+            print(directory)
+            # Read the content of the name.log file in each directory
+            try:
+                with open(os.path.join(directory, 'name.log'), 'r') as file:
+                    name = file.read().strip()
+                    # Add the name to the list
+                    names.append(name)
+            except FileNotFoundError:
+                print(f"Warning: name.log not found in {directory}")
+
+        # Convert the list of names to a single string separated by spaces
+        names_str = ' '.join(names)
+
+        # Split the names string into a list of names
+        names_list = names_str.split()
+
+        # Count the occurrences of each name
+        name_counts = {name: names_list.count(name) for name in set(names_list)}
+
+        # Sort the names by their counts in ascending order
+        sorted_names = sorted(name_counts.items(), key=lambda x: x[1])
+
+        # Print the sorted names and their counts
+        for name, count in sorted_names:
+            print(f'{count} {name}')
+        return sorted_names
+
+
+
 @app.route('/stats',  methods=['GET', 'POST'])
 def stats():
 
@@ -3300,7 +3341,14 @@ def stats():
         dates.append(mod_time)
 
 
-  
+    sorted_names = getProteins(directories);
+    print(sorted_names)
+    names = []
+    times = []
+
+    for name, count in sorted_names:
+        names.append(name)
+        times.append(count)
     graphs = [
 
 
@@ -3315,7 +3363,20 @@ def stats():
             layout=dict(
                 title='Created Sessions per Day'
             )
-        )
+        ),
+        dict(
+            data=[
+                dict(
+                    x=names,
+                    y=times,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Created Sessions per Day'
+            )
+        ),
+
 
        
     ]
@@ -3332,5 +3393,8 @@ def stats():
     return render_template('stats.html',
                            ids=ids,
                            graphJSON=graphJSON)
+
+
+
 
 
