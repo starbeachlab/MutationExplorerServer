@@ -562,14 +562,15 @@ def save_pdb_file(file_path, upload, pdb, af, tag):
     if upload.filename != "":
 
         original_name = upload.filename
-        upload.save(file_path)
-        hash = getHash(file_path)
+        upload.save(file_path+"_wt")
+        hash = getHash(file_path+"_wt")
         print(hash)
         if is_in_db(hash):
             msg = "found"
             cp_from_db(hash, file_path, tag)
         else:
             msg = "notfound"
+            os.rename(file_path+"_wt", file_path)
 
     elif pdb != "":
         original_name = pdb
@@ -777,7 +778,8 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, 
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
             if(user != ""):
-                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure) + ".pdb"
+                #_wt to circumvent the new hash
+                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure+"_wt") + ".pdb"
 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
