@@ -355,7 +355,7 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
         chain_list = list(chains)
 
         for chain in chain_list:
-
+            print(path_to_store + "_" + chain + ".csv")
             if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
                 print("exists")
                 listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
