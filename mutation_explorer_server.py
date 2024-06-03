@@ -23,6 +23,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime as dt
 from subprocess import check_output
+import hashlib
 
 
 
@@ -299,8 +300,16 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     time.sleep(10)
     print("beauty sleep ends")
     if(path_to_store != ""):
-        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        pid = bash_cmd(cmd, tag)
+        if(path_to_store.startswith(app.config['USERPROTEIN_PATH'])):
+            print(path_to_store)
+            hash = getHash(out + structure)
+            print(hash)
+            cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+            print(cmd)
+            pid = bash_cmd(cmd, tag)
+        else:
+            cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+            pid = bash_cmd(cmd, tag)
 
     cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
@@ -549,10 +558,19 @@ def save_pdb_file(file_path, upload, pdb, af, tag):
     error_message = ""
     msg = "x"
 
-    print( 'save pdb file:', file_path, pdb, af)
+    print( 'save pdb file:', file_path, pdb, af, upload)
     if upload.filename != "":
+
         original_name = upload.filename
         upload.save(file_path)
+        hash = getHash(file_path)
+        print(hash)
+        if is_in_db(hash):
+            msg = "found"
+            cp_from_db(hash, file_path, tag)
+        else:
+            msg = "notfound"
+
     elif pdb != "":
         original_name = pdb
         if pdb[-4:] == ".pdb":
@@ -714,8 +732,16 @@ def filter_chain( inpdb, fchain, outpdb, tag):
         fatal_error(tag, WRITE_FAILED + f_out)
     except Exception as e:
         fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + f_out)
+
+
+def getHash(structure):
+    hash_md5 = hashlib.md5()
+    with open(structure, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
             
-def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
+def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
     
@@ -735,6 +761,8 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             if(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
+            if(user != ""):
+                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure) + ".pdb"
 
         print(path)
         start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path], "minimisation")
@@ -748,6 +776,8 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             if(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
+            if(user != ""):
+                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure) + ".pdb"
 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
@@ -804,6 +834,7 @@ def submit():
 
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
+
 
     chain_filter = request.form['chain_filter'].strip().upper()
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
@@ -920,7 +951,7 @@ def submit():
         
     # relax structure
     if minimize:
-        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, upload, "mut_0", "structure.pdb")
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
 
@@ -3123,7 +3154,7 @@ def send_error_mail(tag, error):
             server.ehlo()
             server.login(sender_user, password)
             server.sendmail(sender_email, receiver_email, message)
-            os.remove(fil)
+            #os.remove(fil)
         except Exception as e:
             print(e)
         finally:
@@ -3135,13 +3166,14 @@ def send_error_mail(tag, error):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
-    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
+    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( app.config['USERPROTEIN_PATH'] + pdb + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db(pdb, outfile, tag):
     rose = app.config['ROSEMINT_PATH']
     listig =  glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')
     listig.extend( glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb'))
     listig.extend( glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb'))
+    listig.extend(glob.glob(app.config['USERPROTEIN_PATH'] + pdb + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)
