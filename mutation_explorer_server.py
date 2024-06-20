@@ -759,10 +759,10 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, 
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
+            elif(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
-            if(user != ""):
+            elif(user != ""):
                 path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure) + ".pdb"
 
         print(path)
@@ -774,10 +774,11 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, 
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
+            elif(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
-            if(user != ""):
+            elif(user != ""):
+                print(user)
                 #_wt to circumvent the new hash
                 path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure+"_wt") + ".pdb"
 
