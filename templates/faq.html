@@ -1004,6 +1004,33 @@
         </div>
     </li>
 
+     <li>
+        <div class="collapsible-header grey lighten-4">
+            Which files can MutationExplorer export via the download all button?
+        </div>
+        <div class="collapsible-body">
+         
+            The exported zip file contains the following files:
+
+            <ul class="true-list">
+                <li>The pdb file that was uploaded named structure.pdb</li>
+                <li>The pdb file for each mutation step, e.g. mut_0.pdb</li>
+                <li>Multiple pdb files for each step storing different calculations in the B-factor:
+                <ul class="true-list">
+                    <li>The absolute energy, e.g., mut_0_absE.pdb</li>
+                    <li>Energy difference to parent, e.g., mut_0_1_diffE.pdb</li>
+                    <li>Absolute hydrophobicity, e.g., mut_0_HyPh.pdb</li>
+                    <li>Hydrophobicity difference to parent, e.g., mut_0_1_diffHyPh.pdb</li>
+                    <li>Sequence conservation to parent, e.g., mut_0_1_cons.pdb</li>
+                          </ul>
+                </li>
+                <li>The clustal file for the alignments for each chain and mutation step, e.g., mut_0_1_A.clw </li>
+                <li>The RaSP predictions for each chain and mutation step, e.g., cavity_pred_mut_0_A.csv</li>
+            </ul>
+
+        </div>
+    </li>
+
 </ul>
 
 

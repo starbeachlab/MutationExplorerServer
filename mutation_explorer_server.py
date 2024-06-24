@@ -15,6 +15,17 @@ from scripts import check_pdb
 import smtplib, ssl
 
 
+import json
+import plotly
+
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from datetime import datetime as dt
+from subprocess import check_output
+import hashlib
+
+
 
 # fatal error messages
 NO_MUTATIONS = "No valid mutations were defined"
@@ -289,8 +300,16 @@ def fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_t
     time.sleep(10)
     print("beauty sleep ends")
     if(path_to_store != ""):
-        cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
-        pid = bash_cmd(cmd, tag)
+        if(path_to_store.startswith(app.config['USERPROTEIN_PATH'])):
+            print(path_to_store)
+            hash = getHash(out + structure)
+            print(hash)
+            cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+            print(cmd)
+            pid = bash_cmd(cmd, tag)
+        else:
+            cmd = "cp " + out + structure[:-4] + "_0001.pdb " + path_to_store
+            pid = bash_cmd(cmd, tag)
 
     cmd = "mv " + out + structure[:-4] + "_0001.pdb " + out + out_file_name + ".pdb"
     bash_cmd(cmd, tag)
@@ -336,7 +355,7 @@ def calc_rasp(tag, structure, out_file_name, logfile, path_to_store=""):
         chain_list = list(chains)
 
         for chain in chain_list:
-
+            print(path_to_store + "_" + chain + ".csv")
             if(len(glob.glob( path_to_store + "_" + chain + ".csv" )) > 0 ):
                 print("exists")
                 listig =  glob.glob(  path_to_store + "_" + chain + ".csv" )
@@ -539,10 +558,20 @@ def save_pdb_file(file_path, upload, pdb, af, tag):
     error_message = ""
     msg = "x"
 
-    print( 'save pdb file:', file_path, pdb, af)
+    print( 'save pdb file:', file_path, pdb, af, upload)
     if upload.filename != "":
+
         original_name = upload.filename
-        upload.save(file_path)
+        upload.save(file_path+"_wt")
+        hash = getHash(file_path+"_wt")
+        print(hash)
+        if is_in_db(hash):
+            msg = "found"
+            cp_from_db(hash, file_path, tag)
+        else:
+            msg = "notfound"
+            os.rename(file_path+"_wt", file_path)
+
     elif pdb != "":
         original_name = pdb
         if pdb[-4:] == ".pdb":
@@ -704,8 +733,16 @@ def filter_chain( inpdb, fchain, outpdb, tag):
         fatal_error(tag, WRITE_FAILED + f_out)
     except Exception as e:
         fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + f_out)
+
+
+def getHash(structure):
+    hash_md5 = hashlib.md5()
+    with open(structure, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
             
-def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, structure, ifscore=""):
+def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, name, structure, ifscore=""):
     # name = "mut_0"
     # structure = "structure.pdb"
     
@@ -722,9 +759,11 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
+            elif(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
+            elif(user != ""):
+                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure) + ".pdb"
 
         print(path)
         start_thread(fixbb, [tag, structure, resfile, name, log_file, longmin, path], "minimisation")
@@ -735,9 +774,13 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, name, 
             if(pdb != ""):
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "pdb/" + pdb.upper() + ".pdb"
-            if(af != ""):    
+            elif(af != ""):    
                 rose = app.config['ROSEMINT_PATH']
                 path = rose + "alphafold/" + af.upper() + ".pdb"
+            elif(user != ""):
+                print(user)
+                #_wt to circumvent the new hash
+                path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure+"_wt") + ".pdb"
 
             print("path rasp: " + path)
             calc_rasp(tag, structure, name, log_file, path ) # TODO
@@ -794,6 +837,7 @@ def submit():
 
     pdb = secure_filename( request.form['pdbid'].strip() )
     af = secure_filename( request.form['alphafoldid'].strip() )
+
 
     chain_filter = request.form['chain_filter'].strip().upper()
     hetatom_filter = request.form.get('hetatom_filter')  # .get() needed for checkbox
@@ -910,7 +954,7 @@ def submit():
         
     # relax structure
     if minimize:
-        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, "mut_0", "structure.pdb")
+        relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, upload, "mut_0", "structure.pdb")
     else:
         score_structure(tag, outdir, "mut_0", "structure.pdb")
 
@@ -3113,7 +3157,7 @@ def send_error_mail(tag, error):
             server.ehlo()
             server.login(sender_user, password)
             server.sendmail(sender_email, receiver_email, message)
-            os.remove(fil)
+            #os.remove(fil)
         except Exception as e:
             print(e)
         finally:
@@ -3125,13 +3169,14 @@ def send_error_mail(tag, error):
 
 def is_in_db( pdb):
     rose = app.config['ROSEMINT_PATH']
-    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
+    return len(glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( app.config['USERPROTEIN_PATH'] + pdb + '*.pdb')) > 0 or len(glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')) > 0 or len(glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb')) > 0
 
 def cp_from_db(pdb, outfile, tag):
     rose = app.config['ROSEMINT_PATH']
     listig =  glob.glob( rose + 'fixbb/' + pdb.upper() + '*.pdb')
     listig.extend( glob.glob( rose + 'pdb/' + pdb.upper() + '*.pdb'))
     listig.extend( glob.glob( rose + 'alphafold/' + pdb.upper() + '*.pdb'))
+    listig.extend(glob.glob(app.config['USERPROTEIN_PATH'] + pdb + '*.pdb'))
     if len(listig) == 1:
         print( listig[0], outfile)
         shutil.copyfile(listig[0],outfile)
@@ -3259,4 +3304,176 @@ def get_alignment_ids(filename, tag):
         fatal_error(tag, READ_FAILED + UNEXPECTED + e + ' ' + filename)
             
     return idstr
+
+def count_mutant_pdbs(directories):
+    path = app.config['USER_DATA_DIR']
+    var = ""
+    for directory in directories:
+        if os.path.isdir(path+directory):
+            print(directory)
+            files = [file for file in os.listdir(path+directory) if file.startswith("mut_") and file[-5] in "0123456789"]
+            count = len(files)
+            print(count)
+            var += f"{count} "
+    var_list = var.split()
+    counts = {item: var_list.count(item) for item in var_list}
+    sorted_counts = sorted(counts.items(), key=lambda x: x[0])
+    for count, freq in sorted_counts:
+        print(f"{freq} {count}")
+    return sorted_counts
+
+def getProteins(directories):
+        
+        names = []
+
+        # Get a list of directories in the current directory
+       
+        path = app.config['USER_DATA_DIR']
+
+        # Iterate over each directory
+        for directory in directories:
+            directory = path+directory
+            # Print the directory path
+            print(directory)
+            # Read the content of the name.log file in each directory
+            try:
+                with open(os.path.join(directory, 'name.log'), 'r') as file:
+                    name = file.read().strip()
+                    # Add the name to the list
+                    names.append(name)
+            except FileNotFoundError:
+                print(f"Warning: name.log not found in {directory}")
+
+        # Convert the list of names to a single string separated by spaces
+        names_str = ' '.join(names)
+
+        # Split the names string into a list of names
+        names_list = names_str.split()
+
+        # Count the occurrences of each name
+        name_counts = {name: names_list.count(name) for name in set(names_list)}
+
+        # Sort the names by their counts in ascending order
+        sorted_names = sorted(name_counts.items(), key=lambda x: x[1])
+
+        # Print the sorted names and their counts
+        for name, count in sorted_names:
+            print(f'{count} {name}')
+        return sorted_names
+
+
+
+@app.route('/stats',  methods=['GET', 'POST'])
+def stats():
+
+
+# Get a list of directories in the current directory
+    path = app.config['USER_DATA_DIR']
+    dirs = os.listdir( path )
+    print(dirs)
+    directories = [d for d in os.listdir(app.config['USER_DATA_DIR'])]
+    print(directories)
+
+# Get modification times for each directory and store in a dictionary
+    mod_times = {}
+    for directory in directories:
+        mod_time = os.path.getmtime(path+directory)
+        mod_times[directory] = dt.fromtimestamp(mod_time).strftime('%Y-%m-%d')
+
+# Count occurrences of modification times
+    counted_mod_times = {}
+    for mod_time in mod_times.values():
+        counted_mod_times[mod_time] = counted_mod_times.get(mod_time, 0) + 1
+
+    counts= []
+    dates = []
+# Print the counted modification times
+    for mod_time, count in sorted(counted_mod_times.items()):
+        print(f"{count} {mod_time}")
+        counts.append(count)
+        dates.append(mod_time)
+
+
+    sorted_names = getProteins(directories);
+
+    print(sorted_names)
+    names = []
+    times = []
+
+    
+
+
+    for name, count in sorted_names:
+        names.append(name)
+        times.append(count)
+
+
+    sorted_counts = count_mutant_pdbs(directories)
+    numbers = []
+    counted_numbers = []
+
+    for name, count in sorted_counts:
+        numbers.append(name)
+        counted_numbers.append(count)
+
+    graphs = [
+
+
+        dict(
+            data=[
+                dict(
+                    x=dates,
+                    y=counts,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Created Sessions per Day'
+            )
+        ),
+        dict(
+            data=[
+                dict(
+                    x=names,
+                    y=times,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Mutated Proteins'
+            )
+        ),
+        dict(
+            data=[
+                dict(
+                    x=numbers,
+                    y=counted_numbers,
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='Mutations per Session'
+            )
+        ),
+
+
+       
+    ]
+
+    # Add "ids" to each of the graphs to pass up to the client
+    # for templating
+    ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
+
+    # Convert the figures to JSON
+    # PlotlyJSONEncoder appropriately converts pandas, datetime, etc
+    # objects to their JSON equivalents
+    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template('stats.html',
+                           ids=ids,
+                           graphJSON=graphJSON)
+
+
+
+
 
