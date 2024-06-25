@@ -1011,7 +1011,7 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 
     pid = getLastID(outdir, tag)   
 
-    if not waitID(pid,tag, 60):
+    if not waitID(pid,tag, 15):
         fatal_error(tag, RELAXATION_FAILED + " from add_mutations()")
     time.sleep(10)
     print('Start adding mutations!')
