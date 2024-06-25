@@ -962,7 +962,24 @@ def submit():
 
     return redirect(url_for('mutate', tag = tag, msg=msg, minimize=minimize))
 
+def start_fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False, path_to_store="", ifscore=""):
+    ##adapt to fixbb
+    fixbb(tag, structure, resfile, out_file_name, logfile, longmin=False,  path_to_store="", ifscore=ifscore)
 
+    outdir = app.config['USER_DATA_DIR'] + tag + "/"
+    pid = getLastID(outdir, tag)
+
+
+
+    if not waitID(pid, tag):
+        fatal_error(tag, MUTATION_FAILED + " (fixbb) ")
+
+    # here status update
+
+    print("Send status update for " + out_file_name)
+    
+ 
+    cleanup(tag, out_file_name)
 
 
 def add_mutations(tag, mutant, inputs, ifscore=""):
@@ -1044,6 +1061,10 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 
     if not waitID(pid, tag):
         fatal_error(tag, MUTATION_FAILED + " (fixbb) ")
+
+    # here status update
+    print("Send status update")
+    cleanup(tag, mutant)
     # wait for mutation
     #if wait(mutant, 1, WAIT_MUTATION) == False:
     #    fatal_error(tag, MUTATION_FAILED + " (1)")
@@ -1053,6 +1074,7 @@ def add_mutations(tag, mutant, inputs, ifscore=""):
 def mutate(tag,msg="",minimize="True"):
 
     outdir = app.config['USER_DATA_DIR'] + tag + "/"
+
 
     # get chains, resid-ranges from uploaded structure
     chains_range = get_chains_and_range( outdir + "structure.pdb", tag)
@@ -1095,6 +1117,34 @@ def mutate(tag,msg="",minimize="True"):
 
     if request.method == 'GET':
         return render_template("mutate.html", tag = tag, chains=chains, chains_range=chains_range, status=status, error = "")
+
+    working_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/working.status")
+
+    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+
+
+    if os.path.exists(working_path):
+        print("running job")
+        
+        return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+
+    print(mutant)
+
+    try:
+        print("write working state")
+        with open(working_path, "w") as f:
+            f.write(str("true"))
+    except FileNotFoundError:
+        fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + working_path)
+    except IOError:
+        fatal_error(tag, WRITE_FAILED + working_path)
+    except Exception as e:
+        fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + working_path)
+    
+    print(working_path)
+
+
+
 
     ###  get form values
     inputs = {}
@@ -1972,16 +2022,37 @@ def get_status(tag, filename):
     if done:
         dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + filename )
         successful = os.path.isfile(dirname)
+
         if successful:
             status = "done"
             msg = ""
-            print("send mail?")
-            send_email(os.path.join( app.config['USER_DATA_DIR'], tag + "/mail.txt"))
         else:
             status = "error"
             msg = "Rosetta calculation encountered an error"
     #print( 'get_status', dirname, str(done))
     return jsonify({'done': done, 'status': status, 'message': msg})
+
+
+
+def cleanup(tag, filename):
+    status = ""
+    msg = ""
+    status_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/status.log")
+
+    dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/fin/" + filename)
+    done = os.path.isfile(dirname)
+    if done:
+        dirname = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + filename )
+        successful = os.path.isfile(dirname)
+        working_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/" + "working.status" )
+        if os.path.exists(working_path):
+            os.remove(working_path)
+        if successful:
+            status = "done"
+            msg = ""
+            print("send mail?")
+            send_email(os.path.join( app.config['USER_DATA_DIR'], tag + "/mail.txt"))
+    #print( 'get_status', dirname, str(done))
 
 
 @app.route('/status/<tag>/<filename>')
@@ -2166,6 +2237,31 @@ def explore(tag, filename = ""):  #, connector_string = ""):
         return load_explore_page(app.config['USER_DATA_DIR'], tag, filename)#, connector_string)
 
 
+    working_path = os.path.join( app.config['USER_DATA_DIR'], tag + "/working.status")
+
+    mutant = name_mutation(app.config['USER_DATA_DIR'], "mut_0", tag)
+
+
+    if os.path.exists(working_path):
+        print("running job")
+        
+        return redirect(url_for('status', tag = tag, filename = mutant, msg="-"))
+
+    print(mutant)
+
+    try:
+        print("write working state")
+        with open(working_path, "w") as f:
+            f.write(str("true"))
+    except FileNotFoundError:
+        fatal_error(tag, WRITE_FAILED + FILE_NOT_FOUND + working_path)
+    except IOError:
+        fatal_error(tag, WRITE_FAILED + working_path)
+    except Exception as e:
+        fatal_error(tag, WRITE_FAILED + UNEXPECTED + e + ' ' + working_path)
+    
+    print(working_path)
+
     ### get form values
 
     mutations = request.form['mutations'].strip().replace(' ', '').split(',')
@@ -2188,8 +2284,9 @@ def explore(tag, filename = ""):  #, connector_string = ""):
         write_email(outdir + "mail.txt", email, results_link)
 
     helper_files_from_mutations( mutations, outdir + parent, outdir + mutant[:-4] + '_resfile.txt', outdir + mutant[:-4] + '.clw', outdir + "info/" + mutant[:-4] + '.txt', tag) 
-    start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
-    
+    #start_thread(fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
+    start_thread(start_fixbb, [tag, parent,  mutant[:-4] + '_resfile.txt', mutant, "log.txt"], "remutate")
+    ## we need a new thread that starts fixbb, waits for it and start cleanup
     return redirect(url_for('status', tag = tag, filename = mutant))#, connector_string = connector_string))
 
 

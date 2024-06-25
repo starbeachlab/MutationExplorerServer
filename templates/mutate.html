@@ -697,6 +697,7 @@
 	}
 
 	$("#submitForm").on('submit', function (e) {
+		document.getElementById("submit-btn").disabled = true; 
 		if (!interfaceScoreValid()) {
 			console.log('interfaceScoreValid ', interfaceScoreValid())
 			e.preventDefault();
@@ -710,6 +711,7 @@
 			$("#target_sequence_syntax_error").html(`The target sequence must be in upper case letters only. Please try again.`);
 		};
 		mutationCheck('mutations-input', 'mutations-syntax-error', '{{chains_range}}' , e);
+		document.getElementById("submit-btn").disabled = false; 
 	});
 
 </script>
