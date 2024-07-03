@@ -21,7 +21,7 @@ function mutationSyntaxCorrect(inputId) {
     if (!muts) {
         return true;
     }
-    return /^([A-Z]:-?[0-9]+[A-Z])(,([A-Z]:-?[0-9]+[A-Z]))*$/.test(muts);
+    return /^([A-Z]:-?[0-9]+[ACDEFGHIKLMNPQRSTVWY])(,([A-Z]:-?[0-9]+[ACDEFGHIKLMNPQRSTVWY]))*$/.test(muts)
 }
 
 function checkMutation(mutation, ranges) {
