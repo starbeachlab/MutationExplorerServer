@@ -3467,9 +3467,9 @@ def stats():
 # Get a list of directories in the current directory
     path = app.config['USER_DATA_DIR']
     dirs = os.listdir( path )
-    print(dirs)
+    #print(dirs)
     directories = [d for d in os.listdir(app.config['USER_DATA_DIR'])]
-    print(directories)
+    #print(directories)
 
 # Get modification times for each directory and store in a dictionary
     mod_times = {}
@@ -3486,14 +3486,14 @@ def stats():
     dates = []
 # Print the counted modification times
     for mod_time, count in sorted(counted_mod_times.items()):
-        print(f"{count} {mod_time}")
+        #print(f"{count} {mod_time}")
         counts.append(count)
         dates.append(mod_time)
 
 
     sorted_names = getProteins(directories);
 
-    print(sorted_names)
+    #print(sorted_names)
     names = []
     times = []
 

@@ -113,9 +113,9 @@ with open(out_file, "w") as w:
                     previd = new_Id
                     eidi += 1
                 aa = SeqUtils.IUPACData.protein_letters_3to1[ l[ 17:20 ].title()]
-                if aa != seq[eidi]:
-                    print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
-                    exit(1)
+               # if aa != seq[eidi]:
+               #     print( "ERROR: sequence in alignment and pdb do not match:", eidi, seq[eidi],aa)
+               #     exit(1)
                 w.write( l[:60] + "{:6.2f}".format( factor * vals[eidi] ) + l[66:] + "\n" )
             #elif "ATOM" == l[0:4] or "HETATM" == l[0:6]:
             #    w.write( l[:60] + "{:6.2f}".format( factor ) + l[66:] + "\n" )
