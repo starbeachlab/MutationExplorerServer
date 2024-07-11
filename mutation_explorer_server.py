@@ -785,15 +785,21 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, 
 
             print("path rasp: " + path)
             #We possibly need a thread here?
-            calc_rasp(tag, structure, name, log_file, path ) # TODO
+            start_thread(calc_rasp, [tag, structure, name, log_file, path], "rasp")
+            #time.sleep(1)
+            #calc_rasp(tag, structure, name, log_file, path) # TODO
 
             # interface score for initial structure is going to be calculated later
             # because the selection for the chains was not done yet
             if ifscore != '':
                 print( "calc interface from relax_initial_structure")
-                calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb", ifscore)
+                #calc_interface( tag, outdir + structure, outdir + name + "_IF.pdb", ifscore)
+                start_thread(calc_interface, [tag, outdir + structure, outdir + name + "_IF.pdb", ifscore], "calc_interface")
+                #time.sleep(1)
 
-            file_processing( tag, structure, name,  log_file)
+            #file_processing( tag, structure, name,  log_file)
+            start_thread(file_processing, [ tag, structure, name,  log_file], "file_processing")
+            #time.sleep(1)
 
         else:
             print("Fixbb since filtering")
