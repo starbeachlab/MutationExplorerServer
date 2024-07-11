@@ -41,6 +41,7 @@ UNEXPECTED = 'An unexpected error occured. '
 
 STATUS_UPDATE_FAILED = 'Something went wrong during the status update.'
 FIXBB_FAILED = 'Error in fixbb\n'
+SCORING_FAILED = 'Error in Rosetta Scoring'
 COPY_FAILED = 'Something went wrong while copying or moving a file.'
 INTERFACE_SCORE_FAILED = 'There was an error during the interface score calculation.'
 RASP_FAILED = 'There was an error during the RaSP calculation.'
@@ -783,6 +784,7 @@ def relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, user, 
                 path =  app.config['USERPROTEIN_PATH'] + getHash(outdir+structure+"_wt") + ".pdb"
 
             print("path rasp: " + path)
+            #We possibly need a thread here?
             calc_rasp(tag, structure, name, log_file, path ) # TODO
 
             # interface score for initial structure is going to be calculated later
@@ -807,6 +809,12 @@ def score_structure(tag, outdir, name, structure, ifscore=''):
     bash_cmd(cmd, tag)
 
     status_update(tag, "scoring+for+" + name + "+done")
+
+    sendTestTsp(tag, SCORING_FAILED)
+    print("give the threads some time to terminate")
+    time.sleep(10)
+    print("beauty sleep ends")
+
 
     cmd = "mv " + outdir + structure[:-4] + '_0001.pdb ' + outdir + name + '.pdb'
     bash_cmd(cmd, tag)
@@ -956,7 +964,8 @@ def submit():
     if minimize:
         relax_initial_structure(outdir, tag, msg, filtered, longmin, pdb, af, upload, "mut_0", "structure.pdb")
     else:
-        score_structure(tag, outdir, "mut_0", "structure.pdb")
+        start_thread(score_structure, [tag, outdir, "mut_0", "structure.pdb"], "scoring")
+        #score_structure(tag, outdir, "mut_0", "structure.pdb")
 
     print('fixbb started for initial upload\n')
 
