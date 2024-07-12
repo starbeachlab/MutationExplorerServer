@@ -3422,16 +3422,16 @@ def count_mutant_pdbs(directories):
     var = ""
     for directory in directories:
         if os.path.isdir(path+directory):
-            print(directory)
+            #print(directory)
             files = [file for file in os.listdir(path+directory) if file.startswith("mut_") and file[-5] in "0123456789"]
             count = len(files)
-            print(count)
+            #print(count)
             var += f"{count} "
     var_list = var.split()
     counts = {item: var_list.count(item) for item in var_list}
     sorted_counts = sorted(counts.items(), key=lambda x: x[0])
-    for count, freq in sorted_counts:
-        print(f"{freq} {count}")
+    #for count, freq in sorted_counts:
+    #    print(f"{freq} {count}")
     return sorted_counts
 
 def getProteins(directories):
@@ -3446,7 +3446,7 @@ def getProteins(directories):
         for directory in directories:
             directory = path+directory
             # Print the directory path
-            print(directory)
+            #print(directory)
             # Read the content of the name.log file in each directory
             try:
                 with open(os.path.join(directory, 'name.log'), 'r') as file:
@@ -3469,8 +3469,8 @@ def getProteins(directories):
         sorted_names = sorted(name_counts.items(), key=lambda x: x[1])
 
         # Print the sorted names and their counts
-        for name, count in sorted_names:
-            print(f'{count} {name}')
+        #for name, count in sorted_names:
+        #    print(f'{count} {name}')
         return sorted_names
 
 
