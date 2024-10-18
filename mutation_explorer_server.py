@@ -1334,7 +1334,13 @@ def mutate(tag,msg="",minimize="True"):
 def vcf_calculation(tag, inputs):
 
     vcf = inputs["vcf"]
+    vcf_trimmed = ''.join(vcf.split())
     print(vcf)
+    print(vcf_trimmed)
+    if vcf != vcf_trimmed:
+        os.rename(vcf, vcf_trimmed)
+        vcf = vcf_trimmed
+
     vcf_file = vcf.split("/").pop()
     print(vcf_file)
     minimize = inputs["minimize"]
