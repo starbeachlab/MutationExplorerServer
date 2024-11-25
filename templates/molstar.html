@@ -44,11 +44,14 @@
 
     var vw = mdsrv.Viewer.create('port', {});
 
-    var loadViewer = function loadViewer(params){ //pdbFiles, clustalFiles, color="energy", min="-2", max="2") {
-        vw.then(viewer => {
-            viewer.clear()
-            viewer.loadMutationExplorer(params) // pdbFiles, clustalFiles, color, min, max)
-        })
+    var loadViewer = async function loadViewer(params){ //pdbFiles, clustalFiles, color="energy", min="-2", max="2") {
+        const viewer = await vw;
+        var cameraPosition = await viewer.clear()
+        if (JSON.stringify(cameraPosition) == JSON.stringify([0, 0, 100])) {
+            viewer.loadMutationExplorer(params)
+        } else {
+            viewer.loadMutationExplorer(params, cameraPosition)
+        }
     }
 
 
